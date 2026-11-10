@@ -1,0 +1,1196 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+/* Reports Page Styles */
+.report-stats-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transicion);
+    position: relative;
+    overflow: hidden;
+}
+
+.report-stats-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+.report-stats-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+
+.report-stats-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.report-stats-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.report-stats-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+    margin-bottom: 0.125rem;
+}
+
+.report-stats-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Report Selector Cards */
+.report-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.report-type-card {
+    background: var(--color-fondo);
+    border: 2px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    cursor: pointer;
+    transition: all var(--transicion);
+    position: relative;
+    overflow: hidden;
+}
+
+.report-type-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+
+.report-type-card.active {
+    border-color: var(--color-chocolate);
+    background: var(--color-dorado-claro);
+}
+
+.report-type-card.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-chocolate);
+}
+
+.report-type-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    margin-bottom: var(--space-3);
+}
+
+.report-type-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: 0.25rem;
+}
+
+.report-type-desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-texto-suave);
+    line-height: 1.4;
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 350px;
+    width: 100%;
+}
+
+.chart-wrapper {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.chart-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+}
+
+.chart-actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* Table Enhancements */
+.report-table-container {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.report-table-container .table {
+    margin: 0;
+}
+
+.report-table-container thead th {
+    background: var(--color-crema);
+    color: var(--color-texto-suave);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--color-borde);
+    padding: var(--space-3);
+}
+
+.report-table-container tbody td {
+    padding: var(--space-3);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.report-table-container tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.report-table-container tbody tr:hover {
+    background: var(--color-dorado-claro);
+}
+
+/* Status Indicators in Tables */
+.stock-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+}
+
+.stock-status.ok { background: var(--color-exito-bg); color: var(--color-exito); }
+.stock-status.low { background: var(--color-advertencia-bg); color: var(--color-advertencia); }
+.stock-status.critical { background: var(--color-error-bg); color: var(--color-error); }
+.stock-status.out { background: var(--color-crema-oscuro); color: var(--color-texto-muted); }
+
+.margin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+}
+
+.margin-badge.high { background: var(--color-exito-bg); color: var(--color-exito); }
+.margin-badge.medium { background: var(--color-advertencia-bg); color: var(--color-advertencia); }
+.margin-badge.low { background: var(--color-error-bg); color: var(--color-error); }
+
+/* Filter Bar */
+.report-filter-bar {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.report-filter-row {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.report-filter-group {
+    flex: 1;
+    min-width: 160px;
+}
+
+.report-filter-group label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.375rem;
+}
+
+.report-filter-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* Empty State */
+.report-empty-state {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--color-texto-muted);
+}
+
+.report-empty-state i {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: var(--space-3);
+    opacity: 0.5;
+}
+
+.report-empty-state h6 {
+    color: var(--color-texto-suave);
+    margin-bottom: var(--space-2);
+}
+
+/* Loading State */
+.report-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8);
+    color: var(--color-texto-muted;
+}
+
+.report-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: var(--space-3);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .report-type-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .report-filter-group {
+        min-width: 100%;
+    }
+
+    .report-filter-actions {
+        width: 100%;
+    }
+
+    .report-filter-actions .btn {
+        flex: 1;
+    }
+
+    .chart-container {
+        height: 280px;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .chart-actions {
+        width: 100%;
+    }
+
+    .chart-actions .btn {
+        flex: 1;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .report-type-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .report-filter-bar, .report-stats-card, .btn, .nav-tabs, .report-type-grid {
+        display: none !important;
+    }
+
+    .card, .chart-wrapper, .report-table-container {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .chart-container {
+        height: 300px !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-graph-up me-2 text-dorado"></i>Reportes y Analytics</h1>
+        <p class="text-muted mb-0">Dashboards interactivos, KPIs en tiempo real y exportación de datos</p>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" onclick="exportCurrentReport('excel')">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="exportCurrentReport('pdf')">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="printReport()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Report Type Selector -->
+<div class="card border-0 shadow-none mb-4">
+    <div class="card-body p-0">
+        <h6 class="px-3 py-2 mb-0 text-muted small text-uppercase fw-semibold">
+            <i class="bi bi-collection me-1"></i>Seleccionar Tipo de Reporte
+        </h6>
+        <div class="report-type-grid p-3" id="reportTypeGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="report-filter-bar" id="reportFilterBar" style="display: none;">
+    <div class="report-filter-row">
+        <div class="report-filter-group" style="min-width: 200px;">
+            <label>Período</label>
+            <select class="form-select form-select-sm" id="reportPeriod" onchange="handlePeriodChange()">
+                <option value="today">Hoy</option>
+                <option value="week">Esta Semana</option>
+                <option value="month" selected>Este Mes</option>
+                <option value="quarter">Este Trimestre</option>
+                <option value="year">Este Año</option>
+                <option value="custom">Personalizado</option>
+            </select>
+        </div>
+        <div class="report-filter-group d-none" id="customDateFromGroup">
+            <label>Desde</label>
+            <input type="date" class="form-control form-control-sm" id="reportDateFrom" onchange="loadCurrentReport()">
+        </div>
+        <div class="report-filter-group d-none" id="customDateToGroup">
+            <label>Hasta</label>
+            <input type="date" class="form-control form-control-sm" id="reportDateTo" onchange="loadCurrentReport()">
+        </div>
+        <div class="report-filter-group">
+            <label>Agrupar por</label>
+            <select class="form-select form-select-sm" id="reportGroupBy" onchange="loadCurrentReport()">
+                <option value="day">Día</option>
+                <option value="week">Semana</option>
+                <option value="month">Mes</option>
+            </select>
+        </div>
+        <div class="report-filter-actions">
+            <button type="button" class="btn btn-primary btn-sm" onclick="loadCurrentReport()">
+                <i class="bi bi-search me-1"></i>Generar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs Row -->
+<div class="row g-3 mb-4" id="reportKpisContainer" style="display: none;">
+    <!-- Populated by JS -->
+</div>
+
+<!-- Chart Section -->
+<div class="chart-wrapper" id="chartWrapper" style="display: none;">
+    <div class="chart-header">
+        <h5 class="chart-title mb-0" id="chartTitle"><i class="bi bi-bar-chart me-2"></i>Gráfico</h5>
+        <div class="chart-actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleChartType()">
+                <i class="bi bi-bar-chart me-1"></i><span id="chartTypeBtnText">Barras</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadChartImage()">
+                <i class="bi bi-download me-1"></i>Imagen
+            </button>
+        </div>
+    </div>
+    <div class="chart-container">
+        <canvas id="reportChart"></canvas>
+    </div>
+</div>
+
+<!-- Table Section -->
+<div class="card" id="tableCard" style="display: none;">
+    <div class="card-header border-0">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0" id="tableTitle"><i class="bi bi-table me-2"></i>Datos</h5>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary" onclick="exportCurrentReport('excel')">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="exportCurrentReport('pdf')">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive table-responsive-stack">
+            <table class="table table-hover mb-0" id="reportTable">
+                <thead class="table-light" id="reportTableHead"></thead>
+                <tbody id="reportTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer border-0 bg-transparent py-3" id="tablePagination" style="display: none;">
+        <nav aria-label="Paginación reporte">
+            <ul class="pagination pagination-sm mb-0 justify-content-center" id="reportPaginationList"></ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Empty State -->
+<div class="text-center py-5" id="emptyState" style="display: none;">
+    <i class="bi bi-graph-up fs-1 text-muted"></i>
+    <h5 class="text-muted mt-3">Seleccione un tipo de reporte</h5>
+    <p class="text-muted">Haga clic en una tarjeta arriba para generar un reporte</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+// ==================== CONFIGURACIÓN DE TIPOS DE REPORTE ====================
+const REPORT_TYPES = {
+    sales: {
+        key: 'sales',
+        title: 'Ventas por Período',
+        icon: 'bi-graph-up-arrow',
+        color: 'var(--color-chocolate)',
+        bgColor: 'var(--color-dorado-claro)',
+        desc: 'Ingresos, pedidos, ticket promedio y métodos de pago por período',
+        endpoint: 'sales',
+        defaultChart: 'line',
+        supportsGroupBy: true,
+        columns: [
+            { key: 'date', label: 'Fecha', format: 'date' },
+            { key: 'orders_count', label: 'Pedidos', format: 'number' },
+            { key: 'total_amount', label: 'Total', format: 'currency' },
+            { key: 'avg_ticket', label: 'Ticket Prom.', format: 'currency' },
+            { key: 'webpay_amount', label: 'WebPay', format: 'currency' },
+            { key: 'cash_amount', label: 'Efectivo', format: 'currency' }
+        ],
+        chartConfig: (data) => ({
+            type: 'line',
+            data: {
+                labels: data.map(d => formatDate(d.date)),
+                datasets: [
+                    { label: 'Total Ventas', data: data.map(d => d.total_amount), borderColor: 'var(--color-chocolate)', backgroundColor: 'rgba(93, 46, 12, 0.1)', fill: true, tension: 0.3 },
+                    { label: 'WebPay', data: data.map(d => d.webpay_amount || 0), borderColor: 'var(--color-info)', backgroundColor: 'rgba(58, 107, 140, 0.1)', fill: false, tension: 0.3 },
+                    { label: 'Efectivo', data: data.map(d => d.cash_amount || 0), borderColor: 'var(--color-exito)', backgroundColor: 'rgba(45, 106, 79, 0.1)', fill: false, tension: 0.3 }
+                ]
+            },
+            options: getDefaultChartOptions('CLP')
+        })
+    },
+    products: {
+        key: 'products',
+        title: 'Productos Más Vendidos',
+        icon: 'bi-box-seam',
+        color: 'var(--color-exito)',
+        bgColor: 'var(--color-exito-bg)',
+        desc: 'Ranking de productos por cantidad vendida, ingresos y margen',
+        endpoint: 'products',
+        defaultChart: 'bar',
+        supportsGroupBy: false,
+        columns: [
+            { key: 'product_name', label: 'Producto', format: 'text' },
+            { key: 'category_name', label: 'Categoría', format: 'text' },
+            { key: 'quantity_sold', label: 'Cant. Vendida', format: 'number' },
+            { key: 'revenue', label: 'Ingresos', format: 'currency' },
+            { key: 'cost', label: 'Costo', format: 'currency' },
+            { key: 'margin', label: 'Margen $', format: 'currency' },
+            { key: 'margin_percent', label: 'Margen %', format: 'percent' }
+        ],
+        chartConfig: (data) => {
+            const top10 = data.slice(0, 10);
+            return {
+                type: 'bar',
+                data: {
+                    labels: top10.map(d => d.product_name),
+                    datasets: [
+                        { label: 'Cantidad Vendida', data: top10.map(d => d.quantity_sold), backgroundColor: 'rgba(45, 106, 79, 0.8)' },
+                        { label: 'Ingresos (miles)', data: top10.map(d => d.revenue / 1000), backgroundColor: 'rgba(93, 46, 12, 0.8)', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    ...getDefaultChartOptions(),
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Cantidad' } },
+                        y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Ingresos (miles CLP)' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            };
+        }
+    },
+    production: {
+        key: 'production',
+        title: 'Producción por Estado',
+        icon: 'bi-kanban',
+        color: 'var(--color-info)',
+        bgColor: 'var(--color-info-bg)',
+        desc: 'Tarjetas en cada columna Kanban, tiempo promedio y porciones totales',
+        endpoint: 'production',
+        defaultChart: 'doughnut',
+        supportsGroupBy: false,
+        columns: [
+            { key: 'column_name', label: 'Estado', format: 'status' },
+            { key: 'count', label: 'Tarjetas', format: 'number' },
+            { key: 'avg_days_in_column', label: 'Tiempo Promedio (días)', format: 'decimal' },
+            { key: 'total_servings', label: 'Total Porciones', format: 'number' }
+        ],
+        chartConfig: (data) => ({
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.column_name),
+                datasets: [{
+                    data: data.map(d => d.count),
+                    backgroundColor: data.map(d => d.color || getDefaultColor()),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                ...getDefaultChartOptions(),
+                cutout: '60%',
+                plugins: { legend: { position: 'right' } }
+            }
+        })
+    },
+    stock: {
+        key: 'stock',
+        title: 'Stock Crítico Insumos',
+        icon: 'bi-exclamation-triangle',
+        color: 'var(--color-error)',
+        bgColor: 'var(--color-error-bg)',
+        desc: 'Insumos bajo mínimo, sin stock y valor total de inventario',
+        endpoint: 'stock',
+        defaultChart: 'bar',
+        supportsGroupBy: false,
+        columns: [
+            { key: 'name', label: 'Insumo', format: 'text' },
+            { key: 'current_stock', label: 'Stock Actual', format: 'stock', unitKey: 'unit', minKey: 'min_stock' },
+            { key: 'min_stock', label: 'Stock Mínimo', format: 'number', unitKey: 'unit' },
+            { key: 'unit_cost', label: 'Costo Unit.', format: 'currency' },
+            { key: 'supplier_name', label: 'Proveedor', format: 'text' }
+        ],
+        chartConfig: (data) => {
+            const critical = data.filter(d => d.current_stock <= d.min_stock).slice(0, 10);
+            return {
+                type: 'bar',
+                data: {
+                    labels: critical.map(d => d.name),
+                    datasets: [
+                        { label: 'Stock Actual', data: critical.map(d => d.current_stock), backgroundColor: 'rgba(139, 38, 53, 0.8)' },
+                        { label: 'Stock Mínimo', data: critical.map(d => d.min_stock), backgroundColor: 'rgba(184, 134, 11, 0.8)' }
+                    ]
+                },
+                options: getDefaultChartOptions()
+            };
+        }
+    },
+    profitability: {
+        key: 'profitability',
+        title: 'Rentabilidad por Producto',
+        icon: 'bi-currency-dollar',
+        color: 'var(--color-chocolate)',
+        bgColor: 'var(--color-dorado-claro)',
+        desc: 'Margen bruto, porcentaje de rentabilidad y volumen de pedidos',
+        endpoint: 'profitability',
+        defaultChart: 'bar',
+        supportsGroupBy: false,
+        columns: [
+            { key: 'product_name', label: 'Producto', format: 'text' },
+            { key: 'sale_price', label: 'Precio Venta', format: 'currency' },
+            { key: 'bom_cost', label: 'Costo BOM', format: 'currency' },
+            { key: 'margin_amount', label: 'Margen $', format: 'currency' },
+            { key: 'margin_percent', label: 'Margen %', format: 'margin' },
+            { key: 'orders_count', label: 'Pedidos', format: 'number' }
+        ],
+        chartConfig: (data) => {
+            const top10 = data.slice(0, 10);
+            return {
+                type: 'bar',
+                data: {
+                    labels: top10.map(d => d.product_name),
+                    datasets: [
+                        { label: 'Precio Venta', data: top10.map(d => d.sale_price), backgroundColor: 'rgba(93, 46, 12, 0.8)' },
+                        { label: 'Costo BOM', data: top10.map(d => d.bom_cost), backgroundColor: 'rgba(139, 69, 19, 0.8)' },
+                        { label: 'Margen %', data: top10.map(d => d.margin_percent), backgroundColor: 'rgba(201, 168, 108, 0.8)', yAxisID: 'y1', type: 'line', borderWidth: 2, fill: false }
+                    ]
+                },
+                options: {
+                    ...getDefaultChartOptions(),
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'CLP' } },
+                        y1: { beginAtZero: true, max: 100, position: 'right', title: { display: true, text: 'Margen %' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            };
+        }
+    },
+    clients: {
+        key: 'clients',
+        title: 'Top Clientes',
+        icon: 'bi-people',
+        color: 'var(--color-advertencia)',
+        bgColor: 'var(--color-advertencia-bg)',
+        desc: 'Clientes por volumen de compras, ticket promedio y producto favorito',
+        endpoint: 'clients',
+        defaultChart: 'bar',
+        supportsGroupBy: false,
+        columns: [
+            { key: 'name', label: 'Cliente', format: 'text' },
+            { key: 'orders_count', label: 'Pedidos', format: 'number' },
+            { key: 'total_spent', label: 'Total Gastado', format: 'currency' },
+            { key: 'avg_order', label: 'Ticket Prom.', format: 'currency' },
+            { key: 'last_order', label: 'Último Pedido', format: 'date' },
+            { key: 'favorite_product', label: 'Favorito', format: 'text' }
+        ],
+        chartConfig: (data) => {
+            const top10 = data.slice(0, 10);
+            return {
+                type: 'bar',
+                data: {
+                    labels: top10.map(d => d.name),
+                    datasets: [
+                        { label: 'Total Gastado', data: top10.map(d => d.total_spent), backgroundColor: 'rgba(184, 134, 11, 0.8)' },
+                        { label: 'Pedidos', data: top10.map(d => d.orders_count), backgroundColor: 'rgba(93, 46, 12, 0.8)', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    ...getDefaultChartOptions(),
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'CLP' } },
+                        y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Pedidos' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            };
+        }
+    },
+    dispatch: {
+        key: 'dispatch',
+        title: 'Despachos y Entregas',
+        icon: 'bi-truck',
+        color: 'var(--color-info)',
+        bgColor: 'var(--color-info-bg)',
+        desc: 'Rutas, entregas a tiempo, fallidos y pendientes por fecha',
+        endpoint: 'dispatch',
+        defaultChart: 'line',
+        supportsGroupBy: true,
+        columns: [
+            { key: 'route_name', label: 'Ruta', format: 'text' },
+            { key: 'date', label: 'Fecha', format: 'date' },
+            { key: 'total_dispatches', label: 'Total', format: 'number' },
+            { key: 'delivered', label: 'Entregados', format: 'number' },
+            { key: 'failed', label: 'Fallidos', format: 'number' },
+            { key: 'pending', label: 'Pendientes', format: 'number' },
+            { key: 'on_time_percent', label: 'A Tiempo %', format: 'percent' }
+        ],
+        chartConfig: (data) => ({
+            type: 'line',
+            data: {
+                labels: data.map(d => formatDate(d.date)),
+                datasets: [
+                    { label: 'Entregados', data: data.map(d => d.delivered), borderColor: 'var(--color-exito)', backgroundColor: 'rgba(45, 106, 79, 0.1)', fill: true, tension: 0.3 },
+                    { label: 'Fallidos', data: data.map(d => d.failed), borderColor: 'var(--color-error)', backgroundColor: 'rgba(139, 38, 53, 0.1)', fill: true, tension: 0.3 },
+                    { label: 'A Tiempo %', data: data.map(d => d.on_time_percent), borderColor: 'var(--color-info)', backgroundColor: 'rgba(58, 107, 140, 0.1)', fill: false, tension: 0.3, yAxisID: 'y1' }
+                ]
+            },
+            options: {
+                ...getDefaultChartOptions(),
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Cantidad' } },
+                    y1: { beginAtZero: true, max: 100, position: 'right', title: { display: true, text: '% A Tiempo' }, grid: { drawOnChartArea: false } }
+                }
+            }
+        })
+    },
+    payments: {
+        key: 'payments',
+        title: 'Pagos y Conciliación',
+        icon: 'bi-credit-card',
+        color: 'var(--color-chocolate)',
+        bgColor: 'var(--color-dorado-claro)',
+        desc: 'Transacciones por método, montos, tasa de éxito y conciliación',
+        endpoint: 'payments',
+        defaultChart: 'doughnut',
+        supportsGroupBy: false,
+        columns: [
+            { key: 'method', label: 'Método', format: 'method' },
+            { key: 'count', label: 'Transacciones', format: 'number' },
+            { key: 'total_amount', label: 'Monto Total', format: 'currency' },
+            { key: 'avg_amount', label: 'Promedio', format: 'currency' },
+            { key: 'success_rate', label: 'Éxito %', format: 'percent' }
+        ],
+        chartConfig: (data) => ({
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => getPaymentMethodLabel(d.method)),
+                datasets: [{
+                    data: data.map(d => d.total_amount),
+                    backgroundColor: ['rgba(93, 46, 12, 0.8)', 'rgba(45, 106, 79, 0.8)', 'rgba(58, 107, 140, 0.8)'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                ...getDefaultChartOptions(),
+                cutout: '60%',
+                plugins: { legend: { position: 'right' } }
+            }
+        })
+    }
+};
+
+// ==================== ESTADO GLOBAL ====================
+let currentReportType = 'sales';
+let currentPeriod = 'month';
+let currentGroupBy = 'day';
+let reportChart = null;
+let reportDataCache = null;
+let currentPage = 1;
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Ensure JWT tokens are ready before loading data
+    if (window.API && window.API.initJWTTokens) {
+        await window.API.initJWTTokens();
+    }
+    renderReportTypeGrid();
+    selectReportType('sales');
+});
+
+function renderReportTypeGrid() {
+    const container = document.getElementById('reportTypeGrid');
+    container.innerHTML = Object.values(REPORT_TYPES).map(type => `
+        <div class="report-type-card" id="reportCard-${type.key}" onclick="selectReportType('${type.key}')" style="--card-color: ${type.color};">
+            <div class="report-type-icon" style="background: ${type.color};">
+                <i class="bi ${type.icon}"></i>
+            </div>
+            <div class="report-type-title">${type.title}</div>
+            <div class="report-type-desc">${type.desc}</div>
+        </div>
+    `).join('');
+}
+
+function selectReportType(key) {
+    currentReportType = key;
+
+    // Update UI
+    document.querySelectorAll('.report-type-card').forEach(card => card.classList.remove('active'));
+    document.getElementById(`reportCard-${key}`).classList.add('active');
+
+    // Show filter bar
+    document.getElementById('reportFilterBar').style.display = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+
+    // Show/hide group by based on report type
+    const type = REPORT_TYPES[key];
+    document.getElementById('reportGroupBy').closest('.report-filter-group').style.display = type.supportsGroupBy ? 'block' : 'none';
+
+    // Reset period if needed
+    if (!type.supportsGroupBy) {
+        currentGroupBy = 'day';
+    }
+
+    loadCurrentReport();
+}
+
+function handlePeriodChange() {
+    const period = document.getElementById('reportPeriod').value;
+    currentPeriod = period;
+
+    const isCustom = period === 'custom';
+    document.getElementById('customDateFromGroup').classList.toggle('d-none', !isCustom);
+    document.getElementById('customDateToGroup').classList.toggle('d-none', !isCustom);
+
+    if (isCustom) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('reportDateFrom').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('reportDateTo').value = today.toISOString().split('T')[0];
+    }
+
+    loadCurrentReport();
+}
+
+async function loadCurrentReport() {
+    const type = REPORT_TYPES[currentReportType];
+    currentGroupBy = document.getElementById('reportGroupBy').value;
+
+    let dateFrom = '', dateTo = '';
+    if (currentPeriod === 'custom') {
+        dateFrom = document.getElementById('reportDateFrom').value;
+        dateTo = document.getElementById('reportDateTo').value;
+    }
+
+    const params = new URLSearchParams({
+        type: type.endpoint,
+        period: currentPeriod,
+        group_by: currentGroupBy
+    });
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+
+    // Show loading
+    document.getElementById('reportKpisContainer').style.display = 'none';
+    document.getElementById('chartWrapper').style.display = 'none';
+    document.getElementById('tableCard').style.display = 'none';
+    document.getElementById('reportTableBody').innerHTML = '<tr><td colspan="10" class="text-center py-5"><div class="spinner-border text-chocolate"></div><p class="mt-2 text-muted">Generando reporte...</p></td></tr>';
+    document.getElementById('tableCard').style.display = 'block';
+
+    try {
+        const response = await apiFetch(`reports/${type.endpoint}/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error generando reporte');
+        const data = await response.json();
+
+        reportDataCache = data;
+        currentPage = 1;
+
+        renderReport(data, type);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('reportTableBody').innerHTML = `<tr><td colspan="10" class="text-center py-4 text-danger">Error: ${error.message}</td></tr>`;
+        showToast('Error generando reporte', 'danger');
+    }
+}
+
+function renderReport(data, type) {
+    // Render KPIs
+    renderKPIs(data.kpis || {});
+
+    // Ensure rows is always an array
+    const rows = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
+
+    // Render Table
+    renderTable(rows, type);
+
+    // Render Chart
+    if (data.chart_data || (rows && rows.length > 0)) {
+        if (!data.chart_data && type.chartConfig) {
+            renderChart(type.chartConfig(rows));
+        } else if (data.chart_data) {
+            renderChartFromData(data.chart_data);
+        }
+    }
+}
+
+function renderKPIs(kpis) {
+    const container = document.getElementById('reportKpisContainer');
+    if (!kpis || Object.keys(kpis).length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = Object.entries(kpis).map(([key, value]) => `
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="report-stats-card" style="--accent-color: ${getKpiAccentColor(key)};">
+                <div class="report-stats-icon" style="background: ${getKpiAccentColor(key)};">
+                    <i class="bi ${getKpiIcon(key)}"></i>
+                </div>
+                <div class="report-stats-info">
+                    <div class="report-stats-value">${formatKpiValue(key, value)}</div>
+                    <div class="report-stats-label">${formatKpiLabel(key)}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    container.style.display = 'flex';
+}
+
+function renderTable(rows, type) {
+    const thead = document.getElementById('reportTableHead');
+    const tbody = document.getElementById('reportTableBody');
+    const pagination = document.getElementById('tablePagination');
+
+    // Headers
+    thead.innerHTML = `<tr>${type.columns.map(col => `<th>${col.label}</th>`).join('')}</tr>`;
+
+    // Body
+    if (!rows || rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${type.columns.length}" class="text-center py-5"><div class="report-empty-state"><i class="bi bi-inbox"></i><h6>Sin datos</h6><p>No hay información para el período seleccionado</p></div></td></tr>`;
+        pagination.style.display = 'none';
+        return;
+    }
+
+    tbody.innerHTML = rows.map(row => `
+        <tr>${type.columns.map(col => `<td data-label="${col.label}">${formatCell(row, col)}</td>`).join('')}</tr>
+    `).join('');
+
+    pagination.style.display = 'block';
+}
+
+function formatCell(row, col) {
+    const value = row[col.key];
+    if (value === null || value === undefined) return '<span class="text-muted">—</span>';
+
+    switch (col.format) {
+        case 'currency':
+            return `<strong>${formatCLP(value)}</strong>`;
+        case 'number':
+            return value.toLocaleString();
+        case 'decimal':
+            return Number(value).toFixed(1);
+        case 'percent':
+            return `${Number(value).toFixed(1)}%`;
+        case 'margin':
+            const marginClass = value >= 30 ? 'high' : (value >= 15 ? 'medium' : 'low');
+            return `<span class="margin-badge ${marginClass}">${Number(value).toFixed(1)}%</span>`;
+        case 'date':
+            return formatDate(value);
+        case 'stock':
+            const current = row[col.unitKey] ? value : value;
+            const min = row[col.minKey] || 0;
+            const unit = row[col.unitKey] || '';
+            if (current <= 0) return `<span class="stock-status out">${current} ${unit} <i class="bi bi-x-circle"></i></span>`;
+            const ratio = min > 0 ? current / min : 1;
+            if (ratio < 1) return `<span class="stock-status critical">${current} ${unit} <i class="bi bi-exclamation-triangle"></i></span>`;
+            if (ratio < 1.5) return `<span class="stock-status low">${current} ${unit} <i class="bi bi-arrow-down"></i></span>`;
+            return `<span class="stock-status ok">${current} ${unit} <i class="bi bi-check-circle"></i></span>`;
+        case 'method':
+            return `<span class="method-badge ${value.toLowerCase()}">${getPaymentMethodLabel(value)}</span>`;
+        case 'status':
+            const color = row.color || '#6c757d';
+            return `<span class="badge" style="background: ${color}">${value}</span>`;
+        default:
+            return escapeHtml(String(value));
+    }
+}
+
+function renderChartFromData(chartData) {
+    const ctx = document.getElementById('reportChart');
+    if (!ctx) return;
+
+    if (reportChart) reportChart.destroy();
+
+    const labels = chartData.labels || [];
+    const datasets = chartData.datasets || [];
+
+    const colors = [
+        'rgba(93, 46, 12, 0.8)',
+        'rgba(45, 106, 79, 0.8)',
+        'rgba(58, 107, 140, 0.8)',
+        'rgba(184, 134, 11, 0.8)',
+        'rgba(139, 38, 53, 0.8)',
+        'rgba(160, 82, 45, 0.8)'
+    ];
+
+    const borderColors = colors.map(c => c.replace('0.8', '1'));
+
+    datasets.forEach((ds, i) => {
+        ds.backgroundColor = ds.backgroundColor || colors[i % colors.length];
+        ds.borderColor = ds.borderColor || borderColors[i % borderColors.length];
+        ds.borderWidth = 2;
+        if (!ds.type) ds.tension = 0.3;
+    });
+
+    reportChart = new Chart(ctx, {
+        type: chartData.type || 'bar',
+        data: { labels, datasets },
+        options: getDefaultChartOptions(chartData.yAxisFormat)
+    });
+
+    document.getElementById('chartWrapper').style.display = 'block';
+}
+
+function renderChart(config) {
+    const ctx = document.getElementById('reportChart');
+    if (!ctx) return;
+
+    if (reportChart) reportChart.destroy();
+
+    reportChart = new Chart(ctx, config);
+    document.getElementById('chartWrapper').style.display = 'block';
+    document.getElementById('chartTitle').textContent = config.title || 'Gráfico';
+}
+
+function getDefaultChartOptions(yAxisFormat = 'CLP') {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+                backgroundColor: 'rgba(45, 27, 14, 0.95)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) label += ': ';
+                        if (yAxisFormat === 'CLP' || yAxisFormat === 'currency') {
+                            label += formatCLP(context.parsed.y);
+                        } else if (yAxisFormat === 'percent') {
+                            label += context.parsed.y.toFixed(1) + '%';
+                        } else {
+                            label += context.parsed.y.toLocaleString();
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(93, 46, 12, 0.1)' },
+                ticks: {
+                    callback: function(value) {
+                        if (yAxisFormat === 'CLP' || yAxisFormat === 'currency') return formatCLP(value);
+                        if (yAxisFormat === 'percent') return value + '%';
+                        return value.toLocaleString();
+                    }
+                }
+            },
+            x: { grid: { display: false } }
+        }
+    };
+}
+
+function getDefaultColor() {
+    const colors = ['var(--color-chocolate)', 'var(--color-exito)', 'var(--color-info)', 'var(--color-advertencia)', 'var(--color-error)'];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// ==================== HELPERS ====================
+function formatKpiLabel(key) {
+    const labels = {
+        'total_revenue': 'Ingresos Totales', 'orders_count': 'Total Pedidos', 'avg_ticket': 'Ticket Promedio',
+        'webpay_amount': 'WebPay', 'cash_amount': 'Efectivo', 'products_sold': 'Productos Vendidos',
+        'total_margin': 'Margen Total', 'avg_margin': 'Margen Promedio', 'critical_count': 'Críticos',
+        'out_of_stock_count': 'Sin Stock', 'total_value': 'Valor Stock', 'production_cards': 'En Producción',
+        'completed_today': 'Completados Hoy', 'overdue_count': 'Vencidos', 'delivered_count': 'Entregados',
+        'on_time_rate': 'A Tiempo %', 'payments_count': 'Transacciones', 'success_rate': 'Tasa Éxito'
+    };
+    return labels[key] || key;
+}
+
+function formatKpiValue(key, value) {
+    if (typeof value === 'number') {
+        if (key.includes('amount') || key.includes('revenue') || key.includes('margin') || key.includes('value') || key.includes('cost') || key.includes('price') || key.includes('ticket')) {
+            return formatCLP(value);
+        }
+        if (key.includes('rate') || key.includes('percent')) {
+            return value.toFixed(1) + '%';
+        }
+        return value.toLocaleString();
+    }
+    return value;
+}
+
+function getKpiIcon(key) {
+    const icons = {
+        'total_revenue': 'bi-currency-dollar', 'orders_count': 'bi-cart', 'avg_ticket': 'bi-receipt',
+        'products_sold': 'bi-box-seam', 'total_margin': 'bi-graph-up', 'critical_count': 'bi-exclamation-triangle',
+        'production_cards': 'bi-kanban', 'delivered_count': 'bi-truck', 'payments_count': 'bi-credit-card'
+    };
+    return icons[key] || 'bi-bar-chart';
+}
+
+function getKpiAccentColor(key) {
+    if (key.includes('revenue') || key.includes('amount') || key.includes('value')) return 'var(--color-chocolate)';
+    if (key.includes('margin') || key.includes('profit')) return 'var(--color-exito)';
+    if (key.includes('critical') || key.includes('out_of_stock') || key.includes('failed') || key.includes('overdue')) return 'var(--color-error)';
+    if (key.includes('production') || key.includes('delivered') || key.includes('completed')) return 'var(--color-info)';
+    return 'var(--color-advertencia)';
+}
+
+function getPaymentMethodLabel(method) {
+    const labels = { 'WEBPAY': 'WebPay', 'EFECTIVO': 'Efectivo', 'TRANSFERENCIA': 'Transferencia' };
+    return labels[method] || method;
+}
+
+// ==================== EXPORT / PRINT ====================
+function exportCurrentReport(format) {
+    const type = REPORT_TYPES[currentReportType];
+    let url = `/api/v1/reports/${type.endpoint}/export/?format=${format}&period=${currentPeriod}&group_by=${currentGroupBy}`;
+
+    const dateFrom = document.getElementById('reportDateFrom').value;
+    const dateTo = document.getElementById('reportDateTo').value;
+    if (dateFrom) url += `&date_from=${dateFrom}`;
+    if (dateTo) url += `&date_to=${dateTo}`;
+
+    window.open(url, '_blank');
+    showToast(`Exportando a ${format.toUpperCase()}...`, 'info');
+}
+
+function printReport() {
+    window.print();
+}
+
+function toggleChartType() {
+    if (!reportChart) return;
+
+    const currentType = reportChart.config.type;
+    const newType = currentType === 'bar' ? 'line' : (currentType === 'line' ? 'bar' : 'bar');
+
+    reportChart.config.type = newType;
+    reportChart.update();
+
+    document.getElementById('chartTypeBtnText').textContent = newType === 'bar' ? 'Barras' : 'Línea';
+}
+
+function downloadChartImage() {
+    if (!reportChart) return;
+
+    const link = document.createElement('a');
+    link.download = `reporte-${currentReportType}-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = reportChart.toBase64Image();
+    link.click();
+
+    showToast('Imagen descargada', 'success');
+}
+</script>
+{% endblock %}

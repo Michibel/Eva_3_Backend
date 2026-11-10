@@ -1,0 +1,1875 @@
+{% extends 'base.html' %}
+
+{% block title %}Producción - Kanban - Dulce Arte{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Kanban Board Styles */
+.kanban-board {
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: auto;
+    padding: var(--space-2) var(--space-2) var(--space-4);
+    min-height: calc(100vh - 280px);
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 8px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+    background: var(--color-crema);
+    border-radius: var(--radius-full);
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    background: var(--color-dorado);
+    border-radius: var(--radius-full);
+}
+
+.kanban-column {
+    flex: 0 0 320px;
+    max-width: 320px;
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    max-height: calc(100vh - 220px);
+    scroll-snap-align: start;
+    transition: all var(--transicion);
+    box-shadow: var(--sombra-suave);
+}
+
+.kanban-column:hover {
+    box-shadow: var(--sombra-media);
+}
+
+.kanban-column.drag-over {
+    border-color: var(--color-dorado);
+    box-shadow: 0 0 0 3px var(--color-dorado-claro);
+    background: var(--color-crema);
+}
+
+.kanban-column-header {
+    padding: var(--space-3) var(--space-4);
+    color: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+}
+
+.kanban-column-header h6 {
+    margin: 0;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+}
+
+.kanban-column-count {
+    background: rgba(255,255,255,0.2);
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    min-width: 40px;
+    text-align: center;
+}
+
+.kanban-column-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-3);
+    min-height: 200px;
+    max-height: calc(100vh - 300px);
+}
+
+.kanban-column-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kanban-column-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb {
+    background: var(--color-dorado-claro);
+    border-radius: var(--radius-full);
+}
+
+.kanban-column-body.drag-over {
+    background: var(--color-dorado-claro);
+    border-radius: var(--radius-md);
+}
+
+.kanban-empty {
+    text-align: center;
+    padding: var(--space-6) var(--space-3);
+    color: var(--color-texto-muted);
+    font-size: var(--font-size-sm);
+    border: 2px dashed var(--color-borde);
+    border-radius: var(--radius-md);
+    margin: var(--space-2);
+    background: var(--color-crema);
+}
+
+.kanban-empty i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-dorado);
+}
+
+/* Kanban Cards */
+.kanban-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    cursor: grab;
+    transition: all var(--transicion);
+    box-shadow: var(--sombra-suave);
+    position: relative;
+    overflow: hidden;
+}
+
+.kanban-card:hover {
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+    border-color: var(--color-dorado);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+    box-shadow: var(--sombra-fuerte);
+    transform: rotate(3deg) scale(1.02);
+    z-index: 1000;
+}
+
+.kanban-card.kanban-card-overdue {
+    border-left: 4px solid var(--color-error);
+}
+
+.kanban-card.kanban-card-overdue::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 20px 20px 0;
+    border-color: transparent var(--color-error) transparent transparent;
+}
+
+.kanban-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-crema);
+    border-bottom: 1px solid var(--color-borde);
+    font-size: var(--font-size-xs);
+}
+
+.kanban-card-order {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+}
+
+.kanban-card-overdue-badge {
+    background: var(--color-error);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.kanban-card-body {
+    padding: var(--space-3);
+}
+
+.kanban-card-product {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    line-height: 1.3;
+}
+
+.kanban-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-suave);
+}
+
+.kanban-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.kanban-card-meta-item i {
+    width: 14px;
+    text-align: center;
+    color: var(--color-dorado);
+}
+
+.kanban-card-notes {
+    margin-top: var(--space-2);
+    padding: var(--space-2);
+    background: var(--color-crema);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-texto);
+    border-left: 3px solid var(--color-dorado);
+    font-style: italic;
+}
+
+.kanban-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-crema);
+    border-top: 1px solid var(--color-borde);
+    font-size: var(--font-size-xs);
+}
+
+.kanban-card-assignee {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--color-texto-suave);
+}
+
+.kanban-card-assignee .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+}
+
+.kanban-card-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.kanban-card-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 11px;
+}
+
+.kanban-card-timeline {
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-crema);
+    border-top: 1px solid var(--color-borde);
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+}
+
+.kanban-timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.kanban-timeline-item i {
+    font-size: 12px;
+    width: 16px;
+}
+
+/* Quick Stats Bar */
+.kanban-stats-bar {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+}
+
+.kanban-stat-item {
+    flex: 1;
+    min-width: 140px;
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transicion);
+}
+
+.kanban-stat-item:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+
+.kanban-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.kanban-stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.kanban-stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+}
+
+.kanban-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Filter Bar */
+.kanban-filter-bar {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.kanban-filter-row {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.kanban-filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.kanban-filter-group label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.375rem;
+}
+
+.kanban-filter-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* Modal Enhancements */
+.card-detail-modal .modal-header {
+    background: linear-gradient(135deg, var(--color-chocolate) 0%, var(--color-cacao) 100%);
+    color: white;
+}
+
+.waste-modal .modal-header {
+    background: linear-gradient(135deg, var(--color-advertencia) 0%, #8a6a08 100%);
+    color: var(--color-cacao);
+}
+
+.move-modal .modal-header {
+    background: linear-gradient(135deg, var(--color-info) 0%, #2a5070 100%);
+    color: white;
+}
+
+/* Card Detail Modal */
+.card-detail-content {
+    padding: var(--space-2) 0;
+}
+
+.card-detail-header {
+    display: flex;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-borde);
+    flex-wrap: wrap;
+}
+
+.card-detail-main {
+    flex: 1;
+    min-width: 280px;
+}
+
+.card-detail-main h5 {
+    margin: 0 0 var(--space-2);
+    color: var(--color-cacao);
+}
+
+.card-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+}
+
+.card-detail-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.card-detail-meta-label {
+    color: var(--color-texto-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+}
+
+.card-detail-meta-value {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto);
+}
+
+.card-detail-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-end;
+}
+
+.card-detail-column-badge {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    color: white;
+    box-shadow: var(--sombra-media);
+}
+
+.card-detail-bom {
+    margin-top: var(--space-4);
+}
+
+.card-detail-bom h6 {
+    color: var(--color-chocolate);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.card-detail-bom .table {
+    font-size: var(--font-size-sm);
+}
+
+.card-detail-bom .table th {
+    background: var(--color-crema);
+    color: var(--color-texto-suave);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+}
+
+.card-detail-movements {
+    margin-top: var(--space-4);
+}
+
+.card-detail-movements h6 {
+    color: var(--color-chocolate);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.card-detail-movements .table {
+    font-size: var(--font-size-sm);
+}
+
+.card-detail-movements .table th {
+    background: var(--color-crema);
+    color: var(--color-texto-suave);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+}
+
+/* BOM Preview Tooltip */
+.kanban-card-bom-preview {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: var(--space-2);
+    background: var(--color-fondo);
+    border: 1px solid var(--color-dorado);
+    border-radius: var(--radius-md);
+    box-shadow: var(--sombra-fuerte);
+    padding: var(--space-3);
+    min-width: 280px;
+    max-width: 350px;
+    z-index: 100;
+    display: none;
+}
+
+.kanban-card:hover .kanban-card-bom-preview {
+    display: block;
+    animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Touch Support for Mobile */
+@media (max-width: 767.98px) {
+    .kanban-board {
+        flex-direction: column;
+        align-items: stretch;
+        min-height: auto;
+    }
+
+    .kanban-column {
+        flex: none;
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        scroll-snap-align: none;
+    }
+
+    .kanban-column-body {
+        max-height: none;
+    }
+
+    .kanban-stat-item {
+        min-width: 100%;
+    }
+
+    .kanban-filter-group {
+        min-width: 100%;
+    }
+
+    .kanban-filter-actions {
+        width: 100%;
+    }
+
+    .kanban-filter-actions .btn {
+        flex: 1;
+    }
+
+    .kanban-card-bom-preview {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: none;
+        margin: 0;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        min-width: auto;
+        max-width: none;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+}
+
+/* Responsive column widths */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .kanban-column {
+        flex: 0 0 280px;
+        max-width: 280px;
+    }
+}
+
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+    .kanban-column {
+        flex: 0 0 300px;
+        max-width: 300px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .kanban-column {
+        flex: 0 0 340px;
+        max-width: 340px;
+    }
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.kanban-card {
+    animation: slideInRight 0.3s ease;
+}
+
+.kanban-column {
+    animation: slideInRight 0.4s ease;
+}
+
+.kanban-column:nth-child(1) { animation-delay: 0.05s; }
+.kanban-column:nth-child(2) { animation-delay: 0.1s; }
+.kanban-column:nth-child(3) { animation-delay: 0.15s; }
+.kanban-column:nth-child(4) { animation-delay: 0.2s; }
+.kanban-column:nth-child(5) { animation-delay: 0.25s; }
+.kanban-column:nth-child(6) { animation-delay: 0.3s; }
+
+/* Print Styles */
+@media print {
+    .kanban-filter-bar, .kanban-stats-bar, .kanban-column-header .kanban-column-count,
+    .kanban-card-actions, .kanban-card-footer .kanban-card-actions {
+        display: none !important;
+    }
+
+    .kanban-board {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--space-4);
+        overflow: visible;
+    }
+
+    .kanban-column {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .kanban-column-header {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .kanban-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-kanban me-2 text-dorado"></i>Producción - Tablero Kanban</h1>
+        <p class="text-muted mb-0">Gestiona el flujo de producción: Recibido → Preparación → Horneado → Control → Listo</p>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" onclick="refreshKanban()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="showKanbanStats()">
+            <i class="bi bi-graph-up me-1"></i>Estadísticas
+        </button>
+        <button type="button" class="btn btn-primary" onclick="createProductionCard()">
+            <i class="bi bi-plus-lg me-1"></i>Nueva Tarjeta
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Stats Bar -->
+<div class="kanban-stats-bar" id="kanbanStatsBar">
+    <div class="kanban-stat-item">
+        <div class="kanban-stat-icon" style="background: var(--color-info);"><i class="bi bi-inbox"></i></div>
+        <div class="kanban-stat-info">
+            <div class="kanban-stat-value" id="statRecibido">0</div>
+            <div class="kanban-stat-label">Recibidos</div>
+        </div>
+    </div>
+    <div class="kanban-stat-item">
+        <div class="kanban-stat-icon" style="background: var(--color-chocolate);"><i class="bi bi-bowl-hot"></i></div>
+        <div class="kanban-stat-info">
+            <div class="kanban-stat-value" id="statPreparacion">0</div>
+            <div class="kanban-stat-label">En Preparación</div>
+        </div>
+    </div>
+    <div class="kanban-stat-item">
+        <div class="kanban-stat-icon" style="background: var(--color-advertencia);"><i class="bi bi-fire"></i></div>
+        <div class="kanban-stat-info">
+            <div class="kanban-stat-value" id="statHorneado">0</div>
+            <div class="kanban-stat-label">Horneado/Decoración</div>
+        </div>
+    </div>
+    <div class="kanban-stat-item">
+        <div class="kanban-stat-icon" style="background: var(--color-info);"><i class="bi bi-check-circle"></i></div>
+        <div class="kanban-stat-info">
+            <div class="kanban-stat-value" id="statCalidad">0</div>
+            <div class="kanban-stat-label">Control Calidad</div>
+        </div>
+    </div>
+    <div class="kanban-stat-item">
+        <div class="kanban-stat-icon" style="background: var(--color-exito);"><i class="bi bi-box-seam"></i></div>
+        <div class="kanban-stat-info">
+            <div class="kanban-stat-value" id="statListo">0</div>
+            <div class="kanban-stat-label">Listos para Entregar</div>
+        </div>
+    </div>
+    <div class="kanban-stat-item">
+        <div class="kanban-stat-icon" style="background: var(--color-error);"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="kanban-stat-info">
+            <div class="kanban-stat-value text-danger" id="statOverdue">0</div>
+            <div class="kanban-stat-label">Vencidos</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="kanban-filter-bar">
+    <div class="kanban-filter-row">
+        <div class="kanban-filter-group">
+            <label>Buscar</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="kanbanSearch" placeholder="Cliente, producto, N° pedido..." onkeyup="debounceKanbanSearch()">
+            </div>
+        </div>
+        <div class="kanban-filter-group">
+            <label>Asignado a</label>
+            <select class="form-select form-select-sm" id="kanbanAssigneeFilter" onchange="filterKanbanCards()">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="kanban-filter-group">
+            <label>Producto</label>
+            <select class="form-select form-select-sm" id="kanbanProductFilter" onchange="filterKanbanCards()">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="kanban-filter-group">
+            <label>Estado Vencimiento</label>
+            <select class="form-select form-select-sm" id="kanbanOverdueFilter" onchange="filterKanbanCards()">
+                <option value="">Todos</option>
+                <option value="overdue">Solo vencidos</option>
+                <option value="today">Vencen hoy</option>
+                <option value="this_week">Esta semana</option>
+                <option value="ok">Sin riesgo</option>
+            </select>
+        </div>
+        <div class="kanban-filter-actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearKanbanFilters()">
+                <i class="bi bi-x-circle me-1"></i>Limpiar
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="exportKanban()">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board" id="kanbanBoard">
+    <div class="text-center py-5 w-100" style="flex: none;">
+        <div class="spinner-border text-chocolate" role="status"></div>
+        <p class="text-muted mt-2">Cargando tablero Kanban...</p>
+    </div>
+</div>
+
+<!-- Modal Detalle Tarjeta -->
+<div class="modal fade card-detail-modal" id="cardDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cardDetailTitle"><i class="bi bi-card-text me-2"></i>Detalle de Producción</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body card-detail-content" id="cardDetailBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-chocolate" role="status"></div>
+                </div>
+            </div>
+            <div class="modal-footer" id="cardDetailFooter"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Mover Tarjeta -->
+<div class="modal fade move-modal" id="moveCardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-arrow-right me-2"></i>Mover Tarjeta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="moveCardForm">
+                <input type="hidden" id="moveCardId" name="card_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="moveCardColumn" class="form-label fw-medium">Mover a columna <span class="text-danger">*</span></label>
+                        <select class="form-select" id="moveCardColumn" name="column_id" required>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="moveCardNotes" class="form-label">Notas del movimiento</label>
+                        <textarea class="form-control" id="moveCardNotes" name="notes" rows="2" placeholder="Observaciones, problemas, ajustes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-arrow-right me-1"></i>Mover
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registrar Merma -->
+<div class="modal fade waste-modal" id="wasteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash me-2"></i>Registrar Merma</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="wasteForm" novalidate>
+                <input type="hidden" id="wasteCardId" name="card_id">
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="wasteQuantity" class="form-label fw-medium">Cantidad <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="wasteQuantity" name="quantity" step="0.001" min="0.001" required>
+                                <span class="input-group-text" id="wasteUnit">un</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="wasteReason" class="form-label fw-medium">Motivo <span class="text-danger">*</span></label>
+                            <select class="form-select" id="wasteReason" name="reason" required>
+                                <option value="">Seleccionar motivo...</option>
+                                <option value="QUEMADO"><i class="bi bi-fire me-2"></i>Quemado / Sobrecocción</option>
+                                <option value="ROTO"><i class="bi bi-x-octagon me-2"></i>Roto / Dañado</option>
+                                <option value="MAL_DECORADO"><i class="bi bi-brush me-2"></i>Mal decorado / Estética</option>
+                                <option value="ERROR_RECETA"><i class="bi bi-journal-x me-2"></i>Error en receta</option>
+                                <option value="CADUCIDO"><i class="bi bi-calendar-x me-2"></i>Caducado / Vida útil</option>
+                                <option value="OTRO"><i class="bi bi-three-dots me-2"></i>Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="wasteNotes" class="form-label fw-medium">Detalles</label>
+                        <textarea class="form-control" id="wasteNotes" name="notes" rows="3" placeholder="Describe qué pasó, cómo evitarlo en el futuro..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark">
+                        <i class="bi bi-trash me-1"></i>Registrar Merma
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Tarjeta de Producción -->
+<div class="modal fade" id="createCardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-chocolate text-white">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Crear Tarjeta de Producción</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createCardForm" novalidate>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="createCardOrder" class="form-label fw-medium">Pedido <span class="text-danger">*</span></label>
+                            <select class="form-select" id="createCardOrder" name="order_item" required>
+                                <option value="">Seleccionar item de pedido...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="createCardAssignee" class="form-label fw-medium">Asignar a</label>
+                            <select class="form-select" id="createCardAssignee" name="assigned_to">
+                                <option value="">Sin asignar (auto-asignar)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="createCardColumn" class="form-label fw-medium">Columna inicial</label>
+                            <select class="form-select" id="createCardColumn" name="column_id">
+                                <option value="">Primera columna (Recibido)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="createCardPriority" class="form-label fw-medium">Prioridad</label>
+                            <select class="form-select" id="createCardPriority" name="priority">
+                                <option value="NORMAL">Normal</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="URGENTE">Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createCardNotes" class="form-label fw-medium">Notas iniciales</label>
+                        <textarea class="form-control" id="createCardNotes" name="notes" rows="2" placeholder="Instrucciones especiales, alérgenos, decoración específica..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>Crear Tarjeta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==================== ESTADO GLOBAL ====================
+let kanbanColumns = [];
+let kanbanCards = [];
+let kanbanSearchTimeout;
+let kanbanProducts = [];
+let kanbanAssignees = [];
+let draggedCard = null;
+let dragOverColumn = null;
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Ensure JWT tokens are ready before loading board
+    if (window.API && window.API.initJWTTokens) {
+        await window.API.initJWTTokens();
+    }
+    loadKanbanBoard();
+    setupMoveCardForm();
+    setupWasteForm();
+    setupCreateCardForm();
+});
+
+async function loadKanbanBoard() {
+    try {
+        const [columnsRes, cardsRes, usersRes, ordersRes] = await Promise.all([
+            apiFetch('kanban-columns/?ordering=order'),
+            apiFetch('production-cards/?page_size=500'),
+            apiFetch('users/?role=COCINERO&page_size=100&is_active=true'),
+            apiFetch('orders/?status=CONFIRMADO,EN_PRODUCCION&page_size=200')
+        ]);
+
+        if (!columnsRes.ok || !cardsRes.ok) throw new Error('Error cargando Kanban');
+
+        const columnsData = await columnsRes.json();
+        kanbanColumns = Array.isArray(columnsData) ? columnsData : (columnsData.results || []);
+        const cardsData = await cardsRes.json();
+        kanbanCards = cardsData.results || cardsData;
+        const usersData = await usersRes.json();
+        kanbanAssignees = usersData.results || usersData;
+
+        const ordersData = ordersRes && ordersRes.ok ? await ordersRes.json() : [];
+        const orders = Array.isArray(ordersData.results) ? ordersData.results : (Array.isArray(ordersData) ? ordersData : []);
+        populateOrderItemsSelect(orders);
+
+        renderKanbanBoard();
+        populateFilters();
+        updateStatsBar();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar tablero Kanban', 'danger');
+        document.getElementById('kanbanBoard').innerHTML = `
+            <div class="alert alert-danger m-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Error cargando tablero: ${error.message}
+                <button class="btn btn-sm btn-outline-danger ms-2" onclick="loadKanbanBoard()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+                </button>
+            </div>
+        `;
+    }
+}
+
+function populateOrderItemsSelect(orders) {
+    const select = document.getElementById('createCardOrder');
+    if (!select) return;
+
+    const items = [];
+    orders.forEach(order => {
+        (order.items || []).forEach(item => {
+            // Only include items that don't already have a production card
+            const hasCard = kanbanCards.some(c => c.order_item?.id === item.id);
+            if (!hasCard) {
+                items.push({
+                    id: item.id,
+                    label: `#${order.id} - ${item.product_name} (${item.servings} porc.) - ${item.client_name || order.client?.name}`
+                });
+            }
+        });
+    });
+
+    items.forEach(item => {
+        select.innerHTML += `<option value="${item.id}">${escapeHtml(item.label)}</option>`;
+    });
+}
+
+// ==================== RENDER BOARD ====================
+function renderKanbanBoard() {
+    const board = document.getElementById('kanbanBoard');
+    let totalCards = 0;
+    let overdueCount = 0;
+    const now = new Date();
+
+    board.innerHTML = kanbanColumns.map(column => {
+        const cards = kanbanCards.filter(c => c.column === column.id);
+        totalCards += cards.length;
+
+        // Count overdue
+        cards.forEach(card => {
+            if (card.order_item?.delivery_date) {
+                const delivery = window.parseCustomDate ? window.parseCustomDate(card.order_item.delivery_date) : new Date(card.order_item.delivery_date);
+                if (delivery && !isNaN(delivery.getTime()) && delivery < now && !column.is_final) {
+                    overdueCount++;
+                }
+            }
+        });
+
+        const cardsHtml = cards.map(card => renderKanbanCard(card, column)).join('');
+
+        return `
+            <div class="kanban-column" data-column-id="${column.id}" style="border-top-color: ${column.color};">
+                <div class="kanban-column-header" style="background: ${column.color};">
+                    <div>
+                        <h6 class="mb-0">${escapeHtml(column.name)}</h6>
+                        <small class="opacity-75">${cards.length} tarjetas</small>
+                    </div>
+                    <span class="kanban-column-count">${cards.length}</span>
+                </div>
+                <div class="kanban-column-body" id="kanbanColumn-${column.id}" data-column-id="${column.id}" ondrop="dropCard(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                    ${cardsHtml || '<div class="kanban-empty"><i class="bi bi-inbox"></i>Arrastra tarjetas aquí</div>'}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Initialize drag and drop for all cards
+    initializeDragAndDrop();
+
+    const totalCardsEl = document.getElementById('kanbanTotalCards');
+    if (totalCardsEl) totalCardsEl.textContent = totalCards;
+    const overdueCountEl = document.getElementById('kanbanOverdueCount');
+    if (overdueCountEl) overdueCountEl.textContent = overdueCount;
+}
+
+function renderKanbanCard(card, column) {
+    const deliveryDate = card.order_item?.delivery_date ? (window.parseCustomDate ? window.parseCustomDate(card.order_item.delivery_date) : new Date(card.order_item.delivery_date)) : null;
+    const isOverdue = deliveryDate && !isNaN(deliveryDate.getTime()) && deliveryDate < new Date() && !column.is_final;
+    const isDueToday = deliveryDate && !isNaN(deliveryDate.getTime()) && isSameDay(deliveryDate, new Date());
+    
+    let assignee = '—';
+    if (typeof card.assigned_to === 'object' && card.assigned_to) {
+        assignee = card.assigned_to.full_name || card.assigned_to.name || card.assigned_to.username || '—';
+    } else if (card.assigned_to_name) {
+        assignee = card.assigned_to_name;
+    } else if (card.assigned_to && typeof card.assigned_to === 'string') {
+        assignee = card.assigned_to;
+    }
+    const assigneeInitial = assignee !== '—' && assignee.trim().length > 0 ? assignee.trim().charAt(0).toUpperCase() : '?';
+    const servings = card.order_item?.servings || '—';
+    const productName = card.order_item?.product_name || 'Producto';
+    const clientName = card.order_item?.client_name || card.order_item?.client?.name || 'Cliente';
+    const orderId = card.order_item?.order_id || card.id;
+
+    let timelineHtml = '';
+    if (card.started_at) timelineHtml += `<div class="kanban-timeline-item"><i class="bi bi-play-circle text-success"></i> Iniciado: ${formatDateTime(card.started_at)}</div>`;
+    if (card.completed_at) timelineHtml += `<div class="kanban-timeline-item"><i class="bi bi-check-circle text-primary"></i> Completado: ${formatDateTime(card.completed_at)}</div>`;
+    if (card.waste_qty > 0) timelineHtml += `<div class="kanban-timeline-item"><i class="bi bi-trash text-warning"></i> Merma: ${card.waste_qty} (${card.waste_reason})</div>`;
+
+    // BOM Preview for tooltip
+    let bomPreviewHtml = '';
+    if (card.order_item?.bom_snapshot_scaled && card.order_item.bom_snapshot_scaled.length > 0) {
+        bomPreviewHtml = `
+            <div class="kanban-card-bom-preview">
+                <h6 class="mb-2 text-chocolate"><i class="bi bi-list-ul me-1"></i>BOM Escalado (${servings} porc.)</h6>
+                <div class="table-responsive" style="max-height: 200px;">
+                    <table class="table table-sm table-bordered mb-0" style="font-size: 11px;">
+                        <thead><tr><th>Insumo</th><th class="text-center">Cant.</th><th class="text-end">Costo</th></tr></thead>
+                        <tbody>
+                            ${card.order_item.bom_snapshot_scaled.slice(0, 8).map(b => `
+                                <tr>
+                                    <td>${escapeHtml(b.ingredient_name)}</td>
+                                    <td class="text-center">${b.quantity} ${b.unit}</td>
+                                    <td class="text-end">${formatCLP(b.estimated_cost)}</td>
+                                </tr>
+                            `).join('')}
+                            ${card.order_item.bom_snapshot_scaled.length > 8 ? `<tr><td colspan="3" class="text-center text-muted small">+ ${card.order_item.bom_snapshot_scaled.length - 8} insumos más...</td></tr>` : ''}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end mt-2 small">
+                    <strong>Total BOM: ${formatCLP(card.order_item.bom_snapshot_scaled.reduce((sum, b) => sum + (b.estimated_cost || 0), 0))}</strong>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="kanban-card ${isOverdue ? 'kanban-card-overdue' : ''} ${isDueToday && !isOverdue ? 'kanban-card-due-today' : ''}"
+             draggable="true"
+             data-card-id="${card.id}"
+             data-column-id="${column.id}"
+             ondragstart="dragStart(event)"
+             ondragend="dragEnd(event)"
+             onclick="event.stopPropagation(); viewCardDetail(${card.id})">
+            ${bomPreviewHtml}
+            <div class="kanban-card-header">
+                <span class="kanban-card-order">#${orderId}</span>
+                <div class="d-flex gap-1">
+                    ${isOverdue ? '<span class="kanban-card-overdue-badge"><i class="bi bi-exclamation-triangle"></i> VENCIDO</span>' : ''}
+                    ${isDueToday && !isOverdue ? '<span class="badge bg-warning text-dark" style="font-size: 10px;"><i class="bi bi-clock me-1"></i>HOY</span>' : ''}
+                    ${card.priority === 'ALTA' ? '<span class="badge bg-danger" style="font-size: 10px;">ALTA</span>' : ''}
+                    ${card.priority === 'URGENTE' ? '<span class="badge bg-danger" style="font-size: 10px; animation: pulse 1s infinite;">URGENTE</span>' : ''}
+                </div>
+            </div>
+            <div class="kanban-card-body">
+                <div class="kanban-card-product">${escapeHtml(productName)}</div>
+                <div class="kanban-card-meta">
+                    <div class="kanban-card-meta-item">
+                        <i class="bi bi-people"></i>
+                        <span>${servings} porciones</span>
+                    </div>
+                    <div class="kanban-card-meta-item">
+                        <i class="bi bi-person"></i>
+                        <span>${escapeHtml(clientName)}</span>
+                    </div>
+                    ${card.order_item?.delivery_date ? `
+                        <div class="kanban-card-meta-item">
+                            <i class="bi bi-calendar${isOverdue ? '-x text-danger' : (isDueToday ? '-event text-warning' : '')}"></i>
+                            <span>Entrega: ${formatDate(card.order_item.delivery_date)}${isOverdue ? ' <strong class="text-danger">(VENCIDO)</strong>' : (isDueToday ? ' <strong class="text-warning">(HOY)</strong>' : '')}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                ${card.notes ? `
+                    <div class="kanban-card-notes">${escapeHtml(card.notes)}</div>
+                ` : ''}
+            </div>
+            <div class="kanban-card-footer">
+                <div class="kanban-card-assignee">
+                    <div class="avatar" style="background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);">${assigneeInitial}</div>
+                    <span>${escapeHtml(assignee)}</span>
+                </div>
+                <div class="kanban-card-actions">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); openMoveCardModal(${card.id})" title="Mover"><i class="bi bi-arrow-right"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation(); openWasteModal(${card.id})" title="Registrar Merma"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+            ${timelineHtml ? `<div class="kanban-card-timeline">${timelineHtml}</div>` : ''}
+        </div>
+    `;
+}
+
+function isSameDay(date1, date2) {
+    if (!date1 || !date2 || isNaN(date1.getTime()) || isNaN(date2.getTime())) return false;
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+}
+
+function formatDateTime(dateStr) {
+    if (!dateStr) return '—';
+    if (window.formatDateTime) return window.formatDateTime(dateStr);
+    const date = window.parseCustomDate ? window.parseCustomDate(dateStr) : new Date(dateStr);
+    if (!date || isNaN(date.getTime())) return String(dateStr);
+    return date.toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function populateFilters() {
+    // Assignees
+    const assigneeSelect = document.getElementById('kanbanAssigneeFilter');
+    if (assigneeSelect) {
+        kanbanAssignees.forEach(u => {
+            assigneeSelect.innerHTML += `<option value="${u.id}">${escapeHtml(u.username)}</option>`;
+        });
+    }
+
+    // Products (unique from cards)
+    const products = [...new Set(kanbanCards.map(c => c.order_item?.product_name).filter(Boolean))];
+    const productSelect = document.getElementById('kanbanProductFilter');
+    if (productSelect) {
+        products.forEach(p => {
+            productSelect.innerHTML += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
+        });
+    }
+}
+
+function updateStatsBar() {
+    const stats = {};
+    kanbanColumns.forEach(col => {
+        stats[col.id] = kanbanCards.filter(c => c.column === col.id).length;
+    });
+
+    const now = new Date();
+    let overdue = 0;
+    kanbanCards.forEach(card => {
+        const dDate = card.order_item?.delivery_date ? (window.parseCustomDate ? window.parseCustomDate(card.order_item.delivery_date) : new Date(card.order_item.delivery_date)) : null;
+        if (dDate && !isNaN(dDate.getTime()) && dDate < now) {
+            const col = kanbanColumns.find(c => c.id === card.column);
+            if (col && !col.is_final) overdue++;
+        }
+    });
+
+    // Map column IDs to stat elements (assuming standard order)
+    const columnNames = ['recibido', 'preparacion', 'horneado', 'calidad', 'listo'];
+    columnNames.forEach((name, i) => {
+        const col = kanbanColumns.find(c => c.name.toLowerCase().includes(name) || c.id === i + 1);
+        if (col) {
+            const el = document.getElementById(`stat${name.charAt(0).toUpperCase() + name.slice(1)}`);
+            if (el) el.textContent = stats[col.id] || 0;
+        }
+    });
+
+    const statOverdueEl = document.getElementById('statOverdue');
+    if (statOverdueEl) statOverdueEl.textContent = overdue;
+}
+
+// ==================== FILTERS ====================
+function filterKanbanCards() {
+    const search = document.getElementById('kanbanSearch').value.toLowerCase();
+    const assignee = document.getElementById('kanbanAssigneeFilter').value;
+    const product = document.getElementById('kanbanProductFilter').value;
+    const overdue = document.getElementById('kanbanOverdueFilter').value;
+    const now = new Date();
+
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        const cardData = kanbanCards.find(c => c.id == card.dataset.cardId);
+        if (!cardData) return;
+
+        let show = true;
+
+        if (search) {
+            const text = `${cardData.order_item?.product_name || ''} ${cardData.order_item?.client_name || ''} ${cardData.order_item?.order_id || ''} ${cardData.notes || ''}`.toLowerCase();
+            show = text.includes(search);
+        }
+
+        if (assignee) {
+            const assignedId = typeof cardData.assigned_to === 'object' ? cardData.assigned_to?.id : cardData.assigned_to;
+            if (assignedId != assignee) {
+                show = false;
+            }
+        }
+
+        if (product && cardData.order_item?.product_name !== product) {
+            show = false;
+        }
+
+        if (overdue) {
+            const d = cardData.order_item?.delivery_date ? (window.parseCustomDate ? window.parseCustomDate(cardData.order_item.delivery_date) : new Date(cardData.order_item.delivery_date)) : null;
+            const isOverdue = d && !isNaN(d.getTime()) && d < now;
+            const isDueToday = d && !isNaN(d.getTime()) && isSameDay(d, now);
+            const isThisWeek = d && !isNaN(d.getTime()) && d <= new Date(now.getTime() + 7*24*60*60*1000);
+
+            if (overdue === 'overdue' && !isOverdue) show = false;
+            else if (overdue === 'today' && !isDueToday) show = false;
+            else if (overdue === 'this_week' && !isThisWeek) show = false;
+            else if (overdue === 'ok' && (isOverdue || isDueToday)) show = false;
+        }
+
+        card.style.display = show ? '' : 'none';
+    });
+}
+
+function debounceKanbanSearch() {
+    clearTimeout(kanbanSearchTimeout);
+    kanbanSearchTimeout = setTimeout(() => filterKanbanCards(), 300);
+}
+
+function clearKanbanFilters() {
+    document.getElementById('kanbanSearch').value = '';
+    document.getElementById('kanbanAssigneeFilter').value = '';
+    document.getElementById('kanbanProductFilter').value = '';
+    document.getElementById('kanbanOverdueFilter').value = '';
+    filterKanbanCards();
+}
+
+// ==================== DRAG & DROP ====================
+function allowDrop(ev) {
+    ev.preventDefault();
+    const columnBody = ev.currentTarget;
+    if (!columnBody.classList.contains('drag-over')) {
+        columnBody.classList.add('drag-over');
+    }
+}
+
+function dragLeave(ev) {
+    // Only remove if actually leaving the column (not moving between children)
+    if (!ev.currentTarget.contains(ev.relatedTarget)) {
+        ev.currentTarget.classList.remove('drag-over');
+    }
+}
+
+function dragStart(ev) {
+    const card = ev.target.closest('.kanban-card');
+    if (!card) return;
+
+    draggedCard = card;
+    draggedCard.classList.add('dragging');
+    ev.dataTransfer.effectAllowed = 'move';
+    ev.dataTransfer.setData('text/plain', card.dataset.cardId);
+
+    // Add visual feedback to valid drop targets
+    document.querySelectorAll('.kanban-column-body').forEach(col => {
+        const colId = parseInt(col.dataset.columnId);
+        const cardColId = parseInt(card.dataset.columnId);
+        const cardData = kanbanCards.find(c => c.id == card.dataset.cardId);
+        const currentColIndex = kanbanColumns.findIndex(c => c.id === cardColId);
+        const targetColIndex = kanbanColumns.findIndex(c => c.id === colId);
+
+        // Allow drop only on same or forward columns
+        if (targetColIndex >= currentColIndex) {
+            col.style.background = 'rgba(201, 168, 108, 0.05)';
+        }
+    });
+}
+
+function dragEnd(ev) {
+    if (draggedCard) {
+        draggedCard.classList.remove('dragging');
+        draggedCard = null;
+    }
+    document.querySelectorAll('.kanban-column-body').forEach(col => {
+        col.classList.remove('drag-over');
+        col.style.background = '';
+    });
+}
+
+function dropCard(ev) {
+    ev.preventDefault();
+    const targetColumn = ev.currentTarget;
+    targetColumn.classList.remove('drag-over');
+    targetColumn.style.background = '';
+
+    const cardId = parseInt(ev.dataTransfer.getData('text/plain'));
+    const newColumnId = parseInt(targetColumn.dataset.columnId);
+
+    if (!cardId || !newColumnId) return;
+
+    const card = kanbanCards.find(c => c.id === cardId);
+    if (!card || card.column === newColumnId) return;
+
+    // Check if moving forward (or same column for reorder)
+    const currentColIndex = kanbanColumns.findIndex(c => c.id === card.column);
+    const targetColIndex = kanbanColumns.findIndex(c => c.id === newColumnId);
+
+    if (targetColIndex < currentColIndex) {
+        showToast('Solo se puede mover hacia adelante en el flujo', 'warning');
+        return;
+    }
+
+    moveCardToColumn(cardId, newColumnId);
+}
+
+function initializeDragAndDrop() {
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.draggable = true;
+        card.addEventListener('dragstart', dragStart);
+        card.addEventListener('dragend', dragEnd);
+    });
+
+    document.querySelectorAll('.kanban-column-body').forEach(col => {
+        col.addEventListener('dragover', allowDrop);
+        col.addEventListener('dragleave', dragLeave);
+        col.addEventListener('drop', dropCard);
+    });
+
+    // Touch support for mobile
+    addTouchSupport();
+}
+
+function addTouchSupport() {
+    let touchCard = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+    let ghostCard = null;
+
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.addEventListener('touchstart', handleTouchStart, { passive: true });
+    });
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    function handleTouchStart(e) {
+        touchCard = e.target.closest('.kanban-card');
+        if (!touchCard) return;
+
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isDragging = false;
+
+        // Create ghost card
+        ghostCard = touchCard.cloneNode(true);
+        ghostCard.classList.add('dragging');
+        ghostCard.style.position = 'fixed';
+        ghostCard.style.pointerEvents = 'none';
+        ghostCard.style.zIndex = '9999';
+        ghostCard.style.width = touchCard.offsetWidth + 'px';
+        ghostCard.style.opacity = '0.9';
+        document.body.appendChild(ghostCard);
+
+        touchCard.style.opacity = '0.5';
+    }
+
+    function handleTouchMove(e) {
+        if (!touchCard || !ghostCard) return;
+
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        if (!isDragging && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+            isDragging = true;
+            touchCard.classList.add('dragging');
+            document.querySelectorAll('.kanban-column-body').forEach(col => {
+                col.style.background = 'rgba(201, 168, 108, 0.05)';
+            });
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+            ghostCard.style.left = (touch.clientX - touchCard.offsetWidth / 2) + 'px';
+            ghostCard.style.top = (touch.clientY - 50) + 'px';
+
+            // Check which column we're over
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            const columnBody = elementBelow?.closest('.kanban-column-body');
+
+            document.querySelectorAll('.kanban-column-body').forEach(col => {
+                col.classList.remove('drag-over');
+            });
+
+            if (columnBody) {
+                columnBody.classList.add('drag-over');
+            }
+        }
+    }
+
+    function handleTouchEnd(e) {
+        if (!touchCard || !ghostCard) return;
+
+        if (isDragging) {
+            const touch = e.changedTouches[0];
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            const columnBody = elementBelow?.closest('.kanban-column-body');
+
+            if (columnBody) {
+                const cardId = parseInt(touchCard.dataset.cardId);
+                const newColumnId = parseInt(columnBody.dataset.columnId);
+                const card = kanbanCards.find(c => c.id === cardId);
+
+                if (card && card.column !== newColumnId) {
+                    const currentColIndex = kanbanColumns.findIndex(c => c.id === card.column);
+                    const targetColIndex = kanbanColumns.findIndex(c => c.id === newColumnId);
+
+                    if (targetColIndex >= currentColIndex) {
+                        moveCardToColumn(cardId, newColumnId);
+                    } else {
+                        showToast('Solo se puede mover hacia adelante', 'warning');
+                    }
+                }
+            }
+        }
+
+        // Cleanup
+        touchCard.style.opacity = '';
+        touchCard.classList.remove('dragging');
+        ghostCard.remove();
+        ghostCard = null;
+        touchCard = null;
+        isDragging = false;
+
+        document.querySelectorAll('.kanban-column-body').forEach(col => {
+            col.classList.remove('drag-over');
+            col.style.background = '';
+        });
+    }
+}
+
+async function moveCardToColumn(cardId, newColumnId) {
+    const card = kanbanCards.find(c => c.id === cardId);
+    const oldColumnId = card.column;
+
+    // Optimistic update
+    card.column = newColumnId;
+    renderKanbanBoard();
+    updateStatsBar();
+
+    try {
+        const response = await apiFetch(`production-cards/${cardId}/move/`, {
+            method: 'POST',
+            body: JSON.stringify({ column_id: newColumnId })
+        });
+
+        if (!response.ok) {
+            throw new Error('Error moviendo tarjeta');
+        }
+
+        showToast('Tarjeta movida', 'success');
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al mover tarjeta', 'danger');
+        // Revert on error
+        card.column = oldColumnId;
+        renderKanbanBoard();
+        updateStatsBar();
+    }
+}
+
+// ==================== MODAL DETALLE TARJETA ====================
+async function viewCardDetail(cardId) {
+    const modal = new bootstrap.Modal(document.getElementById('cardDetailModal'));
+    modal.show();
+
+    document.getElementById('cardDetailBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-chocolate"></div></div>';
+    document.getElementById('cardDetailFooter').innerHTML = '';
+
+    try {
+        const response = await apiFetch(`production-cards/${cardId}/`);
+        if (!response.ok) throw new Error('Error cargando tarjeta');
+        const card = await response.json();
+
+        const column = kanbanColumns.find(c => c.id === card.column);
+        const movements = card.movements || [];
+
+        let bomHtml = '';
+        if (card.order_item?.bom_snapshot_scaled && card.order_item.bom_snapshot_scaled.length > 0) {
+            bomHtml = `
+                <div class="card-detail-bom">
+                    <h6><i class="bi bi-list-ul me-2"></i>BOM Escalado (${card.order_item.servings} porciones)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr><th>Insumo</th><th class="text-center">Cantidad</th><th class="text-center">Unidad</th><th class="text-end">Costo Est.</th></tr>
+                            </thead>
+                            <tbody>
+                                ${card.order_item.bom_snapshot_scaled.map(b => `
+                                    <tr>
+                                        <td>${escapeHtml(b.ingredient_name)}</td>
+                                        <td class="text-center">${b.quantity}</td>
+                                        <td class="text-center">${b.unit}</td>
+                                        <td class="text-end">${formatCLP(b.estimated_cost)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-2">
+                        <strong>Total BOM: ${formatCLP(card.order_item.bom_snapshot_scaled.reduce((sum, b) => sum + (b.estimated_cost || 0), 0))}</strong>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('cardDetailTitle').innerHTML = `<i class="bi bi-card-text me-2"></i>Pedido #${card.order_item?.order_id} - ${escapeHtml(card.order_item?.product_name)}`;
+        document.getElementById('cardDetailBody').innerHTML = `
+            <div class="card-detail-header">
+                <div class="card-detail-main">
+                    <h5>${escapeHtml(card.order_item?.product_name)}</h5>
+                    <div class="card-detail-meta">
+                        <div class="card-detail-meta-item">
+                            <span class="card-detail-meta-label">Cliente</span>
+                            <span class="card-detail-meta-value">${escapeHtml(card.order_item?.client_name || '—')}</span>
+                        </div>
+                        <div class="card-detail-meta-item">
+                            <span class="card-detail-meta-label">Porciones</span>
+                            <span class="card-detail-meta-value">${card.order_item?.servings || '—'}</span>
+                        </div>
+                        <div class="card-detail-meta-item">
+                            <span class="card-detail-meta-label">Entrega</span>
+                            <span class="card-detail-meta-value">${formatDate(card.order_item?.delivery_date)}</span>
+                        </div>
+                        <div class="card-detail-meta-item">
+                            <span class="card-detail-meta-label">Pedido</span>
+                            <span class="card-detail-meta-value">#${card.order_item?.order_id || '—'}</span>
+                        </div>
+                        <div class="card-detail-meta-item">
+                            <span class="card-detail-meta-label">Asignado</span>
+                            <span class="card-detail-meta-value">${card.assigned_to?.username || '—'}</span>
+                        </div>
+                        <div class="card-detail-meta-item">
+                            <span class="card-detail-meta-label">Prioridad</span>
+                            <span class="card-detail-meta-value badge bg-${getPriorityColor(card.priority)}">${card.priority}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-detail-sidebar">
+                    <span class="card-detail-column-badge" style="background: ${column?.color || '#6c757d'};">
+                        ${escapeHtml(column?.name || '—')}
+                    </span>
+                    <div class="text-muted small">
+                        <div><i class="bi bi-play me-1"></i>Iniciado: ${card.started_at ? formatDateTime(card.started_at) : '—'}</div>
+                        <div><i class="bi bi-check me-1"></i>Completado: ${card.completed_at ? formatDateTime(card.completed_at) : '—'}</div>
+                        <div><i class="bi bi-trash me-1 text-warning"></i>Merma: ${card.waste_qty > 0 ? `${card.waste_qty} (${card.waste_reason})` : '—'}</div>
+                    </div>
+                </div>
+            </div>
+
+            ${bomHtml}
+
+            <div class="card-detail-movements">
+                <h6><i class="bi bi-clock-history me-2"></i>Historial de Movimientos</h6>
+                <div class="table-responsive table-responsive-stack">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>Fecha</th><th>De</th><th>A</th><th>Usuario</th><th>Notas</th></tr>
+                        </thead>
+                        <tbody>
+                            ${movements.map(m => `
+                                <tr>
+                                    <td>${formatDateTime(m.moved_at)}</td>
+                                    <td>${escapeHtml(m.from_column_name || '—')}</td>
+                                    <td><span class="badge" style="background: ${m.to_column_color}">${escapeHtml(m.to_column_name)}</span></td>
+                                    <td>${escapeHtml(m.moved_by_username || 'Sistema')}</td>
+                                    <td>${escapeHtml(m.notes || '—')}</td>
+                                </tr>
+                            `).join('') || '<tr><td colspan="5" class="text-center text-muted">Sin movimientos</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            ${card.notes ? `
+                <div class="mt-4 p-3 bg-crema rounded">
+                    <strong>Notas:</strong>
+                    <p class="mb-0 mt-1">${escapeHtml(card.notes)}</p>
+                </div>
+            ` : ''}
+        `;
+
+        // Footer actions based on column
+        let footerHtml = '';
+        if (column && !column.is_final) {
+            footerHtml += `
+                <button type="button" class="btn btn-primary" onclick="bootstrap.Modal.getInstance(document.getElementById('cardDetailModal')).hide(); openMoveCardModal(${card.id})">
+                    <i class="bi bi-arrow-right me-1"></i>Mover a siguiente
+                </button>
+            `;
+        }
+        footerHtml += `
+            <button type="button" class="btn btn-warning text-dark" onclick="bootstrap.Modal.getInstance(document.getElementById('cardDetailModal')).hide(); openWasteModal(${card.id})">
+                <i class="bi bi-trash me-1"></i>Registrar Merma
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        `;
+        document.getElementById('cardDetailFooter').innerHTML = footerHtml;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('cardDetailBody').innerHTML = '<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle fs-1"></i><p class="mt-2">Error al cargar detalle</p></div>';
+    }
+}
+
+function getPriorityColor(priority) {
+    const colors = { 'NORMAL': 'secondary', 'ALTA': 'warning', 'URGENTE': 'danger' };
+    return colors[priority] || 'secondary';
+}
+
+// ==================== MOVER TARJETA (Modal) ====================
+function setupMoveCardForm() {
+    const form = document.getElementById('moveCardForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const cardId = document.getElementById('moveCardId').value;
+        const columnId = document.getElementById('moveCardColumn').value;
+        const notes = document.getElementById('moveCardNotes').value;
+
+        if (!columnId) return;
+
+        try {
+            const response = await apiFetch(`production-cards/${cardId}/move/`, {
+                method: 'POST',
+                body: JSON.stringify({ column_id: parseInt(columnId), notes })
+            });
+
+            if (!response.ok) throw new Error('Error moviendo tarjeta');
+
+            showToast('Tarjeta movida', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('moveCardModal')).hide();
+            loadKanbanBoard();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al mover tarjeta', 'danger');
+        }
+    });
+}
+
+function openMoveCardModal(cardId) {
+    const card = kanbanCards.find(c => c.id === cardId);
+    if (!card) return;
+
+    const select = document.getElementById('moveCardColumn');
+    select.innerHTML = '';
+
+    // Only show columns after current one
+    const currentIndex = kanbanColumns.findIndex(c => c.id === card.column);
+    for (let i = currentIndex + 1; i < kanbanColumns.length; i++) {
+        const col = kanbanColumns[i];
+        select.innerHTML += `<option value="${col.id}" style="border-left: 3px solid ${col.color}; padding-left: 8px;">${escapeHtml(col.name)}</option>`;
+    }
+
+    document.getElementById('moveCardId').value = cardId;
+    document.getElementById('moveCardNotes').value = '';
+
+    new bootstrap.Modal(document.getElementById('moveCardModal')).show();
+}
+
+// ==================== MERMA ====================
+function setupWasteForm() {
+    const form = document.getElementById('wasteForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const cardId = document.getElementById('wasteCardId').value;
+        const data = {
+            quantity: parseFloat(document.getElementById('wasteQuantity').value),
+            reason: document.getElementById('wasteReason').value,
+            notes: document.getElementById('wasteNotes').value
+        };
+
+        try {
+            const response = await apiFetch(`production-cards/${cardId}/waste/`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error registrando merma');
+
+            showToast('Merma registrada', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('wasteModal')).hide();
+            loadKanbanBoard();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al registrar merma', 'danger');
+        }
+    });
+}
+
+function openWasteModal(cardId) {
+    const card = kanbanCards.find(c => c.id === cardId);
+    if (!card) return;
+
+    document.getElementById('wasteCardId').value = cardId;
+    document.getElementById('wasteForm').reset();
+    document.getElementById('wasteUnit').textContent = card.order_item?.product_unit || 'un';
+    document.getElementById('wasteQuantity').max = card.order_item?.quantity || 999;
+
+    new bootstrap.Modal(document.getElementById('wasteModal')).show();
+}
+
+// ==================== CREAR TARJETA ====================
+function setupCreateCardForm() {
+    const form = document.getElementById('createCardForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const data = {
+            order_item: parseInt(document.getElementById('createCardOrder').value),
+            assigned_to: document.getElementById('createCardAssignee').value || null,
+            column_id: document.getElementById('createCardColumn').value ? parseInt(document.getElementById('createCardColumn').value) : null,
+            priority: document.getElementById('createCardPriority').value,
+            notes: document.getElementById('createCardNotes').value
+        };
+
+        try {
+            const response = await apiFetch('production-cards/', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(JSON.stringify(err));
+            }
+
+            showToast('Tarjeta de producción creada', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('createCardModal')).hide();
+            loadKanbanBoard();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al crear tarjeta', 'danger');
+        }
+    });
+}
+
+function createProductionCard() {
+    document.getElementById('createCardForm').reset();
+
+    // Populate columns
+    const colSelect = document.getElementById('createCardColumn');
+    colSelect.innerHTML = '<option value="">Primera columna (Recibido)</option>';
+    kanbanColumns.forEach(col => {
+        colSelect.innerHTML += `<option value="${col.id}">${escapeHtml(col.name)}</option>`;
+    });
+
+    // Populate assignees
+    const assigneeSelect = document.getElementById('createCardAssignee');
+    assigneeSelect.innerHTML = '<option value="">Sin asignar</option>';
+    kanbanAssignees.forEach(u => {
+        assigneeSelect.innerHTML += `<option value="${u.id}">${escapeHtml(u.username)}</option>`;
+    });
+
+    new bootstrap.Modal(document.getElementById('createCardModal')).show();
+}
+
+function refreshKanban() {
+    loadKanbanBoard();
+}
+
+function showKanbanStats() {
+    showToast('Estadísticas en desarrollo', 'info');
+}
+
+function exportKanban() {
+    showToast('Exportación en desarrollo', 'info');
+}
+</script>
+{% endblock %}

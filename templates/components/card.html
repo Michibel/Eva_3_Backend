@@ -1,0 +1,25 @@
+{# Card Component #}
+{# Usage: {% include 'components/card.html' with title='Título' header_class='' body_class='' footer_content='' %} #}
+
+<div class="card {% if variant %}card-{{ variant }}{% endif %} {% if extra_class %}{{ extra_class }}{% endif %}">
+    {% if title or header_content %}
+    <div class="card-header {% if header_class %}{{ header_class }}{% endif %}">
+        {% if header_content %}
+            {{ header_content|safe }}
+        {% else %}
+            {% if icon %}<i class="bi {{ icon }} me-2"></i>{% endif %}
+            <h5 class="mb-0">{{ title }}</h5>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card-body {% if body_class %}{{ body_class }}{% endif %}">
+        {% block card_content %}{% endblock %}
+    </div>
+
+    {% if footer_content or show_footer %}
+    <div class="card-footer {% if footer_class %}{{ footer_class }}{% endif %}">
+        {{ footer_content|safe }}
+    </div>
+    {% endif %}
+</div>

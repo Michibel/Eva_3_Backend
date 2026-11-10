@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+
+{% block title %}Clientes - Dulce Arte{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <i class="bi bi-people me-2"></i>Clientes
+        <small class="text-muted ms-2">Gestiona tus clientes y su historial de pedidos</small>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#clientModal" onclick="openCreateClientModal()">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo Cliente
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="row g-4 mb-5" id="clientsKpiCards">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted fw-medium mb-1 fs-sm">Total Clientes</p>
+                        <h2 class="mb-0 fs-3xl fw-bold" id="kpiTotalClients">—</h2>
+                    </div>
+                    <div class="kpi-icon bg-primary">
+                        <i class="bi bi-people fs-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted fw-medium mb-1 fs-sm">Clientes Activos</p>
+                        <h2 class="mb-0 fs-3xl fw-bold" id="kpiActiveClients">—</h2>
+                    </div>
+                    <div class="kpi-icon bg-success">
+                        <i class="bi bi-person-check fs-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted fw-medium mb-1 fs-sm">Pedidos Totales</p>
+                        <h2 class="mb-0 fs-3xl fw-bold" id="kpiTotalOrders">—</h2>
+                    </div>
+                    <div class="kpi-icon bg-warning">
+                        <i class="bi bi-bag fs-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card kpi-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted fw-medium mb-1 fs-sm">Ingresos Totales</p>
+                        <h2 class="mb-0 fs-3xl fw-bold" id="kpiTotalRevenue">—</h2>
+                    </div>
+                    <div class="kpi-icon bg-info">
+                        <i class="bi bi-currency-dollar fs-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y búsqueda -->
+<div class="card mb-5">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6">
+                <label for="clientSearch" class="form-label visually-hidden">Buscar clientes</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="clientSearch" placeholder="Buscar por nombre, email, teléfono..." onkeyup="debounceSearch('clients')">
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <label for="clientStatusFilter" class="form-label visually-hidden">Filtrar por estado</label>
+                <select class="form-control" id="clientStatusFilter" onchange="loadClients()">
+                    <option value="">Todos los estados</option>
+                    <option value="true">Activos</option>
+                    <option value="false">Inactivos</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <div class="btn-group w-100" role="group" aria-label="Vista">
+                    <button type="button" class="btn btn-outline-primary active" id="viewTableBtn" onclick="setViewMode('table')" aria-pressed="true">
+                        <i class="bi bi-table"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="viewGridBtn" onclick="setViewMode('grid')" aria-pressed="false">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                    </button>
+                </div>
+                <button class="btn btn-outline-secondary" onclick="exportClients()" title="Exportar">
+                    <i class="bi bi-download"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vista Tabla (Default) -->
+<div id="tableView">
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive table-responsive-stack">
+                <table class="table table-hover mb-0" id="clientsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cliente</th>
+                            <th data-label="Contacto">Contacto</th>
+                            <th data-label="Dirección">Dirección</th>
+                            <th data-label="Pedidos">Pedidos</th>
+                            <th data-label="Último Pedido">Último Pedido</th>
+                            <th data-label="Total Gastado">Total Gastado</th>
+                            <th data-label="Estado">Estado</th>
+                            <th data-label="Acciones">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTableBody">
+                        <!-- Skeleton loading rows -->
+                        <tr class="skeleton-row">
+                            <td colspan="8"><div class="skeleton skeleton-text w-50 mx-auto"></div></td>
+                        </tr>
+                        <tr class="skeleton-row">
+                            <td colspan="8"><div class="skeleton skeleton-text w-50 mx-auto"></div></td>
+                        </tr>
+                        <tr class="skeleton-row">
+                            <td colspan="8"><div class="skeleton skeleton-text w-50 mx-auto"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top">
+            <nav aria-label="Paginación clientes">
+                <ul class="pagination pagination-sm mb-0 justify-content-center" id="clientsPaginationList"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Vista Grid -->
+<div id="gridView" class="d-none">
+    <div class="row g-4" id="clientsGrid">
+        <!-- Client cards will be rendered here -->
+    </div>
+    <nav aria-label="Paginación clientes" class="mt-4">
+        <ul class="pagination pagination-sm mb-0 justify-content-center" id="clientsGridPaginationList"></ul>
+    </nav>
+</div>
+
+<!-- Empty State (Hidden by default) -->
+<div id="emptyState" class="d-none text-center py-6">
+    <div class="empty-state">
+        <div class="empty-icon mb-4">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-muted">
+                <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H11C9.93913 15 8.92172 15.4214 8.17157 16.1716C7.42143 16.9217 7 17.9391 7 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 9C9 10.6569 10.3431 12 12 12C13.6569 12 15 10.6569 15 9C15 7.34315 13.6569 6 12 6C10.3431 6 9 7.34315 9 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 15C21 16.6569 19.6569 18 18 18H6C4.34315 18 3 16.6569 3 15V9C3 7.34315 4.34315 6 6 6H18C19.6569 6 21 7.34315 21 9V15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h3 class="h4 fw-semibold mb-2">No hay clientes registrados</h3>
+        <p class="text-muted mb-4">Comienza agregando tu primer cliente</p>
+        <button type="button" class="btn btn-primary btn-lg" onclick="openCreateClientModal()">
+            <i class="bi bi-plus-lg me-2"></i>Crear Cliente
+        </button>
+    </div>
+</div>
+
+<!-- Modal Cliente -->
+<div class="modal fade" id="clientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clientModalTitle"><i class="bi bi-person-plus me-2"></i>Nuevo Cliente</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal" aria-label="Cerrar">&times;</button>
+            </div>
+            <form id="clientForm" novalidate>
+                <input type="hidden" name="id" id="clientId">
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-12 col-md-6">
+                            <label for="clientName" class="form-label fw-medium">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="clientName" name="name" required autocomplete="name">
+                            <div class="invalid-feedback">Ingrese el nombre del cliente</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="clientEmail" class="form-label fw-medium">Email</label>
+                            <input type="email" class="form-control" id="clientEmail" name="email" autocomplete="email">
+                            <div class="invalid-feedback">Email inválido</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="clientPhone" class="form-label fw-medium">Teléfono</label>
+                            <input type="tel" class="form-control" id="clientPhone" name="phone" autocomplete="tel">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="clientAddress" class="form-label fw-medium">Dirección</label>
+                            <input type="text" class="form-control" id="clientAddress" name="address" autocomplete="street-address">
+                        </div>
+                        <div class="col-12">
+                            <label for="clientNotes" class="form-label fw-medium">Notas</label>
+                            <textarea class="form-control" id="clientNotes" name="notes" rows="3" placeholder="Información adicional, preferencias, alergias..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="clientIsActive" name="is_active" checked>
+                                <label class="form-check-label fw-medium" for="clientIsActive">Cliente Activo</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="clientSubmitBtn">
+                        <i class="bi bi-save me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Cliente -->
+<div class="modal fade" id="clientDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person me-2"></i>Detalle del Cliente</h5>
+                <button type="button" class="modal-close" data-bs-dismiss="modal" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="modal-body" id="clientDetailBody">
+                <div class="text-center py-5">
+                    <div class="skeleton skeleton-title mx-auto mb-3" style="width: 40%;"></div>
+                    <div class="skeleton skeleton-text mx-auto mb-2" style="width: 60%;"></div>
+                    <div class="skeleton skeleton-text mx-auto" style="width: 50%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Estado global
+let clientsCurrentPage = 1;
+let clientsSearchTimeout;
+let currentViewMode = 'table'; // 'table' or 'grid'
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadClients();
+    setupClientForm();
+    updateViewModeUI();
+});
+
+async function loadClients(page = 1) {
+    clientsCurrentPage = page;
+    const search = document.getElementById('clientSearch').value;
+    const status = document.getElementById('clientStatusFilter').value;
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: currentViewMode === 'grid' ? 12 : 20,
+        ordering: '-created_at'
+    });
+    if (search) params.append('search', search);
+    if (status !== '') params.append('is_active', status);
+
+    try {
+        const response = await apiFetch(`clients/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando clientes');
+        const data = await response.json();
+
+        // Update KPIs
+        updateKPIs(data);
+
+        if (currentViewMode === 'grid') {
+            renderClientsGrid(data.results || data);
+            renderPagination(data, 'clientsGrid');
+        } else {
+            renderClientsTable(data.results || data);
+            renderPagination(data, 'clients');
+        }
+
+        toggleEmptyState(data.results && data.results.length > 0);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar clientes', 'danger');
+    }
+}
+
+function updateKPIs(data) {
+    // Calculate KPIs from the data
+    const clients = data.results || data;
+    const totalClients = data.count || clients.length;
+    const activeClients = clients.filter(c => c.is_active).length;
+    const totalOrders = clients.reduce((sum, c) => sum + (c.orders_count || 0), 0);
+    const totalRevenue = clients.reduce((sum, c) => sum + (c.total_spent || 0), 0);
+
+    document.getElementById('kpiTotalClients').textContent = totalClients;
+    document.getElementById('kpiActiveClients').textContent = activeClients;
+    document.getElementById('kpiTotalOrders').textContent = totalOrders;
+    document.getElementById('kpiTotalRevenue').textContent = formatCLP(totalRevenue);
+}
+
+function debounceSearch(type) {
+    clearTimeout(clientsSearchTimeout);
+    clientsSearchTimeout = setTimeout(() => loadClients(1), 300);
+}
+
+function setViewMode(mode) {
+    currentViewMode = mode;
+    updateViewModeUI();
+    loadClients(1);
+}
+
+function updateViewModeUI() {
+    const tableView = document.getElementById('tableView');
+    const gridView = document.getElementById('gridView');
+    const tableBtn = document.getElementById('viewTableBtn');
+    const gridBtn = document.getElementById('viewGridBtn');
+
+    if (currentViewMode === 'grid') {
+        tableView.classList.add('d-none');
+        gridView.classList.remove('d-none');
+        tableBtn.classList.remove('active');
+        tableBtn.setAttribute('aria-pressed', 'false');
+        gridBtn.classList.add('active');
+        gridBtn.setAttribute('aria-pressed', 'true');
+    } else {
+        tableView.classList.remove('d-none');
+        gridView.classList.add('d-none');
+        tableBtn.classList.add('active');
+        tableBtn.setAttribute('aria-pressed', 'true');
+        gridBtn.classList.remove('active');
+        gridBtn.setAttribute('aria-pressed', 'false');
+    }
+}
+
+function toggleEmptyState(hasData) {
+    const emptyState = document.getElementById('emptyState');
+    const tableView = document.getElementById('tableView');
+    const gridView = document.getElementById('gridView');
+    const pagination = document.getElementById('clientsPaginationList');
+    const gridPagination = document.getElementById('clientsGridPaginationList');
+
+    if (hasData) {
+        emptyState.classList.add('d-none');
+        if (currentViewMode === 'grid') {
+            gridView.classList.remove('d-none');
+            tableView.classList.add('d-none');
+        } else {
+            tableView.classList.remove('d-none');
+            gridView.classList.add('d-none');
+        }
+        if (pagination) pagination.closest('nav').style.display = '';
+        if (gridPagination) gridPagination.closest('nav').style.display = '';
+    } else {
+        emptyState.classList.remove('d-none');
+        tableView.classList.add('d-none');
+        gridView.classList.add('d-none');
+        if (pagination) pagination.closest('nav').style.display = 'none';
+        if (gridPagination) gridPagination.closest('nav').style.display = 'none';
+    }
+}
+
+function renderClientsTable(clients) {
+    const tbody = document.getElementById('clientsTableBody');
+    if (!clients || clients.length === 0) {
+        toggleEmptyState(false);
+        return;
+    }
+    toggleEmptyState(true);
+
+    tbody.innerHTML = clients.map(client => `
+        <tr>
+            <td data-label="Cliente">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-sm">
+                        <span class="avatar-initials">${getInitials(client.name)}</span>
+                    </div>
+                    <div>
+                        <div class="fw-medium">${escapeHtml(client.name)}</div>
+                        ${client.user ? `<small class="text-muted">Usuario: ${escapeHtml(client.user.username)}</small>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td data-label="Contacto">
+                ${client.email ? `<div><i class="bi bi-envelope text-muted me-1"></i>${escapeHtml(client.email)}</div>` : ''}
+                ${client.phone ? `<div><i class="bi bi-phone text-muted me-1"></i>${escapeHtml(client.phone)}</div>` : ''}
+                ${!client.email && !client.phone ? '<span class="text-muted">Sin contacto</span>' : ''}
+            </td>
+            <td data-label="Dirección">
+                ${client.address ? escapeHtml(client.address) : '<span class="text-muted">Sin dirección</span>'}
+            </td>
+            <td data-label="Pedidos">
+                <span class="badge badge-light fw-medium">${client.orders_count || 0}</span>
+            </td>
+            <td data-label="Último Pedido">
+                ${client.last_order_date ? formatDate(client.last_order_date) : '<span class="text-muted">—</span>'}
+            </td>
+            <td data-label="Total Gastado">
+                <span class="fw-medium text-success">${formatCLP(client.total_spent || 0)}</span>
+            </td>
+            <td data-label="Estado">
+                <span class="badge ${client.is_active ? 'badge-success' : 'badge-light'}">
+                    ${client.is_active ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            <td data-label="Acciones">
+                <div class="dropdown">
+                    <button class="btn btn-ghost btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="viewClientDetail(${client.id})">
+                                <i class="bi bi-eye me-2"></i>Ver detalle
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="editClient(${client.id})">
+                                <i class="bi bi-pencil me-2"></i>Editar
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" onclick="deleteClient(${client.id})">
+                                <i class="bi bi-trash me-2"></i>Eliminar
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderClientsGrid(clients) {
+    const grid = document.getElementById('clientsGrid');
+    if (!clients || clients.length === 0) {
+        toggleEmptyState(false);
+        return;
+    }
+    toggleEmptyState(true);
+
+    grid.innerHTML = clients.map(client => `
+        <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+            <div class="card client-card h-100 transition">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="avatar avatar-md flex-shrink-0">
+                            <span class="avatar-initials">${getInitials(client.name)}</span>
+                        </div>
+                        <span class="badge ${client.is_active ? 'badge-success' : 'badge-light'} fs-xs">
+                            ${client.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </div>
+                    <h6 class="fw-semibold mb-1">${escapeHtml(client.name)}</h6>
+                    ${client.user ? `<p class="text-muted fs-sm mb-2">Usuario: ${escapeHtml(client.user.username)}</p>` : ''}
+
+                    <div class="flex-grow-1">
+                        ${client.email ? `<p class="text-muted fs-sm mb-1"><i class="bi bi-envelope me-1"></i>${escapeHtml(client.email)}</p>` : ''}
+                        ${client.phone ? `<p class="text-muted fs-sm mb-1"><i class="bi bi-phone me-1"></i>${escapeHtml(client.phone)}</p>` : ''}
+                        ${client.address ? `<p class="text-muted fs-sm mb-1"><i class="bi bi-geo-alt me-1"></i>${escapeHtml(truncate(client.address, 40))}</p>` : ''}
+                    </div>
+
+                    <div class="border-top pt-3 mt-3">
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div class="fw-bold fs-lg text-primary">${client.orders_count || 0}</div>
+                                <small class="text-muted">Pedidos</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-lg text-success">${formatCLP(client.total_spent || 0)}</div>
+                                <small class="text-muted">Gastado</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold fs-lg text-info">${client.last_order_date ? formatDateShort(client.last_order_date) : '—'}</div>
+                                <small class="text-muted">Último</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="viewClientDetail(${client.id})" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="editClient(${client.id})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteClient(${client.id})" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderPagination(data, type) {
+    const container = document.getElementById(`${type}PaginationList`);
+    if (!container) return;
+
+    const current = data.page || 1;
+    const total = data.total_pages || 1;
+    let html = '';
+
+    if (total <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    if (current > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadClients(${current - 1})" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a></li>`;
+    }
+
+    const start = Math.max(1, current - 2);
+    const end = Math.min(total, current + 2);
+
+    if (start > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadClients(1)">1</a></li>`;
+        if (start > 2) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+
+    for (let i = start; i <= end; i++) {
+        html += `<li class="page-item ${i === current ? 'active' : ''}"><a class="page-link" href="#" onclick="loadClients(${i})">${i}</a></li>`;
+    }
+
+    if (end < total) {
+        if (end < total - 1) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadClients(${total})">${total}</a></li>`;
+    }
+
+    if (current < total) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadClients(${current + 1})" aria-label="Siguiente"><i class="bi bi-chevron-right"></i></a></li>`;
+    }
+
+    container.innerHTML = html;
+}
+
+function openCreateClientModal() {
+    const form = document.getElementById('clientForm');
+    form.reset();
+    form.classList.remove('was-validated');
+    document.getElementById('clientId').value = '';
+    document.getElementById('clientModalTitle').innerHTML = '<i class="bi bi-person-plus me-2"></i>Nuevo Cliente';
+    document.getElementById('clientIsActive').checked = true;
+    document.getElementById('clientSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Guardar';
+    new bootstrap.Modal(document.getElementById('clientModal')).show();
+}
+
+async function editClient(id) {
+    try {
+        const response = await apiFetch(`clients/${id}/`);
+        if (!response.ok) throw new Error('Error cargando cliente');
+        const client = await response.json();
+
+        document.getElementById('clientId').value = client.id;
+        document.getElementById('clientName').value = client.name;
+        document.getElementById('clientEmail').value = client.email || '';
+        document.getElementById('clientPhone').value = client.phone || '';
+        document.getElementById('clientAddress').value = client.address || '';
+        document.getElementById('clientNotes').value = client.notes || '';
+        document.getElementById('clientIsActive').checked = client.is_active;
+        document.getElementById('clientModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Cliente';
+        document.getElementById('clientSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Actualizar';
+        new bootstrap.Modal(document.getElementById('clientModal')).show();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar cliente', 'danger');
+    }
+}
+
+async function viewClientDetail(id) {
+    const modal = new bootstrap.Modal(document.getElementById('clientDetailModal'));
+    modal.show();
+
+    try {
+        const [clientRes, ordersRes] = await Promise.all([
+            apiFetch(`clients/${id}/`),
+            apiFetch(`orders/?client=${id}&page_size=10&ordering=-created_at`)
+        ]);
+
+        if (!clientRes.ok) throw new Error('Error cargando cliente');
+        const client = await clientRes.json();
+        const orders = await ordersRes.json();
+
+        const ordersList = (orders.results || orders).map(order => `
+            <tr>
+                <td>#${order.id}</td>
+                <td><span class="badge ${getStatusBadgeClass(order.status)}">${getStatusLabel(order.status)}</span></td>
+                <td>${formatCLP(order.total)}</td>
+                <td>${formatDate(order.delivery_date)}</td>
+                <td>${formatDate(order.created_at)}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">Sin pedidos</td></tr>';
+
+        document.getElementById('clientDetailBody').innerHTML = `
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="avatar avatar-lg">
+                            <span class="avatar-initials">${getInitials(client.name)}</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">${escapeHtml(client.name)}</h5>
+                            <span class="badge ${client.is_active ? 'badge-success' : 'badge-light'}">${client.is_active ? 'Activo' : 'Inactivo'}</span>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <p class="mb-1"><i class="bi bi-envelope me-2 text-muted"></i>${escapeHtml(client.email || '—')}</p>
+                            <p class="mb-1"><i class="bi bi-phone me-2 text-muted"></i>${escapeHtml(client.phone || '—')}</p>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <p class="mb-1"><i class="bi bi-geo-alt me-2 text-muted"></i>${escapeHtml(client.address || '—')}</p>
+                            ${client.user ? `<p class="mb-1"><i class="bi bi-person me-2 text-muted"></i>${escapeHtml(client.user.username)}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="p-3 bg-light rounded-lg">
+                                <div class="fw-bold fs-2xl text-primary">${client.orders_count || 0}</div>
+                                <small class="text-muted">Total Pedidos</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-light rounded-lg">
+                                <div class="fw-bold fs-2xl text-success">${formatCLP(client.total_spent || 0)}</div>
+                                <small class="text-muted">Total Gastado</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-light rounded-lg">
+                                <div class="fw-bold fs-lg text-info">${client.last_order_date ? formatDateShort(client.last_order_date) : '—'}</div>
+                                <small class="text-muted">Último Pedido</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ${client.notes ? `<div class="mb-4 p-3 bg-light rounded-lg"><strong>Notas:</strong><p class="text-muted mb-0 mt-2">${escapeHtml(client.notes)}</p></div>` : ''}
+            <div>
+                <h6 class="fw-semibold mb-3">Historial de Pedidos (últimos 10)</h6>
+                <div class="table-responsive table-responsive-stack">
+                    <table class="table table-sm table-hover">
+                        <thead><tr><th>Pedido</th><th>Estado</th><th>Total</th><th>Entrega</th><th>Creado</th></tr></thead>
+                        <tbody>${ordersList}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('clientDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+async function setupClientForm() {
+    const form = document.getElementById('clientForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const id = document.getElementById('clientId').value;
+        const data = {
+            name: document.getElementById('clientName').value,
+            email: document.getElementById('clientEmail').value,
+            phone: document.getElementById('clientPhone').value,
+            address: document.getElementById('clientAddress').value,
+            notes: document.getElementById('clientNotes').value,
+            is_active: document.getElementById('clientIsActive').checked
+        };
+
+        try {
+            const url = id ? `clients/${id}/` : 'clients/';
+            const method = id ? 'PATCH' : 'POST';
+            const response = await apiFetch(url, { method, body: JSON.stringify(data) });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(JSON.stringify(err));
+            }
+
+            showToast(id ? 'Cliente actualizado' : 'Cliente creado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('clientModal')).hide();
+            loadClients(clientsCurrentPage);
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al guardar cliente', 'danger');
+        }
+    });
+}
+
+async function deleteClient(id) {
+    if (!confirm('¿Está seguro de eliminar este cliente?')) return;
+
+    try {
+        const response = await apiFetch(`clients/${id}/`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Error eliminando cliente');
+        showToast('Cliente eliminado', 'success');
+        loadClients(clientsCurrentPage);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al eliminar cliente', 'danger');
+    }
+}
+
+function exportClients() {
+    showToast('Función de exportación en desarrollo', 'info');
+}
+
+// Helper functions
+function getInitials(name) {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function truncate(str, max) {
+    return str.length > max ? str.slice(0, max) + '...' : str;
+}
+
+function formatDateShort(dateStr) {
+    if (!dateStr) return '—';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
+}
+
+function getStatusBadgeClass(status) {
+    const classes = {
+        'pending': 'badge-warning',
+        'confirmed': 'badge-info',
+        'in_production': 'badge-primary',
+        'ready': 'badge-success',
+        'dispatched': 'badge-secondary',
+        'delivered': 'badge-success',
+        'cancelled': 'badge-danger'
+    };
+    return classes[status] || 'badge-light';
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        'pending': 'Pendiente',
+        'confirmed': 'Confirmado',
+        'in_production': 'En Producción',
+        'ready': 'Listo',
+        'dispatched': 'Despachado',
+        'delivered': 'Entregado',
+        'cancelled': 'Cancelado'
+    };
+    return labels[status] || status;
+}
+</script>
+{% endblock %}

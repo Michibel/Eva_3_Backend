@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Cuenta - Dulce Arte Pastelería Fina{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #F8F7F5;
+        padding: 3rem 1.5rem;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .register-card {
+        width: 100%;
+        max-width: 520px;
+        background: #FFFFFF;
+        border: 1px solid #EAE6DF;
+        border-radius: 4px;
+        box-shadow: 0 15px 35px rgba(26, 22, 18, 0.06);
+        overflow: hidden;
+    }
+    .register-header {
+        background: #11100C;
+        color: #F8F7F5;
+        padding: 2.5rem 2rem 2rem;
+        text-align: center;
+        border-bottom: 2px solid #C5A059;
+    }
+    .register-header h2 {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 2.2rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #F8F7F5;
+        margin: 0.5rem 0 0.2rem;
+    }
+    .register-header p {
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #C5A059;
+        margin: 0;
+    }
+    .register-body {
+        padding: 2.5rem;
+    }
+    .register-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: #16120E;
+        margin-bottom: 0.2rem;
+    }
+    .form-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #5A524A;
+        margin-bottom: 0.35rem;
+    }
+    .input-group {
+        border: 1px solid #D9D2C7;
+        border-radius: 3px;
+        background: #FFFFFF;
+        transition: all 0.2s ease;
+    }
+    .input-group:focus-within {
+        border-color: #C5A059;
+        box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.15);
+    }
+    .input-group-text {
+        background: transparent;
+        border: none;
+        color: #8C827A;
+        padding-left: 0.9rem;
+    }
+    .input-group .form-control {
+        border: none;
+        padding: 0.7rem 0.9rem 0.7rem 0.4rem;
+        font-size: 0.88rem;
+        color: #16120E;
+        box-shadow: none !important;
+    }
+    .btn-register {
+        background: #16120E;
+        border: 1px solid #16120E;
+        color: #F8F7F5;
+        border-radius: 3px;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        width: 100%;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    .btn-register:hover {
+        background: #C5A059;
+        border-color: #C5A059;
+        color: #16120E;
+    }
+    .login-link {
+        color: #C5A059;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .login-link:hover {
+        color: #16120E;
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2Z" stroke="#C5A059" stroke-width="2"/>
+                <path d="M12 6V12" stroke="#C5A059" stroke-width="2"/>
+                <path d="M8 12C8 13.1 8.9 14 10 14H14C15.1 14 16 13.1 16 12" stroke="#C5A059" stroke-width="2"/>
+                <path d="M6 16C6 17.1 6.9 18 8 18H16C17.1 18 18 17.1 18 16" stroke="#C5A059" stroke-width="2"/>
+                <path d="M4 20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20" stroke="#C5A059" stroke-width="2"/>
+            </svg>
+            <h2>Dulce Arte</h2>
+            <p>Pastelería Fina &bull; Estilo Marriet</p>
+        </div>
+        <div class="register-body">
+            <h4 class="register-title">Crear Cuenta</h4>
+            <p class="text-muted small mb-4">Ingresa tus datos para acceder a pedidos y seguimiento exclusivo</p>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombre</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            {{ form.first_name }}
+                        </div>
+                        {% if form.first_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellido</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            {{ form.last_name }}
+                        </div>
+                        {% if form.last_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Usuario <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-at"></i></span>
+                            {{ form.username }}
+                        </div>
+                        {% if form.username.errors %}
+                        <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">Email <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            {{ form.email }}
+                        </div>
+                        {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label">Contraseña <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            {{ form.password1 }}
+                        </div>
+                        {% if form.password1.errors %}
+                        <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmar <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            {{ form.password2 }}
+                        </div>
+                        {% if form.password2.errors %}
+                        <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    {{ form.non_field_errors }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-register">
+                    <i class="bi bi-person-plus me-2"></i>Crear Cuenta
+                </button>
+            </form>
+
+            <div class="text-center mt-4 pt-2 border-top">
+                <p class="text-muted small mb-0">
+                    ¿Ya tienes una cuenta registrada?
+                    <a href="{% url 'login' %}" class="login-link">Iniciar Sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

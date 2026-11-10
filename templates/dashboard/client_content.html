@@ -1,0 +1,566 @@
+<!-- Dashboard Cliente Content - Redesigned for Cliente -->
+<div class="stagger">
+    <!-- Quick Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-bag"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="clientOrdersTrend">
+                        <i class="bi bi-arrow-up"></i> +2
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiTotalOrders">—</div>
+                <div class="kpi-label">Total Pedidos</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="clientSpentTrend">
+                        <i class="bi bi-arrow-up"></i> +15%
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiTotalSpent">—</div>
+                <div class="kpi-label">Total Gastado</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <div class="kpi-trend negative" id="clientPendingTrend">
+                        <i class="bi bi-arrow-down"></i> -1
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiPendingPayments">—</div>
+                <div class="kpi-label">Pagos Pendientes</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-heart"></i>
+                    </div>
+                    <div class="kpi-trend" id="clientFavTrend">
+                        <i class="bi bi-arrow-right"></i> —
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiFavorites">—</div>
+                <div class="kpi-label">Favoritos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- My Orders Timeline -->
+        <div class="col-12 col-xl-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="bi bi-bag me-2"></i>Mis Pedidos</h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="orderStatusFilter" style="width: auto;">
+                            <option value="all">Todos</option>
+                            <option value="COTIZACION">Cotizaciones</option>
+                            <option value="CONFIRMADO">Confirmados</option>
+                            <option value="EN_PRODUCCION">En Producción</option>
+                            <option value="LISTO">Listos</option>
+                            <option value="DESPACHADO">Despachados</option>
+                            <option value="ENTREGADO">Entregados</option>
+                            <option value="CANCELADO">Cancelados</option>
+                        </select>
+                        <a href="{% url 'client_portal' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-right me-1"></i>Ver todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="clientOrdersTimeline" class="timeline">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-chocolate" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Panel: Payments & Quick Actions -->
+        <div class="col-12 col-xl-4">
+            <div class="row g-4 h-100">
+                <!-- Pending Payments -->
+                <div class="col-12">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Pagos Pendientes</h5>
+                            <span class="badge badge-warning" id="pendingPaymentsCount">0</span>
+                        </div>
+                        <div class="card-body p-0" id="clientPendingPayments">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-chocolate" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-12">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Acciones Rápidas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'client_portal' %}?new=order" class="btn btn-primary">
+                                    <i class="bi bi-cart-plus me-2"></i>Nuevo Pedido
+                                </a>
+                                <a href="{% url 'client_portal' %}?tab=favorites" class="btn btn-outline-secondary">
+                                    <i class="bi bi-heart me-2"></i>Mis Favoritos
+                                </a>
+                                <a href="{% url 'client_portal' %}?tab=history" class="btn btn-outline-secondary">
+                                    <i class="bi bi-clock-history me-2"></i>Historial Completo
+                                </a>
+                                <a href="{% url 'client_portal' %}?tab=profile" class="btn btn-outline-secondary">
+                                    <i class="bi bi-person me-2"></i>Mi Perfil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favorite Products Quick Reorder -->
+                <div class="col-12">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-star me-2"></i>Reordenar Favoritos</h5>
+                            <a href="{% url 'client_portal' %}?tab=favorites" class="btn btn-ghost btn-sm">Ver todos</a>
+                        </div>
+                        <div class="card-body p-0" id="clientFavorites">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-chocolate" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Summary -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Resumen de Mi Cuenta</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <div class="p-4 bg-crema rounded-lg text-center">
+                                <div class="fw-bold text-chocolate fs-3" id="summaryTotalOrders">0</div>
+                                <small class="text-muted">Pedidos Totales</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="p-4 bg-crema rounded-lg text-center">
+                                <div class="fw-bold text-exito fs-3" id="summaryTotalSpent">$0</div>
+                                <small class="text-muted">Total Gastado</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="p-4 bg-crema rounded-lg text-center">
+                                <div class="fw-bold text-dorado fs-3" id="summaryAvgOrder">$0</div>
+                                <small class="text-muted">Ticket Promedio</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="p-4 bg-crema rounded-lg text-center">
+                                <div class="fw-bold text-info fs-3" id="summaryThisMonth">0</div>
+                                <small class="text-muted">Pedidos Este Mes</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="p-4 bg-crema rounded-lg text-center">
+                                <div class="fw-bold text-warning fs-3" id="summaryPendingPayments">0</div>
+                                <small class="text-muted">Pagos Pendientes</small>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="p-4 bg-crema rounded-lg text-center">
+                                <div class="fw-bold text-danger fs-3" id="summaryFavorites">0</div>
+                                <small class="text-muted">Productos Favoritos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadClientDashboardData();
+    initOrderFilter();
+});
+
+async function loadClientDashboardData() {
+    try {
+        const response = await apiFetch('reports/dashboard/');
+        if (!response.ok) throw new Error('Error cargando dashboard cliente');
+        const data = await response.json();
+
+        // Update KPIs
+        if (data.kpis) {
+            updateElement('kpiTotalOrders', data.kpis.orders_count || 0);
+            updateElement('kpiTotalSpent', formatCLP(data.kpis.total_spent || 0));
+            updateElement('kpiPendingPayments', data.kpis.pending_payments_count || 0);
+            updateElement('kpiFavorites', data.kpis.favorites_count || 0);
+
+            updateElement('summaryTotalOrders', data.kpis.orders_count || 0);
+            updateElement('summaryTotalSpent', formatCLP(data.kpis.total_spent || 0));
+            updateElement('summaryAvgOrder', formatCLP(data.kpis.avg_order_value || 0));
+            updateElement('summaryThisMonth', data.kpis.orders_this_month || 0);
+            updateElement('summaryPendingPayments', data.kpis.pending_payments_count || 0);
+            updateElement('summaryFavorites', data.kpis.favorites_count || 0);
+        }
+
+        // Render orders timeline
+        if (data.my_orders) {
+            renderClientOrdersTimeline(data.my_orders);
+        }
+
+        // Render pending payments
+        if (data.pending_payments) {
+            renderClientPendingPayments(data.pending_payments);
+        }
+
+        // Render favorites
+        if (data.favorites) {
+            renderClientFavorites(data.favorites);
+        }
+    } catch (error) {
+        console.error('Error cargando dashboard cliente:', error);
+        showToast('Error al cargar dashboard cliente', 'danger');
+    }
+}
+
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        if (!isNaN(parseFloat(value)) && typeof value !== 'string') {
+            animateNumber(el, value);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+function animateNumber(element, target) {
+    const start = parseFloat(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const end = parseFloat(target);
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (end - start) * eased;
+        element.textContent = typeof target === 'string' && target.startsWith('$') ? formatCLP(current) : Math.round(current);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+function renderClientOrdersTimeline(orders) {
+    const container = document.getElementById('clientOrdersTimeline');
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-bag fs-1 text-muted mb-3" style="color: var(--color-dorado-claro) !important;"></i>
+                <h6 class="text-muted mb-2">No tienes pedidos aún</h6>
+                <p class="text-muted small mb-4">¡Haz tu primer pedido y disfruta de nuestras delicias!</p>
+                <a href="{% url 'client_portal' %}?new=order" class="btn btn-primary">
+                    <i class="bi bi-cart-plus me-2"></i>Hacer Pedido
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort orders by date descending
+    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    container.innerHTML = orders.slice(0, 10).map((order, index) => {
+        const statusConfig = getOrderStatusConfig(order.status);
+        const paymentConfig = getPaymentStatusConfig(order.payment_status);
+        const isCurrent = ['CONFIRMADO', 'EN_PRODUCCION', 'LISTO', 'DESPACHADO', 'EN_RUTA'].includes(order.status);
+        const isCompleted = ['ENTREGADO'].includes(order.status);
+
+        return `
+            <div class="timeline-item">
+                <div class="timeline-marker ${isCurrent ? 'current' : (isCompleted ? 'completed' : 'pending')}" style="${statusConfig.color ? 'background: ' + statusConfig.color : ''}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <div class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center">
+                            <h6 class="timeline-title mb-0">Pedido #${order.id}</h6>
+                            <span class="timeline-date">${formatDate(order.created_at)}</span>
+                        </div>
+                        <div class="timeline-status">
+                            <span class="badge ${statusConfig.badgeClass}">${statusConfig.label}</span>
+                            <span class="badge ${paymentConfig.badgeClass}">${paymentConfig.label}</span>
+                        </div>
+                    </div>
+
+                    <div class="timeline-details">
+                        <div class="timeline-detail">
+                            <span class="timeline-detail-label">Entrega</span>
+                            <span class="timeline-detail-value">${order.delivery_date ? formatDate(order.delivery_date) : 'Por confirmar'}</span>
+                        </div>
+                        <div class="timeline-detail">
+                            <span class="timeline-detail-label">Total</span>
+                            <span class="timeline-detail-value text-chocolate fw-bold">${formatCLP(order.total)}</span>
+                        </div>
+                        <div class="timeline-detail">
+                            <span class="timeline-detail-label">Productos</span>
+                            <span class="timeline-detail-value">${order.items_count || 0} items</span>
+                        </div>
+                        ${order.payment_status !== 'PAGADO_TOTAL' && order.payment_status !== 'PAGADO_PARCIAL' ? `
+                        <div class="timeline-detail">
+                            <span class="timeline-detail-label">Saldo</span>
+                            <span class="timeline-detail-value text-danger fw-bold">${formatCLP(order.balance_due || order.total)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="timeline-actions">
+                        ${order.payment_status === 'PENDIENTE' ? `
+                            <button class="btn btn-primary btn-sm" onclick="openWebpay(${order.id})">
+                                <i class="bi bi-credit-card me-1"></i>Pagar Ahora
+                            </button>
+                        ` : ''}
+                        ${['ENTREGADO'].includes(order.status) ? `
+                            <button class="btn btn-outline-secondary btn-sm" onclick="reorderItems(${order.id})">
+                                <i class="bi bi-arrow-repeat me-1"></i>Volver a Pedir
+                            </button>
+                        ` : ''}
+                        <a href="{% url 'client_portal' %}${order.id}/" class="btn btn-ghost btn-sm">
+                            <i class="bi bi-eye me-1"></i>Ver Detalle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getOrderStatusConfig(status) {
+    const configs = {
+        'COTIZACION': { label: 'Cotización', color: 'var(--color-advertencia)', badgeClass: 'badge-warning' },
+        'CONFIRMADO': { label: 'Confirmado', color: 'var(--color-info)', badgeClass: 'badge-info' },
+        'EN_PRODUCCION': { label: 'En Producción', color: 'var(--color-chocolate)', badgeClass: 'badge-primary' },
+        'LISTO': { label: 'Listo', color: 'var(--color-dorado)', badgeClass: 'badge-warning' },
+        'DESPACHADO': { label: 'Despachado', color: 'var(--color-info)', badgeClass: 'badge-info' },
+        'ENTREGADO': { label: 'Entregado', color: 'var(--color-exito)', badgeClass: 'badge-success' },
+        'CANCELADO': { label: 'Cancelado', color: 'var(--color-error)', badgeClass: 'badge-danger' },
+        'RECHAZADO': { label: 'Rechazado', color: 'var(--color-error)', badgeClass: 'badge-danger' },
+    };
+    return configs[status] || { label: status, color: 'var(--color-texto-muted)', badgeClass: 'badge-secondary' };
+}
+
+function getPaymentStatusConfig(status) {
+    const configs = {
+        'PENDIENTE': { label: 'Pendiente', badgeClass: 'badge-warning' },
+        'PAGADO_PARCIAL': { label: 'Pagado Parcial', badgeClass: 'badge-info' },
+        'PAGADO_TOTAL': { label: 'Pagado', badgeClass: 'badge-success' },
+    };
+    return configs[status] || { label: status, badgeClass: 'badge-secondary' };
+}
+
+function renderClientPendingPayments(payments) {
+    const container = document.getElementById('clientPendingPayments');
+    const countEl = document.getElementById('pendingPaymentsCount');
+
+    if (countEl) countEl.textContent = payments?.length || 0;
+
+    if (!payments || payments.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-check-circle fs-1 text-success mb-3"></i>
+                <h6 class="text-muted mb-2">¡Todo al día!</h6>
+                <p class="text-muted small mb-0">No tienes pagos pendientes</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = payments.map(p => `
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="mb-0">Pedido #${p.order__id}</h6>
+                            ${p.due_date && new Date(p.due_date) < new Date() ?
+                                '<span class="badge badge-danger">Vencido</span>' :
+                                '<span class="badge badge-warning">Pendiente</span>'
+                            }
+                        </div>
+                        <p class="text-muted mb-1 small">${p.description || 'Pago de pedido'}</p>
+                        <small class="text-muted">Vence: ${p.due_date ? formatDate(p.due_date) : '—'}</small>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="fw-bold fs-4 text-chocolate">${formatCLP(p.amount)}</div>
+                        <button class="btn btn-primary btn-sm mt-2 w-100 w-md-auto" onclick="openWebpay(${p.order__id}, ${p.id})">
+                            <i class="bi bi-credit-card me-1"></i>Pagar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderClientFavorites(favorites) {
+    const container = document.getElementById('clientFavorites');
+
+    if (!favorites || favorites.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-star fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                <p class="text-muted small mb-3">No tienes favoritos aún</p>
+                <a href="{% url 'client_portal' %}?tab=products" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-heart me-1"></i>Ver Productos
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = favorites.slice(0, 4).map(fav => `
+        <a href="{% url 'client_portal' %}?reorder=${fav.id}" class="list-group-item list-group-item-action px-0 d-flex align-items-center gap-3">
+            ${fav.image ? `
+                <img src="${fav.image}" alt="${escapeHtml(fav.name)}" class="rounded" style="width: 56px; height: 56px; object-fit: cover;">
+            ` : `
+                <div class="avatar avatar-md" style="background: var(--color-crema); color: var(--color-dorado-claro);">
+                    <i class="bi bi-cupcake"></i>
+                </div>
+            `}
+            <div class="flex-grow-1 min-w-0">
+                <div class="fw-medium text-truncate">${escapeHtml(fav.name)}</div>
+                <small class="text-muted">${fav.servings_options?.join(', ') || '12/20/40 porc.'} · ${formatCLP(fav.base_price || 0)}</small>
+            </div>
+            <i class="bi bi-plus-circle text-dorado"></i>
+        </a>
+    `).join('');
+}
+
+function initOrderFilter() {
+    const filter = document.getElementById('orderStatusFilter');
+    if (!filter) return;
+
+    filter.addEventListener('change', function() {
+        const value = this.value;
+        const items = document.querySelectorAll('#clientOrdersTimeline .timeline-item');
+
+        items.forEach(item => {
+            if (value === 'all') {
+                item.style.display = '';
+            } else {
+                const badge = item.querySelector('.badge-primary, .badge-info, .badge-warning, .badge-success, .badge-danger, .badge-secondary');
+                if (badge) {
+                    item.style.display = badge.textContent.trim() === UI.getStatusLabel(value, 'orders') ? '' : 'none';
+                }
+            }
+        });
+    });
+}
+
+function openWebpay(orderId, paymentId = null) {
+    const modal = new bootstrap.Modal(document.getElementById('clientWebpayModal'));
+    modal.show();
+
+    const modalBody = document.getElementById('clientWebpayModalBody');
+    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-chocolate"></div><p class="mt-2">Iniciando pago WebPay...</p></div>';
+
+    API.post(`webpay-transactions/init/?order=${orderId}${paymentId ? '&payment=' + paymentId : ''}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.url && data.token) {
+                modalBody.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-credit-card-2-front fs-1 text-chocolate"></i>
+                        <h5 class="mt-3">Redirigiendo a WebPay Transbank...</h5>
+                        <p class="text-muted">Si no es redirigido automáticamente, haga clic en el botón:</p>
+                        <a href="${data.url}?token_ws=${data.token}" target="_blank" class="btn btn-primary btn-lg mt-3">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Ir a WebPay
+                        </a>
+                    </div>
+                `;
+                setTimeout(() => {
+                    window.location.href = `${data.url}?token_ws=${data.token}`;
+                }, 3000);
+            } else {
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">Error iniciando pago: ${data.error || 'Error desconocido'}</div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">Error al iniciar pago WebPay</div>';
+        });
+}
+
+function reorderItems(orderId) {
+    showToast('Redirigiendo para reordenar...', 'info');
+    setTimeout(() => {
+        window.location.href = `{% url 'client_portal' %}?reorder=${orderId}`;
+    }, 500);
+}
+</script>
+
+<style>
+/* Timeline marker colors for client orders */
+.timeline-marker.current {
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 4px var(--color-dorado-claro);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--color-dorado-claro); }
+    50% { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* Avatar */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--color-cacao);
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+}
+.avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-sm); }
+.avatar-md { width: 48px; height: 48px; font-size: var(--font-size-base); }
+
+/* Utility */
+.bg-crema { background-color: var(--color-crema) !important; }
+.text-chocolate { color: var(--color-chocolate) !important; }
+.text-dorado { color: var(--color-advertencia) !important; }
+.text-exito { color: var(--color-exito) !important; }
+.text-info { color: var(--color-info) !important; }
+.text-danger { color: var(--color-error) !important; }
+.font-mono { font-family: var(--font-mono); }
+.min-w-0 { min-width: 0; }
+</style>

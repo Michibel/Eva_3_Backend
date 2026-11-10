@@ -1,0 +1,589 @@
+<!-- Dashboard Repartidor Content - Redesigned for Repartidor -->
+<div class="stagger">
+    <!-- Quick Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <div class="kpi-trend" id="driverTotalTrend">
+                        <i class="bi bi-arrow-right"></i> —
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiTotalDeliveries">—</div>
+                <div class="kpi-label">Entregas Totales Hoy</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="driverPendingTrend">
+                        <i class="bi bi-arrow-up"></i> +2
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiPendingDeliveries">—</div>
+                <div class="kpi-label">Pendientes</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="driverCompletedTrend">
+                        <i class="bi bi-arrow-up"></i> +5
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiCompletedDeliveries">—</div>
+                <div class="kpi-label">Completadas</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="driverOnTimeTrend">
+                        <i class="bi bi-arrow-up"></i> +3%
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiOnTimeRate">—</div>
+                <div class="kpi-label">A Tiempo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- Today's Route -->
+        <div class="col-12 col-xl-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Mi Ruta de Hoy</h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge badge-info align-self-center" id="routeDate">Sin ruta asignada</span>
+                        <a href="{% url 'dispatch' %}" class="btn btn-ghost btn-sm">Ver todas las rutas</a>
+                    </div>
+                </div>
+                <div class="card-body" id="driverRouteContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-chocolate" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions & Next Delivery -->
+        <div class="col-12 col-xl-4">
+            <div class="row g-4 h-100">
+                <!-- Next Delivery Card -->
+                <div class="col-12">
+                    <div class="card h-100" id="nextDeliveryCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-arrow-right-circle me-2"></i>Próxima Entrega</h5>
+                            <span class="badge badge-warning" id="nextDeliveryStatus">Pendiente</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center py-4">
+                                <i class="bi bi-truck fs-1 text-muted mb-3" style="color: var(--color-dorado-claro) !important;"></i>
+                                <p class="text-muted mb-0" id="nextDeliveryText">Cargando ruta...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-12">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Acciones Rápidas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary" onclick="openDeliveryScanner()">
+                                    <i class="bi bi-camera me-2"></i>Escanear QR Entrega
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="openNavigation()">
+                                    <i class="bi bi-geo-alt me-2"></i>Navegar a Próxima
+                                </button>
+                                <a href="{% url 'dispatch' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-map me-2"></i>Ver Mapa de Rutas
+                                </a>
+                                <button class="btn btn-outline-secondary" onclick="reportIssue()">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Reportar Incidencia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Deliveries List -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Despachos de la Ruta</h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="deliveryStatusFilter" style="width: auto;">
+                            <option value="all">Todos</option>
+                            <option value="PENDIENTE">Pendientes</option>
+                            <option value="EN_RUTA">En Ruta</option>
+                            <option value="ENTREGADO">Entregados</option>
+                            <option value="FALLIDO">Fallidos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="driverRouteDispatchesTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="width: 80px;">Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Dirección</th>
+                                    <th style="width: 130px;">Ventana Horaria</th>
+                                    <th style="width: 120px;">Estado</th>
+                                    <th style="width: 120px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent History -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historial Reciente</h5>
+                    <a href="{% url 'dispatch' %}?tab=history" class="btn btn-ghost btn-sm">Ver todo</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="driverHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Pedido</th>
+                                    <th>Cliente</th>
+                                    <th style="width: 130px;">Fecha</th>
+                                    <th style="width: 120px;">Estado</th>
+                                    <th style="width: 100px;">Tiempo</th>
+                                    <th style="width": 50px></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDriverDashboardData();
+    initDeliveryFilter();
+});
+
+async function loadDriverDashboardData() {
+    try {
+        const response = await apiFetch('reports/dashboard/');
+        if (!response.ok) throw new Error('Error cargando dashboard repartidor');
+        const data = await response.json();
+
+        // Update KPIs
+        if (data.kpis) {
+            updateElement('kpiTotalDeliveries', data.kpis.total_deliveries_today || 0);
+            updateElement('kpiPendingDeliveries', data.kpis.pending_deliveries || 0);
+            updateElement('kpiCompletedDeliveries', data.kpis.completed_today || 0);
+            updateElement('kpiOnTimeRate', (data.kpis.on_time_rate || 0) + '%');
+        }
+
+        // Render route
+        if (data.route) {
+            renderDriverRoute(data.route);
+        } else {
+            showNoRoute();
+        }
+
+        // Render history
+        if (data.recent_dispatches) {
+            renderDriverHistory(data.recent_dispatches);
+        }
+    } catch (error) {
+        console.error('Error cargando dashboard repartidor:', error);
+        showToast('Error al cargar dashboard repartidor', 'danger');
+    }
+}
+
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        if (!isNaN(parseFloat(value)) && typeof value !== 'string') {
+            animateNumber(el, value);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+function animateNumber(element, target) {
+    const start = parseFloat(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const end = parseFloat(target);
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (end - start) * eased;
+        element.textContent = Math.round(current);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+function renderDriverRoute(route) {
+    const container = document.getElementById('driverRouteContent');
+    const routeDateEl = document.getElementById('routeDate');
+    const nextDeliveryCard = document.getElementById('nextDeliveryCard');
+    const nextDeliveryStatus = document.getElementById('nextDeliveryStatus');
+    const nextDeliveryText = document.getElementById('nextDeliveryText');
+
+    if (routeDateEl) routeDateEl.textContent = formatDate(route.date);
+
+    if (!route) {
+        showNoRoute();
+        return;
+    }
+
+    const pendingCount = route.pending_count || 0;
+    const completedCount = route.completed_count || 0;
+    const totalCount = pendingCount + completedCount;
+
+    // Find next pending delivery
+    const nextDelivery = route.dispatches?.find(d => d.status === 'PENDIENTE' || d.status === 'EN_RUTA');
+
+    if (nextDelivery) {
+        if (nextDeliveryStatus) nextDeliveryStatus.textContent = UI.getStatusLabel(nextDelivery.status, 'dispatch');
+        if (nextDeliveryStatus) nextDeliveryStatus.className = `badge ${getDispatchStatusBadgeClass(nextDelivery.status)}`;
+        if (nextDeliveryText) {
+            nextDeliveryText.innerHTML = `
+                <strong>${escapeHtml(nextDelivery.order__client__name)}</strong><br>
+                <small class="text-muted">${escapeHtml(nextDelivery.order__delivery_address)}</small><br>
+                <span class="badge badge-info mt-1">${formatTime(nextDelivery.delivery_window_start)} - ${formatTime(nextDelivery.delivery_window_end)}</span>
+            `;
+        }
+        if (nextDeliveryCard) {
+            nextDeliveryCard.onclick = () => confirmDelivery(nextDelivery.id);
+            nextDeliveryCard.style.cursor = 'pointer';
+        }
+    } else if (completedCount > 0) {
+        if (nextDeliveryText) nextDeliveryText.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> ¡Ruta completada!</span>';
+        if (nextDeliveryStatus) { nextDeliveryStatus.textContent = 'Completada'; nextDeliveryStatus.className = 'badge badge-success'; }
+    } else {
+        if (nextDeliveryText) nextDeliveryText.textContent = 'Sin entregas en esta ruta';
+    }
+
+    container.innerHTML = `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <div class="fw-bold fs-5">${escapeHtml(route.name)}</div>
+                    <small class="text-muted">${route.driver_name || 'Conductor'} · ${totalCount} entregas</small>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold fs-4 text-chocolate">${completedCount} / ${totalCount}</div>
+                    <small class="text-muted">Completadas</small>
+                </div>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-exito" style="width: ${totalCount > 0 ? (completedCount / totalCount * 100) : 0}%"></div>
+            </div>
+        </div>
+        <div class="table-responsive table-responsive-stack">
+            <table class="table table-sm table-hover mb-0" id="driverRouteDispatchesTableInner">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th style="width: 80px;">Pedido</th>
+                        <th>Cliente</th>
+                        <th style="width: 130px;">Ventana</th>
+                        <th style="width: 120px;">Estado</th>
+                        <th style="width": 50px></th>
+                    </tr>
+                </thead>
+                <tbody id="driverRouteDispatches">
+                    <tr>
+                        <td colspan="6" class="text-center py-3">
+                            <div class="spinner-border text-chocolate spinner-border-sm" role="status"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Load dispatches for this route
+    loadRouteDispatches(route.id);
+}
+
+function showNoRoute() {
+    const container = document.getElementById('driverRouteContent');
+    const routeDateEl = document.getElementById('routeDate');
+    const nextDeliveryCard = document.getElementById('nextDeliveryCard');
+    const nextDeliveryStatus = document.getElementById('nextDeliveryStatus');
+    const nextDeliveryText = document.getElementById('nextDeliveryText');
+
+    if (routeDateEl) routeDateEl.textContent = 'Sin ruta asignada';
+
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x fs-1 text-muted mb-3" style="color: var(--color-dorado-claro) !important;"></i>
+                <h6 class="text-muted mb-2">No hay ruta asignada para hoy</h6>
+                <p class="text-muted small mb-4">Contacta a tu supervisor para asignación de ruta</p>
+                <a href="{% url 'dispatch' %}" class="btn btn-outline-primary">Ver Rutas</a>
+            </div>
+        `;
+    }
+
+    if (nextDeliveryStatus) { nextDeliveryStatus.textContent = 'Sin ruta'; nextDeliveryStatus.className = 'badge badge-secondary'; }
+    if (nextDeliveryText) nextDeliveryText.textContent = 'No hay ruta asignada para hoy';
+    if (nextDeliveryCard) { nextDeliveryCard.onclick = null; nextDeliveryCard.style.cursor = 'default'; }
+}
+
+async function loadRouteDispatches(routeId) {
+    try {
+        const response = await apiFetch(`routes/${routeId}/dispatches/`);
+        if (!response.ok) return;
+        const dispatches = await response.json();
+        renderRouteDispatches(dispatches);
+    } catch (error) {
+        console.error('Error cargando despachos de ruta:', error);
+    }
+}
+
+function renderRouteDispatches(dispatches) {
+    const tbody = document.getElementById('driverRouteDispatches');
+    if (!tbody) return;
+
+    if (!dispatches || dispatches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No hay despachos en esta ruta</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = dispatches.map((d, index) => {
+        const isNext = d.status === 'PENDIENTE' || d.status === 'EN_RUTA';
+        const rowClass = isNext ? 'table-primary' : '';
+
+        return `
+            <tr class="${rowClass}" data-id="${d.id}">
+                <td data-label="#">${index + 1}</td>
+                <td data-label="Pedido"><strong>#${d.order__id}</strong></td>
+                <td data-label="Cliente">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="avatar avatar-sm" style="background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-dorado-brillante) 100%);">
+                            ${escapeHtml(d.order__client__name?.charAt(0) || 'C')}
+                        </div>
+                        <div class="fw-medium">${escapeHtml(d.order__client__name)}</div>
+                    </div>
+                </td>
+                <td data-label="Ventana">
+                    ${d.delivery_window_start && d.delivery_window_end ?
+                        `<span class="badge badge-info">${formatTime(d.delivery_window_start)} - ${formatTime(d.delivery_window_end)}</span>` :
+                        '<span class="text-muted">—</span>'
+                    }
+                </td>
+                <td data-label="Estado">
+                    <span class="badge ${getDispatchStatusBadgeClass(d.status)}">${UI.getStatusLabel(d.status, 'dispatch')}</span>
+                </td>
+                <td>
+                    ${isNext ? `
+                        <button class="btn btn-sm btn-primary" onclick="confirmDelivery(${d.id})">
+                            <i class="bi bi-check-circle"></i> Entregar
+                        </button>
+                    ` : `
+                        <span class="text-muted">—</span>
+                    `}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getDispatchStatusBadgeClass(status) {
+    const classes = {
+        'PENDIENTE': 'badge-warning',
+        'EN_RUTA': 'badge-info',
+        'ENTREGADO': 'badge-success',
+        'FALLIDO': 'badge-danger',
+    };
+    return classes[status] || 'badge-secondary';
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return '';
+    return timeStr.substring(0, 5);
+}
+
+function renderDriverHistory(dispatches) {
+    const tbody = document.getElementById('driverHistoryTable').querySelector('tbody');
+    if (!dispatches || dispatches.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5">
+                    <i class="bi bi-clock-history fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-0">Sin historial reciente</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = dispatches.slice(0, 10).map(d => {
+        const deliveredAt = d.delivered_at || d.created_at;
+        const timeStr = d.duration_minutes ? formatDuration(d.duration_minutes) : '—';
+
+        return `
+            <tr>
+                <td data-label="Pedido"><strong>#${d.order__id}</strong></td>
+                <td data-label="Cliente">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="avatar avatar-sm" style="background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-dorado-brillante) 100%);">
+                            ${escapeHtml(d.order__client__name?.charAt(0) || 'C')}
+                        </div>
+                        <div>${escapeHtml(d.order__client__name)}</div>
+                    </div>
+                </td>
+                <td data-label="Fecha">${formatDate(deliveredAt)}</td>
+                <td data-label="Estado"><span class="badge ${getDispatchStatusBadgeClass(d.status)}">${UI.getStatusLabel(d.status, 'dispatch')}</span></td>
+                <td data-label="Tiempo">
+                    <span class="badge badge-secondary font-mono">${timeStr}</span>
+                </td>
+                <td>
+                    <a href="{% url 'dispatch' %}${d.id}/" class="btn btn-ghost btn-sm" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function formatDuration(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+}
+
+function initDeliveryFilter() {
+    const filter = document.getElementById('deliveryStatusFilter');
+    if (!filter) return;
+
+    filter.addEventListener('change', function() {
+        const value = this.value;
+        const rows = document.querySelectorAll('#driverRouteDispatchesTable tbody tr[data-id]');
+
+        rows.forEach(row => {
+            if (value === 'all') {
+                row.style.display = '';
+            } else {
+                const badge = row.querySelector('.badge');
+                if (badge) {
+                    row.style.display = badge.textContent.trim() === UI.getStatusLabel(value, 'dispatch') ? '' : 'none';
+                }
+            }
+        });
+    });
+}
+
+function confirmDelivery(dispatchId) {
+    window.location.href = `/despachos/${dispatchId}/entregar/`;
+}
+
+function openDeliveryScanner() {
+    showToast('Abriendo escáner QR...', 'info');
+    // In a real app: window.location.href = '/despachos/scan/';
+}
+
+function openNavigation() {
+    showToast('Abriendo navegación...', 'info');
+    // In a real app: use geolocation API to open maps
+}
+
+function reportIssue() {
+    UI.confirm('¿Reportar una incidencia en la entrega actual?', 'Reportar Incidencia')
+        .then(confirmed => {
+            if (confirmed) {
+                showToast('Formulario de incidencia en desarrollo', 'info');
+            }
+        });
+}
+</script>
+
+<style>
+/* Avatar */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--color-cacao);
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+}
+.avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-sm); }
+
+/* Card hover effects */
+.card[onclick] {
+    cursor: pointer;
+    transition: var(--transicion-normal);
+}
+.card[onclick]:hover {
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+
+/* Progress bar */
+.progress {
+    background-color: var(--color-crema-oscuro);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+.progress-bar {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Table highlighting */
+.table-primary {
+    --bs-table-bg: var(--color-dorado-claro) !important;
+}
+</style>

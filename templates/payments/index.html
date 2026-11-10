@@ -1,0 +1,1411 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+/* Payments Page Styles */
+.payment-stats-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transicion);
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-stats-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+.payment-stats-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+
+.payment-stats-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.payment-stats-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.payment-stats-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+    margin-bottom: 0.125rem;
+}
+
+.payment-stats-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Payment Method Badge */
+.method-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+}
+
+.method-badge.webpay {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+}
+
+.method-badge.efectivo {
+    background: var(--color-exito-bg);
+    color: var(--color-exito);
+}
+
+.method-badge.transferencia {
+    background: var(--color-advertencia-bg);
+    color: var(--color-advertencia);
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+}
+
+.status-badge.pending,
+.status-badge.iniciada {
+    background: var(--color-advertencia-bg);
+    color: var(--color-advertencia);
+}
+
+.status-badge.paid {
+    background: var(--color-exito-bg);
+    color: var(--color-exito);
+}
+
+.status-badge.failed {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+.status-badge.cancelled {
+    background: var(--color-crema-oscuro);
+    color: var(--color-texto-muted);
+}
+
+.status-badge.refunded {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+}
+
+/* WebPay Card */
+.webpay-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transicion);
+}
+
+.webpay-card:hover {
+    box-shadow: var(--sombra-media);
+    border-color: var(--color-dorado);
+}
+
+.webpay-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: linear-gradient(135deg, var(--color-info) 0%, #2a5070 100%);
+    color: white;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.webpay-card-header h6 {
+    margin: 0;
+    font-size: var(--font-size-base);
+}
+
+.webpay-card-body {
+    padding: var(--space-4);
+}
+
+.webpay-detail-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.webpay-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.webpay-detail-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.webpay-detail-value {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto);
+    word-break: break-all;
+}
+
+.webpay-detail-value code {
+    background: var(--color-crema);
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+}
+
+/* Conciliation Card */
+.conciliation-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-3);
+}
+
+.conciliation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.conciliation-match {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+}
+
+.conciliation-match.success {
+    background: var(--color-exito-bg);
+    color: var(--color-exito);
+}
+
+.conciliation-match.warning {
+    background: var(--color-advertencia-bg);
+    color: var(--color-advertencia);
+}
+
+.conciliation-totals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.conciliation-total-item {
+    background: var(--color-crema);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+}
+
+.conciliation-total-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.conciliation-total-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+}
+
+.conciliation-total-value.difference-positive {
+    color: var(--color-error);
+}
+
+.conciliation-total-value.difference-negative {
+    color: var(--color-exito);
+}
+
+.conciliation-discrepancies {
+    border-top: 1px solid var(--color-borde);
+    padding-top: var(--space-3);
+}
+
+.conciliation-discrepancy-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.conciliation-discrepancy-item:last-child {
+    border-bottom: none;
+}
+
+.discrepancy-info {
+    flex: 1;
+}
+
+.discrepancy-type {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto);
+    margin-bottom: 0.125rem;
+}
+
+.discrepancy-ref {
+    font-size: var(--font-size-sm);
+    color: var(--color-texto-muted);
+}
+
+.discrepancy-amounts {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    min-width: 200px;
+}
+
+.discrepancy-diff {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+}
+
+.discrepancy-diff.positive {
+    color: var(--color-error);
+}
+
+.discrepancy-diff.negative {
+    color: var(--color-exito);
+}
+
+/* Filter Bar */
+.payment-filter-bar {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.payment-filter-row {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.payment-filter-group {
+    flex: 1;
+    min-width: 160px;
+}
+
+.payment-filter-group label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.375rem;
+}
+
+.payment-filter-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* Tab Panel */
+.payment-tabs .nav-tabs {
+    border-bottom: 2px solid var(--color-borde);
+}
+
+.payment-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-texto-suave);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transicion);
+}
+
+.payment-tabs .nav-link:hover {
+    color: var(--color-chocolate);
+    border-bottom-color: var(--color-dorado);
+    background: transparent;
+}
+
+.payment-tabs .nav-link.active {
+    color: var(--color-chocolate);
+    border-bottom-color: var(--color-chocolate);
+    background: transparent;
+}
+
+.payment-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* Transaction Row */
+.transaction-row {
+    transition: background-color var(--transicion);
+}
+
+.transaction-row:hover {
+    background: var(--color-dorado-claro);
+}
+
+.transaction-row.pending { background: var(--color-advertencia-bg-light); }
+.transaction-row.paid { background: var(--color-exito-bg-light); }
+.transaction-row.failed { background: var(--color-error-bg-light); }
+
+/* Modal Enhancements */
+.modal-header-gradient-primary {
+    background: linear-gradient(135deg, var(--color-info) 0%, #2a5070 100%);
+    color: white;
+}
+
+.modal-header-gradient-warning {
+    background: linear-gradient(135deg, var(--color-advertencia) 0%, #8a6a08 100%);
+    color: var(--color-cacao);
+}
+
+.modal-header-gradient-danger {
+    background: linear-gradient(135deg, var(--color-error) 0%, #6b1d2a 100%);
+    color: white;
+}
+
+/* JSON Preview */
+.json-preview {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    max-height: 300px;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .payment-filter-group {
+        min-width: 100%;
+    }
+
+    .payment-filter-actions {
+        width: 100%;
+    }
+
+    .payment-filter-actions .btn {
+        flex: 1;
+    }
+
+    .webpay-detail-row {
+        grid-template-columns: 1fr;
+    }
+
+    .conciliation-totals {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .conciliation-discrepancy-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    .discrepancy-amounts {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .payment-filter-bar, .payment-stats-card, .btn, .modal, .nav-tabs {
+        display: none !important;
+    }
+
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .webpay-card {
+        break-inside: avoid;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-credit-card me-2 text-dorado"></i>Pagos / WebPay Transbank</h1>
+        <p class="text-muted mb-0">Gestión de pagos, transacciones WebPay y conciliación bancaria</p>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" onclick="exportPayments('excel')">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="exportPayments('pdf')">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+        </button>
+        <button type="button" class="btn btn-primary" onclick="loadPayments()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="payment-stats-card" style="--accent-color: var(--color-advertencia);">
+            <div class="payment-stats-icon" style="background: var(--color-advertencia);"><i class="bi bi-clock"></i></div>
+            <div class="payment-stats-info">
+                <div class="payment-stats-value" id="kpiPaymentsPending">0</div>
+                <div class="payment-stats-label">Pendientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="payment-stats-card" style="--accent-color: var(--color-exito);">
+            <div class="payment-stats-icon" style="background: var(--color-exito);"><i class="bi bi-check-circle"></i></div>
+            <div class="payment-stats-info">
+                <div class="payment-stats-value" id="kpiPaymentsPaid">0</div>
+                <div class="payment-stats-label">Pagados (Mes)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="payment-stats-card" style="--accent-color: var(--color-chocolate);">
+            <div class="payment-stats-icon" style="background: var(--color-chocolate);"><i class="bi bi-currency-dollar"></i></div>
+            <div class="payment-stats-info">
+                <div class="payment-stats-value" id="kpiPaymentsAmount">$0</div>
+                <div class="payment-stats-label">Monto Cobrado</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="payment-stats-card" style="--accent-color: var(--color-error);">
+            <div class="payment-stats-icon" style="background: var(--color-error);"><i class="bi bi-x-circle"></i></div>
+            <div class="payment-stats-info">
+                <div class="payment-stats-value" id="kpiPaymentsFailed">0</div>
+                <div class="payment-stats-label">Fallidos</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="payment-filter-bar">
+    <div class="payment-filter-row">
+        <div class="payment-filter-group" style="min-width: 250px;">
+            <label>Buscar</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="paymentSearch" placeholder="Orden, cliente, transacción..." onkeyup="debounceSearchPayments()">
+            </div>
+        </div>
+        <div class="payment-filter-group">
+            <label>Estado</label>
+            <select class="form-select form-select-sm" id="paymentStatusFilter" onchange="loadPayments()">
+                <option value="">Todos</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="INICIADA">Iniciada WebPay</option>
+                <option value="PAGADO">Pagado</option>
+                <option value="FALLIDO">Fallido</option>
+                <option value="ANULADO">Anulado</option>
+                <option value="REEMBOLSADO">Reembolsado</option>
+            </select>
+        </div>
+        <div class="payment-filter-group">
+            <label>Método</label>
+            <select class="form-select form-select-sm" id="paymentMethodFilter" onchange="loadPayments()">
+                <option value="">Todos</option>
+                <option value="WEBPAY">WebPay</option>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+            </select>
+        </div>
+        <div class="payment-filter-group">
+            <label>Desde</label>
+            <input type="date" class="form-control form-control-sm" id="paymentDateFrom" onchange="loadPayments()">
+        </div>
+        <div class="payment-filter-group">
+            <label>Hasta</label>
+            <input type="date" class="form-control form-control-sm" id="paymentDateTo" onchange="loadPayments()">
+        </div>
+        <div class="payment-filter-actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportPayments('excel')">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Tabs -->
+<div class="card payment-tabs">
+    <div class="card-header border-0">
+        <ul class="nav nav-tabs" id="paymentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-transacciones" data-bs-toggle="tab" data-bs-target="#panel-transacciones" type="button" onclick="loadPayments()">
+                    <i class="bi bi-list-ul me-1"></i>Transacciones
+                    <span class="badge bg-secondary ms-2" id="tabCountTransacciones">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-webpay" data-bs-toggle="tab" data-bs-target="#panel-webpay" type="button" onclick="loadWebpayTransactions()">
+                    <i class="bi bi-credit-card-2-front me-1"></i>WebPay Transbank
+                    <span class="badge bg-info ms-2" id="tabCountWebpay">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-conciliacion" data-bs-toggle="tab" data-bs-target="#panel-conciliacion" type="button" onclick="loadConciliation()">
+                    <i class="bi bi-calculator me-1"></i>Conciliación
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <!-- Panel Transacciones -->
+            <div class="tab-pane fade show active" id="panel-transacciones" role="tabpanel">
+                <div class="table-responsive table-responsive-stack">
+                    <table class="table table-hover mb-0" id="paymentsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 70px;">Pago</th>
+                                <th>Pedido</th>
+                                <th>Cliente</th>
+                                <th style="width: 120px;">Método</th>
+                                <th style="width: 110px;">Monto</th>
+                                <th style="width: 110px;">Estado</th>
+                                <th style="width: 100px;">Fecha</th>
+                                <th style="width: 100px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="spinner-border text-chocolate" role="status"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav aria-label="Paginación pagos" class="p-3">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center" id="paymentsPaginationList"></ul>
+                </nav>
+            </div>
+
+            <!-- Panel WebPay -->
+            <div class="tab-pane fade" id="panel-webpay" role="tabpanel">
+                <div class="alert alert-info border-0 mb-3" style="background: var(--color-info-bg); color: var(--color-info);">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-info-circle fs-4"></i>
+                        <div>
+                            <strong>Integración WebPay Transbank (Sandbox)</strong>
+                            <div class="mt-2 small">
+                                <code>Commerce Code: 597055555532</code> | <code>API Key: 579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C</code>
+                            </div>
+                            <div class="mt-2">
+                                <a href="https://www.transbankdevelopers.cl/documentacion/como_empezar#tarjetas-de-prueba" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Tarjetas de Prueba
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="webpayCardsContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-info" role="status"></div>
+                        <p class="text-muted mt-2">Cargando transacciones WebPay...</p>
+                    </div>
+                </div>
+                <nav aria-label="Paginación WebPay" class="p-3">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center" id="webpayPaginationList"></ul>
+                </nav>
+            </div>
+
+            <!-- Panel Conciliación -->
+            <div class="tab-pane fade" id="panel-conciliacion" role="tabpanel">
+                <div class="conciliation-card">
+                    <div class="conciliation-header">
+                        <h6 class="mb-0"><i class="bi bi-calculator me-2"></i>Ejecutar Conciliación Diaria</h6>
+                    </div>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12 col-md-4">
+                            <label for="conciliationDate" class="form-label fw-medium">Fecha a Conciliar</label>
+                            <input type="date" class="form-control" id="conciliationDate">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <button class="btn btn-primary w-100" onclick="runConciliation()">
+                                <i class="bi bi-calculator me-1"></i>Ejecutar Conciliación
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <button class="btn btn-outline-secondary w-100" onclick="exportConciliation()">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar Resultado
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="conciliationResults">
+                    <div class="text-center py-5">
+                        <i class="bi bi-calculator fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">Seleccione una fecha y ejecute la conciliación</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Pago -->
+<div class="modal fade" id="paymentDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-primary">
+                <h5 class="modal-title"><i class="bi bi-credit-card me-2"></i>Detalle de Pago</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="paymentDetailBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-white" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle WebPay -->
+<div class="modal fade" id="webpayDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-primary">
+                <h5 class="modal-title"><i class="bi bi-credit-card-2-front me-2"></i>Detalle Transacción WebPay</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="webpayDetailBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-white" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reembolso -->
+<div class="modal fade" id="refundModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-warning">
+                <h5 class="modal-title"><i class="bi bi-arrow-return-left me-2"></i>Procesar Reembolso</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="refundForm" novalidate>
+                <input type="hidden" id="refundTransactionId" name="transaction_id">
+                <input type="hidden" id="refundIsWebpay" name="is_webpay" value="false">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Transacción Original</label>
+                        <input type="text" class="form-control" id="refundOriginalInfo" readonly style="background: var(--color-crema);">
+                    </div>
+                    <div class="mb-3">
+                        <label for="refundAmount" class="form-label fw-medium">Monto a Reembolsar <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="refundAmount" name="amount" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="refundReason" class="form-label fw-medium">Motivo <span class="text-danger">*</span></label>
+                        <select class="form-select" id="refundReason" name="reason" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="CLIENTE_SOLICITA">Cliente solicita devolución</option>
+                            <option value="PRODUCTO_DEFECTUOSO">Producto defectuoso</option>
+                            <option value="ENTREGA_NO_REALIZADA">Entrega no realizada</option>
+                            <option value="DUPLICADO">Pago duplicado</option>
+                            <option value="OTRO">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="refundNotes" class="form-label">Notas</label>
+                        <textarea class="form-control" id="refundNotes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark">
+                        <i class="bi bi-arrow-return-left me-1"></i>Procesar Reembolso
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let paymentsCurrentPage = 1;
+let paymentsSearchTimeout;
+let webpayCurrentPage = 1;
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', function() {
+    loadPaymentKpis();
+    loadPayments();
+    loadWebpayTransactions();
+    setupRefundForm();
+
+    // Set default dates
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('paymentDateFrom').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('paymentDateTo').value = today.toISOString().split('T')[0];
+    document.getElementById('conciliationDate').value = today.toISOString().split('T')[0];
+});
+
+// ==================== KPIs ====================
+async function loadPaymentKpis() {
+    try {
+        const response = await apiFetch('payments/stats/');
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('kpiPaymentsPending').textContent = data.pending_count || 0;
+            document.getElementById('kpiPaymentsPaid').textContent = data.paid_count || 0;
+            document.getElementById('kpiPaymentsAmount').textContent = formatCLP(data.paid_amount || 0);
+            document.getElementById('kpiPaymentsFailed').textContent = data.failed_count || 0;
+        }
+    } catch (error) {
+        console.error('Error cargando KPIs de pagos:', error);
+    }
+}
+
+// ==================== TRANSACCIONES ====================
+async function loadPayments(page = 1) {
+    paymentsCurrentPage = page;
+    const search = document.getElementById('paymentSearch').value;
+    const status = document.getElementById('paymentStatusFilter').value;
+    const method = document.getElementById('paymentMethodFilter').value;
+    const dateFrom = document.getElementById('paymentDateFrom').value;
+    const dateTo = document.getElementById('paymentDateTo').value;
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: 20,
+        ordering: '-created_at'
+    });
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    if (method) params.append('method', method);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+
+    try {
+        const response = await apiFetch(`payments/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando pagos');
+        const data = await response.json();
+        renderPaymentsTable(data.results || data);
+        renderPagination(data, 'payments');
+        document.getElementById('tabCountTransacciones').textContent = data.count || 0;
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar pagos', 'danger');
+    }
+}
+
+function debounceSearchPayments() {
+    clearTimeout(paymentsSearchTimeout);
+    paymentsSearchTimeout = setTimeout(() => loadPayments(1), 300);
+}
+
+function renderPaymentsTable(payments) {
+    const tbody = document.getElementById('paymentsTableBody');
+    if (!payments || payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-1 d-block"></i>No hay pagos registrados</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = payments.map(p => `
+        <tr class="transaction-row ${p.status.toLowerCase()}">
+            <td data-label="Pago"><strong>#${p.id}</strong></td>
+            <td data-label="Pedido"><strong>#${p.order_id}</strong></td>
+            <td data-label="Cliente">${escapeHtml(p.client_name || '—')}</td>
+            <td data-label="Método"><span class="method-badge ${p.method.toLowerCase()}">${getPaymentMethodLabel(p.method)}</span></td>
+            <td data-label="Monto"><strong>${formatCLP(p.amount)}</strong></td>
+            <td data-label="Estado"><span class="status-badge ${p.status.toLowerCase()}">${getPaymentStatusLabel(p.status)}</span></td>
+            <td data-label="Fecha">${formatDate(p.created_at)}</td>
+            <td data-label="Acciones">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-primary" onclick="viewPaymentDetail(${p.id})" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${p.method === 'WEBPAY' && p.status === 'PAGADO' ? `
+                        <button class="btn btn-outline-warning" onclick="openRefundModal(${p.id})" title="Reembolso">
+                            <i class="bi bi-arrow-return-left"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getPaymentMethodColor(method) {
+    const colors = { 'WEBPAY': 'primary', 'EFECTIVO': 'success', 'TRANSFERENCIA': 'info' };
+    return colors[method] || 'secondary';
+}
+
+function getPaymentMethodLabel(method) {
+    const labels = { 'WEBPAY': 'WebPay', 'EFECTIVO': 'Efectivo', 'TRANSFERENCIA': 'Transferencia' };
+    return labels[method] || method;
+}
+
+function getPaymentStatusColor(status) {
+    const colors = {
+        'PENDIENTE': 'warning', 'INICIADA': 'info', 'PAGADO': 'success',
+        'FALLIDO': 'danger', 'ANULADO': 'secondary', 'REEMBOLSADO': 'purple',
+    };
+    return colors[status] || 'secondary';
+}
+
+function getPaymentStatusLabel(status) {
+    const labels = {
+        'PENDIENTE': 'Pendiente', 'INICIADA': 'Iniciada', 'PAGADO': 'Pagado',
+        'FALLIDO': 'Fallido', 'ANULADO': 'Anulado', 'REEMBOLSADO': 'Reembolsado',
+    };
+    return labels[status] || status;
+}
+
+// ==================== WEBPAY TRANSACTIONS ====================
+async function loadWebpayTransactions(page = 1) {
+    webpayCurrentPage = page;
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: 20,
+        ordering: '-created_at'
+    });
+
+    try {
+        const response = await apiFetch(`webpay-transactions/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando transacciones WebPay');
+        const data = await response.json();
+        renderWebpayCards(data.results || data);
+        renderPagination(data, 'webpay');
+        document.getElementById('tabCountWebpay').textContent = data.count || 0;
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar transacciones WebPay', 'danger');
+    }
+}
+
+function renderWebpayCards(transactions) {
+    const container = document.getElementById('webpayCardsContainer');
+    if (!transactions || transactions.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-credit-card-2-front fs-1 text-muted"></i>
+                <p class="text-muted mt-2">No hay transacciones WebPay</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = transactions.map(t => {
+        const statusClass = t.status.toLowerCase();
+        const statusLabel = getWebpayStatusLabel(t.status);
+        return `
+            <div class="webpay-card">
+                <div class="webpay-card-header">
+                    <h6>
+                        <i class="bi bi-credit-card-2-front me-2"></i>
+                        ${t.buy_order}
+                        <span class="status-badge ${statusClass} ms-2">${statusLabel}</span>
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <strong class="text-white">${formatCLP(t.amount)}</strong>
+                        <small class="text-white-50">${formatDate(t.created_at)}</small>
+                    </div>
+                </div>
+                <div class="webpay-card-body">
+                    <div class="webpay-detail-row">
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Token</span>
+                            <span class="webpay-detail-value"><code>${t.token || '—'}</code></span>
+                        </div>
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Pedido</span>
+                            <span class="webpay-detail-value"><strong>#${t.order_id}</strong></span>
+                        </div>
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Session ID</span>
+                            <span class="webpay-detail-value"><code>${t.session_id || '—'}</code></span>
+                        </div>
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Código Respuesta</span>
+                            <span class="webpay-detail-value"><code>${t.response_code || '—'}</code></span>
+                        </div>
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Auth Code</span>
+                            <span class="webpay-detail-value"><code>${t.auth_code || '—'}</code></span>
+                        </div>
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Tarjeta</span>
+                            <span class="webpay-detail-value">${t.card_last_four ? '•••• ' + t.card_last_four : '—'}</span>
+                        </div>
+                        <div class="webpay-detail-item">
+                            <span class="webpay-detail-label">Cuotas</span>
+                            <span class="webpay-detail-value">${t.installments || 1}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewWebpayDetail('${t.token}')">
+                            <i class="bi bi-eye me-1"></i>Ver JSON
+                        </button>
+                        ${t.status === 'PAGADO' ? `
+                            <button class="btn btn-outline-warning btn-sm" onclick="openRefundModalWebpay('${t.token}')">
+                                <i class="bi bi-arrow-return-left me-1"></i>Reembolso
+                            </button>
+                        ` : ''}
+                        ${t.status === 'INICIADA' || t.status === 'PENDIENTE' ? `
+                            <button class="btn btn-outline-danger btn-sm" onclick="cancelWebpayTransaction('${t.token}')">
+                                <i class="bi bi-x-circle me-1"></i>Anular
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getWebpayStatusColor(status) {
+    const colors = {
+        'PENDIENTE': 'warning', 'INICIADA': 'info', 'PAGADO': 'success',
+        'FALLIDO': 'danger', 'ANULADO': 'secondary', 'REEMBOLSADO': 'purple',
+    };
+    return colors[status] || 'secondary';
+}
+
+function getWebpayStatusLabel(status) {
+    const labels = {
+        'PENDIENTE': 'Pendiente', 'INICIADA': 'Iniciada', 'PAGADO': 'Pagado',
+        'FALLIDO': 'Fallido', 'ANULADO': 'Anulado', 'REEMBOLSADO': 'Reembolsado',
+    };
+    return labels[status] || status;
+}
+
+function renderPagination(data, type) {
+    const container = document.getElementById(`${type}PaginationList`);
+    if (!container) return;
+
+    const current = data.page || 1;
+    const total = data.total_pages || 1;
+    let html = '';
+
+    if (current > 1) {
+        const fn = type === 'payments' ? 'loadPayments' : 'loadWebpayTransactions';
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${fn}(${current - 1})"><i class="bi bi-chevron-left"></i></a></li>`;
+    }
+
+    for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+        const fn = type === 'payments' ? 'loadPayments' : 'loadWebpayTransactions';
+        html += `<li class="page-item ${i === current ? 'active' : ''}"><a class="page-link" href="#" onclick="${fn}(${i})">${i}</a></li>`;
+    }
+
+    if (current < total) {
+        const fn = type === 'payments' ? 'loadPayments' : 'loadWebpayTransactions';
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${fn}(${current + 1})"><i class="bi bi-chevron-right"></i></a></li>`;
+    }
+
+    container.innerHTML = html;
+}
+
+// ==================== DETALLE PAGO ====================
+async function viewPaymentDetail(paymentId) {
+    const modal = new bootstrap.Modal(document.getElementById('paymentDetailModal'));
+    modal.show();
+
+    document.getElementById('paymentDetailBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-chocolate"></div></div>';
+
+    try {
+        const response = await apiFetch(`payments/${paymentId}/`);
+        if (!response.ok) throw new Error('Error cargando pago');
+        const p = await response.json();
+
+        let webpayInfo = '';
+        if (p.webpay_transaction) {
+            const w = p.webpay_transaction;
+            webpayInfo = `
+                <hr>
+                <h6><i class="bi bi-credit-card-2-front me-2"></i>Detalle WebPay</h6>
+                <div class="webpay-detail-row">
+                    <div class="webpay-detail-item">
+                        <span class="webpay-detail-label">Token</span>
+                        <span class="webpay-detail-value"><code>${w.token}</code></span>
+                    </div>
+                    <div class="webpay-detail-item">
+                        <span class="webpay-detail-label">Orden Compra</span>
+                        <span class="webpay-detail-value">${w.buy_order}</span>
+                    </div>
+                    <div class="webpay-detail-item">
+                        <span class="webpay-detail-label">Session ID</span>
+                        <span class="webpay-detail-value">${w.session_id}</span>
+                    </div>
+                    <div class="webpay-detail-item">
+                        <span class="webpay-detail-label">Código Respuesta</span>
+                        <span class="webpay-detail-value"><code>${w.response_code || '—'}</code></span>
+                    </div>
+                    <div class="webpay-detail-item" style="grid-column: 1 / -1;">
+                        <span class="webpay-detail-label">Respuesta Completa</span>
+                        <pre class="json-preview">${JSON.stringify(w.response_json, null, 2)}</pre>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('paymentDetailBody').innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Pedido:</strong> #${p.order_id}</p>
+                    <p class="mb-1"><strong>Cliente:</strong> ${escapeHtml(p.client_name || '—')}</p>
+                    <p class="mb-0"><strong>Método:</strong> <span class="method-badge ${p.method.toLowerCase()}">${getPaymentMethodLabel(p.method)}</span></p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1"><strong>Monto:</strong> ${formatCLP(p.amount)}</p>
+                    <p class="mb-1"><strong>Estado:</strong> <span class="status-badge ${p.status.toLowerCase()}">${getPaymentStatusLabel(p.status)}</span></p>
+                    <p class="mb-0"><strong>Fecha:</strong> ${formatDate(p.created_at)}</p>
+                </div>
+            </div>
+            ${p.transaction_id ? `<p class="mb-1"><strong>ID Transacción:</strong> ${p.transaction_id}</p>` : ''}
+            ${p.paid_at ? `<p class="mb-1"><strong>Pagado el:</strong> ${formatDate(p.paid_at)}</p>` : ''}
+            ${p.notes ? `<p class="mb-0"><strong>Notas:</strong> ${escapeHtml(p.notes)}</p>` : ''}
+            ${webpayInfo}
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('paymentDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+async function viewWebpayDetail(token) {
+    const modal = new bootstrap.Modal(document.getElementById('webpayDetailModal'));
+    modal.show();
+
+    document.getElementById('webpayDetailBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-info"></div></div>';
+
+    try {
+        const response = await apiFetch(`webpay-transactions/${token}/`);
+        if (!response.ok) throw new Error('Error cargando transacción');
+        const t = await response.json();
+
+        document.getElementById('webpayDetailBody').innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Orden Compra:</strong> ${t.buy_order}</p>
+                    <p class="mb-1"><strong>Pedido:</strong> #${t.order_id}</p>
+                    <p class="mb-0"><strong>Monto:</strong> ${formatCLP(t.amount)}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1"><strong>Estado:</strong> <span class="status-badge ${t.status.toLowerCase()}">${getWebpayStatusLabel(t.status)}</span></p>
+                    <p class="mb-1"><strong>Token:</strong> <code>${t.token}</code></p>
+                    <p class="mb-0"><strong>Fecha:</strong> ${formatDate(t.created_at)}</p>
+                </div>
+            </div>
+            <hr>
+            <h6><i class="bi bi-code me-2"></i>Respuesta Transbank</h6>
+            <div class="webpay-detail-row">
+                <div class="webpay-detail-item">
+                    <span class="webpay-detail-label">Código</span>
+                    <span class="webpay-detail-value"><code>${t.response_code || '—'}</code></span>
+                </div>
+                <div class="webpay-detail-item">
+                    <span class="webpay-detail-label">Auth Code</span>
+                    <span class="webpay-detail-value"><code>${t.auth_code || '—'}</code></span>
+                </div>
+                <div class="webpay-detail-item">
+                    <span class="webpay-detail-label">Tarjeta (últimos 4)</span>
+                    <span class="webpay-detail-value">${t.card_last_four || '—'}</span>
+                </div>
+                <div class="webpay-detail-item">
+                    <span class="webpay-detail-label">Cuotas</span>
+                    <span class="webpay-detail-value">${t.installments || 1}</span>
+                </div>
+                <div class="webpay-detail-item" style="grid-column: 1 / -1;">
+                    <span class="webpay-detail-label">JSON Completo</span>
+                    <pre class="json-preview">${JSON.stringify(t.response_json, null, 2)}</pre>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('webpayDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+// ==================== REEMBOLSO ====================
+function setupRefundForm() {
+    document.getElementById('refundForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            return;
+        }
+
+        const btn = this.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+        const data = {
+            transaction_id: document.getElementById('refundTransactionId').value,
+            amount: parseFloat(document.getElementById('refundAmount').value),
+            reason: document.getElementById('refundReason').value,
+            notes: document.getElementById('refundNotes').value
+        };
+
+        try {
+            const endpoint = document.getElementById('refundIsWebpay').value === 'true'
+                ? `webpay-transactions/${data.transaction_id}/refund/`
+                : `payments/${data.transaction_id}/refund/`;
+
+            const response = await apiFetch(endpoint, {
+                method: 'POST',
+                body: JSON.stringify({
+                    amount: data.amount,
+                    reason: data.reason,
+                    notes: data.notes
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Error procesando reembolso');
+            }
+
+            showToast('Reembolso procesado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('refundModal')).hide();
+            loadPayments();
+            loadWebpayTransactions();
+            loadPaymentKpis();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al procesar reembolso: ' + error.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-return-left me-1"></i>Procesar Reembolso';
+        }
+    });
+}
+
+function openRefundModal(paymentId) {
+    apiFetch(`payments/${paymentId}/`).then(res => res.json()).then(p => {
+        if (p.webpay_transaction) {
+            document.getElementById('refundTransactionId').value = p.webpay_transaction.token;
+            document.getElementById('refundIsWebpay').value = 'true';
+            document.getElementById('refundOriginalInfo').value = `#${p.id} - ${formatCLP(p.amount)} - ${p.webpay_transaction.token}`;
+            document.getElementById('refundAmount').max = p.amount;
+            document.getElementById('refundAmount').value = p.amount;
+            document.getElementById('refundForm').reset();
+            document.getElementById('refundTransactionId').value = p.webpay_transaction.token;
+            document.getElementById('refundIsWebpay').value = 'true';
+            document.getElementById('refundOriginalInfo').value = `#${p.id} - ${formatCLP(p.amount)} - ${p.webpay_transaction.token}`;
+            document.getElementById('refundAmount').value = p.amount;
+            new bootstrap.Modal(document.getElementById('refundModal')).show();
+        } else {
+            showToast('Solo transacciones WebPay pueden reembolsarse', 'warning');
+        }
+    });
+}
+
+function openRefundModalWebpay(token) {
+    apiFetch(`webpay-transactions/${token}/`).then(res => res.json()).then(t => {
+        document.getElementById('refundTransactionId').value = t.token;
+        document.getElementById('refundIsWebpay').value = 'true';
+        document.getElementById('refundOriginalInfo').value = `WebPay ${t.token} - ${formatCLP(t.amount)}`;
+        document.getElementById('refundAmount').max = t.amount;
+        document.getElementById('refundAmount').value = t.amount;
+        new bootstrap.Modal(document.getElementById('refundModal')).show();
+    });
+}
+
+async function cancelWebpayTransaction(token) {
+    if (!confirm('¿Anular esta transacción WebPay?')) return;
+
+    try {
+        const response = await apiFetch(`webpay-transactions/${token}/cancel/`, { method: 'POST' });
+        if (!response.ok) throw new Error('Error anulando transacción');
+        showToast('Transacción anulada', 'success');
+        loadWebpayTransactions();
+        loadPaymentKpis();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al anular transacción', 'danger');
+    }
+}
+
+// ==================== CONCILIACIÓN ====================
+async function runConciliation() {
+    const date = document.getElementById('conciliationDate').value;
+    if (!date) {
+        showToast('Seleccione una fecha', 'warning');
+        return;
+    }
+
+    const container = document.getElementById('conciliationResults');
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-chocolate"></div><p class="mt-2">Conciliando...</p></div>';
+
+    try {
+        const response = await apiFetch(`webpay-transactions/conciliation/`, {
+            method: 'POST',
+            body: JSON.stringify({ date })
+        });
+        if (!response.ok) throw new Error('Error en conciliación');
+        const data = await response.json();
+
+        container.innerHTML = renderConciliationResults(data, date);
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `<div class="alert alert-danger">Error en conciliación: ${error.message}</div>`;
+    }
+}
+
+function renderConciliationResults(data, date) {
+    const match = data.match;
+    const diffClass = data.difference > 0 ? 'difference-positive' : (data.difference < 0 ? 'difference-negative' : '');
+    const diffLabel = data.difference > 0 ? '(Sistema > WebPay)' : data.difference < 0 ? '(WebPay > Sistema)' : '';
+
+    let html = `
+        <div class="conciliation-card">
+            <div class="conciliation-header">
+                <div>
+                    <span class="conciliation-match ${match ? 'success' : 'warning'}">
+                        <i class="bi bi-${match ? 'check-circle' : 'exclamation-triangle'}"></i>
+                        ${match ? 'Conciliación Exitosa' : 'Diferencias Encontradas'}
+                    </span>
+                </div>
+                <small class="text-muted">${formatDate(date)}</small>
+            </div>
+            <div class="conciliation-totals">
+                <div class="conciliation-total-item">
+                    <div class="conciliation-total-label">Total Sistema</div>
+                    <div class="conciliation-total-value">${formatCLP(data.system_total)}</div>
+                </div>
+                <div class="conciliation-total-item">
+                    <div class="conciliation-total-label">Total WebPay</div>
+                    <div class="conciliation-total-value">${formatCLP(data.webpay_total)}</div>
+                </div>
+                <div class="conciliation-total-item">
+                    <div class="conciliation-total-label">Diferencia ${diffLabel}</div>
+                    <div class="conciliation-total-value ${diffClass}">${formatCLP(Math.abs(data.difference))}</div>
+                </div>
+            </div>
+    `;
+
+    if (data.discrepancies && data.discrepancies.length > 0) {
+        html += `
+            <div class="conciliation-discrepancies">
+                <h6 class="mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Discrepancias Detectadas (${data.discrepancies.length})</h6>
+                ${data.discrepancies.map(d => {
+                    const diff = d.difference;
+                    const diffClass = diff > 0 ? 'positive' : (diff < 0 ? 'negative' : '');
+                    return `
+                        <div class="conciliation-discrepancy-item">
+                            <div class="discrepancy-info">
+                                <div class="discrepancy-type">${d.type}</div>
+                                <div class="discrepancy-ref">${d.reference}</div>
+                            </div>
+                            <div class="discrepancy-amounts">
+                                <span>Sistema: ${formatCLP(d.system_amount)}</span>
+                                <span>WebPay: ${formatCLP(d.webpay_amount)}</span>
+                                <span class="discrepancy-diff ${diffClass}">${formatCLP(Math.abs(diff))}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+function exportConciliation() {
+    showToast('Exportación de conciliación - En desarrollo', 'info');
+}
+
+function exportPayments(format) {
+    const search = document.getElementById('paymentSearch').value;
+    const status = document.getElementById('paymentStatusFilter').value;
+    const method = document.getElementById('paymentMethodFilter').value;
+    const dateFrom = document.getElementById('paymentDateFrom').value;
+    const dateTo = document.getElementById('paymentDateTo').value;
+
+    let url = `/api/v1/payments/export/?format=${format}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (status) url += `&status=${status}`;
+    if (method) url += `&method=${method}`;
+    if (dateFrom) url += `&date_from=${dateFrom}`;
+    if (dateTo) url += `&date_to=${dateTo}`;
+
+    window.open(url, '_blank');
+    showToast(`Exportando a ${format.toUpperCase()}...`, 'info');
+}
+</script>
+{% endblock %}

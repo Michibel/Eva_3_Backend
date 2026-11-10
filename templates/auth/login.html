@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Dulce Arte Pastelería Fina{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* Estilo Marriet Pastelería Fina */
+    .login-page {
+        min-height: 100vh;
+        display: flex;
+        background-color: #F8F7F5;
+        font-family: 'Montserrat', -apple-system, sans-serif;
+    }
+
+    .login-illustration {
+        flex: 1.1;
+        max-width: 52%;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 3.5rem;
+        background: linear-gradient(165deg, #11100C 0%, #1A1612 50%, #261D15 100%);
+        position: relative;
+        overflow: hidden;
+        color: #F8F7F5;
+        border-right: 1px solid rgba(197, 160, 89, 0.25);
+    }
+
+    .login-illustration::before {
+        content: '';
+        position: absolute;
+        top: -20%;
+        right: -20%;
+        width: 70%;
+        height: 70%;
+        background: radial-gradient(circle, rgba(197, 160, 89, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    @media (min-width: 992px) {
+        .login-illustration {
+            display: flex;
+        }
+    }
+
+    .login-brand {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #C5A059 0%, #E0C788 50%, #B38E46 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .login-logo svg,
+    .login-logo i {
+        width: 40px;
+        height: 40px;
+        color: #11100C;
+    }
+
+    .login-brand h1 {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 3rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #F8F7F5;
+        margin-bottom: 0.4rem;
+        line-height: 1;
+    }
+
+    .login-brand .tagline {
+        font-size: 0.75rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: #C5A059;
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+
+    .login-divider-gold {
+        width: 60px;
+        height: 1px;
+        background: #C5A059;
+        margin: 1.5rem auto;
+    }
+
+    .login-story {
+        text-align: center;
+        max-width: 440px;
+        margin: 0 auto 2.5rem;
+    }
+
+    .login-story p {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.25rem;
+        font-style: italic;
+        line-height: 1.6;
+        color: rgba(248, 247, 245, 0.85);
+        margin-bottom: 0.5rem;
+    }
+
+    .login-features {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        max-width: 420px;
+        width: 100%;
+    }
+
+    .login-feature {
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        padding: 0.9rem 1.2rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(197, 160, 89, 0.15);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .login-feature:hover {
+        background: rgba(197, 160, 89, 0.06);
+        border-color: rgba(197, 160, 89, 0.35);
+    }
+
+    .login-feature-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(197, 160, 89, 0.12);
+        color: #C5A059;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+
+    .login-feature-text h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #F8F7F5;
+        margin: 0 0 2px;
+        letter-spacing: 0.02em;
+    }
+
+    .login-feature-text p {
+        font-size: 0.75rem;
+        color: rgba(248, 247, 245, 0.6);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .login-form-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+        background-color: #F8F7F5;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        background-color: #FFFFFF;
+        border: 1px solid #EAE6DF;
+        border-radius: 4px;
+        box-shadow: 0 15px 35px rgba(26, 22, 18, 0.06);
+        overflow: hidden;
+    }
+
+    .login-card-header {
+        background: #FFFFFF;
+        padding: 2.5rem 2.5rem 1.5rem;
+        text-align: center;
+        border-bottom: 1px solid #F0ECE4;
+    }
+
+    .login-card-title {
+        font-family: 'Cormorant Garamond', Georgia, serif;
+        font-size: 2rem;
+        font-weight: 600;
+        color: #16120E;
+        margin: 0 0 0.3rem;
+        letter-spacing: 0.02em;
+    }
+
+    .login-card-subtitle {
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8C827A;
+        margin: 0;
+    }
+
+    .login-card-body {
+        padding: 2.5rem;
+    }
+
+    .login-form .form-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #4A423B;
+        margin-bottom: 0.4rem;
+    }
+
+    .login-form .input-group {
+        border: 1px solid #D9D2C7;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+        background: #FFFFFF;
+    }
+
+    .login-form .input-group:focus-within {
+        border-color: #C5A059;
+        box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.15);
+    }
+
+    .login-form .input-group-text {
+        background-color: transparent;
+        border: none;
+        color: #8C827A;
+        padding-left: 1rem;
+    }
+
+    .login-form .input-group .form-control {
+        border: none;
+        padding: 0.75rem 1rem 0.75rem 0.5rem;
+        font-size: 0.9rem;
+        color: #16120E;
+        box-shadow: none !important;
+    }
+
+    .login-form .form-check-label {
+        font-size: 0.8rem;
+        color: #635A52;
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 0.9rem 1.5rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        background: #16120E;
+        border: 1px solid #16120E;
+        color: #F8F7F5;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-btn:hover {
+        background: #C5A059;
+        border-color: #C5A059;
+        color: #16120E;
+    }
+
+    .login-footer-link {
+        color: #C5A059;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .login-footer-link:hover {
+        color: #16120E;
+        text-decoration: underline;
+    }
+
+    .login-card-title {
+        font-family: var(--font-heading);
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        margin: 0 0 var(--space-1);
+    }
+
+    .login-card-subtitle {
+        opacity: 0.8;
+        margin: 0;
+    }
+
+    .login-card-body {
+        padding: var(--space-6);
+    }
+
+    .login-form .form-group {
+        margin-bottom: var(--space-4);
+    }
+
+    .login-form .form-label {
+        font-weight: var(--font-weight-medium);
+    }
+
+    .login-form .input-group {
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+
+    .login-form .input-group-text {
+        background-color: var(--color-crema);
+        border: 2px solid var(--color-crema-oscuro);
+        border-right: none;
+        color: var(--color-texto-muted);
+        transition: var(--transicion-rapida);
+    }
+
+    .login-form .input-group .form-control {
+        border-left: none;
+        border-radius: 0;
+        border-top-right-radius: var(--radius-md);
+        border-bottom-right-radius: var(--radius-md);
+    }
+
+    .login-form .input-group:focus-within .input-group-text {
+        border-color: var(--color-dorado);
+        color: var(--color-chocolate);
+    }
+
+    .login-form .input-group:focus-within .form-control {
+        border-color: var(--color-dorado);
+    }
+
+    .login-form .form-check {
+        margin-bottom: var(--space-4);
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-4);
+    }
+
+    .login-footer {
+        text-align: center;
+    }
+
+    .login-footer-text {
+        font-size: var(--font-size-sm);
+        color: var(--color-texto-muted);
+        margin: 0;
+    }
+
+    .login-footer-link {
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-chocolate);
+    }
+
+    .login-footer-link:hover {
+        color: var(--color-dorado);
+    }
+
+    /* Decorative elements */
+    .decorative-swirl {
+        position: absolute;
+        opacity: 0.03;
+        pointer-events: none;
+    }
+
+    .decorative-swirl-1 {
+        top: 10%;
+        left: 5%;
+        width: 200px;
+        height: 200px;
+    }
+
+    .decorative-swirl-2 {
+        bottom: 10%;
+        right: 5%;
+        width: 150px;
+        height: 150px;
+        transform: rotate(180deg);
+    }
+
+    @media (max-width: 991px) {
+        .decorative-swirl {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <!-- Left side: Brand illustration & story -->
+    <div class="login-illustration">
+        <div class="decorative-swirl decorative-swirl-1">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5C77.6 5 100 27.4 100 55C100 82.6 77.6 105 50 105C22.4 105 0 82.6 0 55C0 27.4 22.4 5 50 5Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M50 20C33.4 20 20 33.4 20 50C20 66.6 33.4 80 50 80C66.6 80 80 66.6 80 50C80 33.4 66.6 20 50 20Z" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+        </div>
+
+        <div class="login-brand">
+            <div class="login-logo">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <!-- Cupcake illustration -->
+                    <path d="M24 4C28.4 4 32 7.6 32 12C32 16.4 28.4 20 24 20C19.6 20 16 16.4 16 12C16 7.6 19.6 4 24 4Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M24 12V20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 20C14 24.4 17.6 28 22 28H26C30.4 28 34 24.4 34 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M10 28C10 32.4 13.6 36 18 36H30C34.4 36 38 32.4 38 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 36C8 40.4 11.6 44 16 44H32C36.4 44 40 40.4 40 36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Cherry on top -->
+                    <circle cx="24" cy="2" r="4" fill="currentColor"/>
+                </svg>
+            </div>
+            <h1>Dulce Arte</h1>
+            <p class="tagline">Pastelería Artesanal Chilena</p>
+        </div>
+
+        <div class="login-story">
+            <p>Desde 2015, en Dulce Arte endulzamos los momentos más especiales de las familias chilenas. Cada torta, cada pie, cada galleta sale de nuestro obrador con la misma dedicación que la primera: ingredientes nobles, recetas de abuela y mucho cariño.</p>
+            <p>Creemos que la pastelería artesanal no es solo comida, es memoria. Es el olor a vainilla que te recibe al llegar a casa de la abuela, es la primera mordida de una torta de cumpleaños, es compartir un café con quienes más quieres.</p>
+        </div>
+
+        <div class="login-features">
+            <div class="login-feature">
+                <div class="login-feature-icon">
+                    <i class="bi bi-gem fs-5"></i>
+                </div>
+                <div class="login-feature-text">
+                    <h4>Ingredientes Nobles</h4>
+                    <p>Solo usamos mantequilla, chocolate belga, frutas de estación y harinas seleccionadas</p>
+                </div>
+            </div>
+            <div class="login-feature">
+                <div class="login-feature-icon">
+                    <i class="bi bi-heart fs-5"></i>
+                </div>
+                <div class="login-feature-text">
+                    <h4>Hecho a Mano Diario</h4>
+                    <p>Nuestro obrador amasa, hornea y decora fresco cada madrugada</p>
+                </div>
+            </div>
+            <div class="login-feature">
+                <div class="login-feature-icon">
+                    <i class="bi bi-truck fs-5"></i>
+                </div>
+                <div class="login-feature-text">
+                    <h4>Entrega en Todo Chile</h4>
+                    <p>Llegamos a tu mesa con la misma frescura que sale del horno</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="decorative-swirl decorative-swirl-2">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5C77.6 5 100 27.4 100 55C100 82.6 77.6 105 50 105C22.4 105 0 82.6 0 55C0 27.4 22.4 5 50 5Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Right side: Login form -->
+    <div class="login-form-container">
+        <div class="login-card">
+            <div class="login-card-header">
+                <h2 class="login-card-title">Bienvenido de vuelta</h2>
+                <p class="login-card-subtitle">Accede a tu panel de gestión</p>
+            </div>
+
+            <div class="login-card-body">
+                <form method="post" novalidate id="loginForm" class="login-form">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        {{ form.non_field_errors }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Usuario o Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text" aria-hidden="true">
+                                <i class="bi bi-person"></i>
+                            </span>
+                            {{ form.username }}
+                        </div>
+                        {% if form.username.errors %}
+                        <div class="form-text text-danger">
+                            <i class="bi bi-exclamation-circle me-1"></i>{{ form.username.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text" aria-hidden="true">
+                                <i class="bi bi-lock"></i>
+                            </span>
+                            {{ form.password }}
+                        </div>
+                        {% if form.password.errors %}
+                        <div class="form-text text-danger">
+                            <i class="bi bi-exclamation-circle me-1"></i>{{ form.password.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remember" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">
+                            Recordarme
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg login-btn" id="loginBtn">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                        Iniciar Sesión
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <p class="login-footer-text">
+                        ¿No tienes cuenta?
+                        <a href="{% url 'register' %}" class="login-footer-link">Regístrate</a>
+                    </p>
+                </div>
+
+                <!-- Demo credentials hint -->
+                <details class="mt-4" style="border-top: 1px solid var(--color-crema-oscuro); padding-top: var(--space-4);">
+                    <summary class="cursor-pointer text-muted small fw-medium">
+                        <i class="bi bi-info-circle me-1"></i>Credenciales de prueba
+                    </summary>
+                    <div class="mt-2 p-3 bg-light rounded small">
+                        <div class="mb-1"><strong>Usuario:</strong> admin@dulcearte.cl | <strong>Pass:</strong> demo123</div>
+                        <div class="mb-1"><strong>Roles:</strong> ADMIN, VENTAS, COCINERO, BODEGA, REPARTIDOR, CLIENTE</div>
+                        <div class="text-muted">Todos los usuarios demo usan password: <code>demo123</code></div>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Iniciando...';
+
+            // Let the form submit normally (Django session auth)
+            // After successful login, the dashboard will initialize JWT tokens via API
+        });
+    }
+
+    // Enhanced input group focus effects
+    document.querySelectorAll('.input-group .form-control').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.closest('.input-group').classList.add('focused');
+        });
+        input.addEventListener('blur', function() {
+            this.closest('.input-group').classList.remove('focused');
+        });
+    });
+
+    // Password visibility toggle
+    const passwordInput = document.querySelector('input[type="password"]');
+    if (passwordInput) {
+        const inputGroup = passwordInput.closest('.input-group');
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn btn-ghost input-group-text';
+        toggleBtn.innerHTML = '<i class="bi bi-eye"></i>';
+        toggleBtn.style.borderLeft = 'none';
+        toggleBtn.style.borderTopRightRadius = 'var(--radius-md)';
+        toggleBtn.style.borderBottomRightRadius = 'var(--radius-md)';
+        toggleBtn.setAttribute('aria-label', 'Mostrar/ocultar contraseña');
+
+        inputGroup.appendChild(toggleBtn);
+        passwordInput.style.borderTopRightRadius = 'var(--radius-md)';
+        passwordInput.style.borderBottomRightRadius = 'var(--radius-md)';
+
+        toggleBtn.addEventListener('click', function() {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+            this.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+        });
+    }
+});
+</script>
+{% endblock %}

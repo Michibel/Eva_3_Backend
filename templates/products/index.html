@@ -1,0 +1,1526 @@
+{% extends 'base.html' %}
+
+{% block title %}Productos / Recetas - Dulce Arte{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Product Grid Layout */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+}
+
+@media (max-width: 575.98px) {
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .products-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Product Card */
+.product-card {
+    background: var(--color-blanco);
+    border: 1px solid var(--color-crema-oscuro);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transicion-normal);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.product-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-4px);
+}
+
+.product-card-image {
+    height: 180px;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--color-crema) 0%, var(--color-dorado-claro) 100%);
+}
+
+.product-card-image-placeholder {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-crema) 0%, var(--color-dorado-claro) 100%);
+    color: var(--color-dorado);
+    font-size: 3rem;
+}
+
+.product-card-body {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.product-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-2);
+}
+
+.product-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.product-card-category {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.product-card-description {
+    color: var(--color-texto-suave);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    flex-grow: 1;
+    margin-bottom: var(--space-3);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-crema-oscuro);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-suave);
+    background: var(--color-crema);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.meta-item strong {
+    color: var(--color-texto);
+    font-weight: var(--font-weight-medium);
+}
+
+.product-card-pricing {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-crema-oscuro);
+    margin-top: auto;
+}
+
+.price-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.price-sale {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+}
+
+.price-base {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-decoration: line-through;
+}
+
+.price-margin {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-full);
+}
+
+.margin-high { background-color: var(--color-exito); color: var(--color-blanco); }
+.margin-medium { background-color: var(--color-advertencia); color: var(--color-cacao); }
+.margin-low { background-color: var(--color-error); color: var(--color-blanco); }
+
+/* Filter Bar */
+.filter-bar {
+    background: var(--color-blanco);
+    border: 1px solid var(--color-crema-oscuro);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.filter-bar .input-group-text {
+    background: var(--color-crema);
+    border-color: var(--color-crema-oscuro);
+    color: var(--color-texto-muted);
+}
+
+.filter-bar .form-control,
+.filter-bar .form-select {
+    border-color: var(--color-crema-oscuro);
+}
+
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-focus);
+}
+
+/* Stats Bar */
+.stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-blanco);
+    border: 1px solid var(--color-crema-oscuro);
+    border-radius: var(--radius-md);
+    min-width: 140px;
+    flex: 1;
+    max-width: 200px;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--color-blanco);
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* BOM Modal */
+.bom-item-row {
+    transition: background-color 0.2s ease;
+}
+
+.bom-item-row:hover {
+    background-color: var(--color-crema);
+}
+
+.bom-ingredient-select {
+    min-width: 200px;
+}
+
+/* Scaled BOM Preview */
+.scaled-bom-card {
+    background: var(--color-crema);
+    border: 1px solid var(--color-dorado-claro);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.scaled-bom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-dorado-claro);
+}
+
+.scaled-bom-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-chocolate);
+    margin: 0;
+}
+
+.scaled-bom-factor {
+    background-color: var(--color-dorado);
+    color: var(--color-cacao);
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+/* View Toggle */
+.view-toggle .btn {
+    border-radius: var(--radius-md) !important;
+}
+
+.view-toggle .btn.active {
+    background-color: var(--color-chocolate);
+    border-color: var(--color-chocolate);
+    color: var(--color-blanco);
+}
+
+/* Empty State */
+.empty-state-grid {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+}
+
+/* Modal Responsive */
+@media (max-width: 767.98px) {
+    .modal-xl {
+        max-width: 100%;
+        margin: 0.5rem;
+    }
+
+    .bom-ingredient-select {
+        min-width: 100%;
+    }
+
+    .bom-table-container {
+        font-size: var(--font-size-xs);
+    }
+}
+
+/* Utility classes for design system */
+.text-chocolate { color: var(--color-chocolate) !important; }
+.text-dorado { color: var(--color-dorado) !important; }
+.text-exito { color: var(--color-exito) !important; }
+.bg-chocolate { background-color: var(--color-chocolate) !important; }
+.border-chocolate { border-color: var(--color-chocolate) !important; }
+.border-dorado { border-color: var(--color-dorado) !important; }
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <i class="bi bi-cupcake me-2 text-secondary"></i>Productos / Recetas
+        <small class="text-muted ms-2">Gestiona tu catálogo y recetas (BOM) con escalado automático 12/20/40 porciones</small>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openCreateProductModal()">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Bar -->
+<div class="stats-bar" id="productsStats">
+    <div class="stat-item">
+        <div class="stat-icon" style="background: var(--color-chocolate);"><i class="bi bi-cupcake"></i></div>
+        <div class="stat-info">
+            <div class="stat-value" id="statTotalProducts">—</div>
+            <div class="stat-label">Total Productos</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon" style="background: var(--color-exito);"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-value" id="statActiveProducts">—</div>
+            <div class="stat-label">Activos</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon" style="background: var(--color-dorado);"><i class="bi bi-list-ul"></i></div>
+        <div class="stat-info">
+            <div class="stat-value" id="statWithBom">—</div>
+            <div class="stat-label">Con Receta (BOM)</div>
+        </div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-icon" style="background: var(--color-info);"><i class="bi bi-calculator"></i></div>
+        <div class="stat-info">
+            <div class="stat-value" id="statAvgMargin">—</div>
+            <div class="stat-label">Margen Promedio</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-medium mb-1">Buscar</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="productSearch" placeholder="Nombre, descripción, categoría..." onkeyup="debounceSearchProducts()">
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label fw-medium mb-1">Categoría</label>
+            <select class="form-select" id="productCategoryFilter" onchange="loadProducts()">
+                <option value="">Todas las categorías</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label fw-medium mb-1">Estado</label>
+            <select class="form-select" id="productStatusFilter" onchange="loadProducts()">
+                <option value="">Todos</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label fw-medium mb-1">Vista</label>
+            <div class="btn-group view-toggle w-100" role="group">
+                <input type="radio" class="btn-check" name="viewMode" id="viewGrid" value="grid" checked onchange="toggleView('grid')">
+                <label class="btn btn-outline-secondary" for="viewGrid"><i class="bi bi-grid-3x3-gap"></i></label>
+                <input type="radio" class="btn-check" name="viewMode" id="viewTable" value="table" onchange="toggleView('table')">
+                <label class="btn btn-outline-secondary" for="viewTable"><i class="bi bi-table"></i></label>
+            </div>
+        </div>
+        <div class="col-12 col-md-1">
+            <label class="form-label fw-medium mb-1 d-md-none">&nbsp;</label>
+            <button class="btn btn-outline-secondary w-100" onclick="exportProducts()">
+                <i class="bi bi-download"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Grid View (Default) -->
+<div class="products-grid" id="productsGridView">
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-chocolate" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Cargando productos...</p>
+    </div>
+</div>
+
+<!-- Table View (Hidden by default) -->
+<div class="card d-none" id="productsTableView">
+    <div class="card-body p-0">
+        <div class="table-responsive table-responsive-stack">
+            <table class="table table-hover mb-0" id="productsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60px;">Imagen</th>
+                        <th>Producto</th>
+                        <th data-label="Categoría">Categoría</th>
+                        <th data-label="Porciones">Porc. Base</th>
+                        <th data-label="Costo">Costo BOM</th>
+                        <th data-label="Precio Base">Precio Base</th>
+                        <th data-label="Precio Venta">Precio Venta</th>
+                        <th data-label="Margen">Margen</th>
+                        <th data-label="Tiempo">Tiempo</th>
+                        <th data-label="Estado">Estado</th>
+                        <th style="width: 140px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <tr>
+                        <td colspan="11" class="text-center py-4">
+                            <div class="spinner-border text-chocolate" role="status"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-transparent">
+        <nav aria-label="Paginación productos">
+            <ul class="pagination pagination-sm mb-0 justify-content-center" id="productsPaginationList"></ul>
+        </nav>
+    </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-chocolate text-white">
+                <h5 class="modal-title" id="productModalTitle"><i class="bi bi-cupcake me-2"></i>Nuevo Producto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="productForm" novalidate>
+                <input type="hidden" name="id" id="productId">
+                <div class="modal-body">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-3" id="productTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-general" data-bs-toggle="tab" data-bs-target="#panel-general" type="button">
+                                <i class="bi bi-info-circle me-1"></i>General
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-bom" data-bs-toggle="tab" data-bs-target="#panel-bom" type="button">
+                                <i class="bi bi-list-ul me-1"></i>Receta (BOM)
+                                <span class="badge badge-secondary ms-1" id="bomItemsCount">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-scaled" data-bs-toggle="tab" data-bs-target="#panel-scaled" type="button">
+                                <i class="bi bi-calculator me-1"></i>Preview Escalado
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- GENERAL TAB -->
+                        <div class="tab-pane fade show active" id="panel-general" role="tabpanel">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="productName" class="form-label fw-medium">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="productName" name="name" required placeholder="Ej: Torta de Chocolate 3 Leches">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="productCategory" class="form-label fw-medium">Categoría <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="productCategory" name="category" required>
+                                        <option value="">Seleccionar categoría...</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="productDescription" class="form-label fw-medium">Descripción</label>
+                                    <textarea class="form-control" id="productDescription" name="description" rows="3" placeholder="Describe el producto, ingredientes principales, ocasión ideal..."></textarea>
+                                </div>
+
+                                <hr class="my-3">
+                                <h6 class="mb-3"><i class="bi bi-gear me-2 text-dorado"></i>Especificaciones Técnicas</h6>
+
+                                <div class="col-12 col-md-4">
+                                    <label for="productBaseServings" class="form-label fw-medium">Porciones Base <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="productBaseServings" name="base_servings" min="1" max="100" value="12" required>
+                                    <div class="form-text">Porciones que rinde la receta base (se escala a 12/20/40)</div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="productPrepTime" class="form-label fw-medium">Tiempo Preparación (min)</label>
+                                    <input type="number" class="form-control" id="productPrepTime" name="prep_time_minutes" min="0" max="1440" value="60">
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="productImage" class="form-label fw-medium">Imagen del Producto</label>
+                                    <input type="file" class="form-control" id="productImage" name="image" accept="image/*">
+                                    <div class="form-text">JPG/PNG, máx 5MB. Recomendado 1:1 (cuadrada)</div>
+                                </div>
+
+                                <hr class="my-3">
+                                <h6 class="mb-3"><i class="bi bi-currency-dollar me-2 text-dorado"></i>Precios y Costos</h6>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="productBasePrice" class="form-label fw-medium">Costo Base (Precio Costo) <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="productBasePrice" name="base_price" step="1" min="0" required placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="productSalePrice" class="form-label fw-medium">Precio Venta <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="productSalePrice" name="sale_price" step="1" min="0" required placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="productMargin" class="form-label fw-medium">Margen %</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control fw-bold" id="productMargin" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="productCostCalculated" class="form-label fw-medium">Costo Calculado (BOM)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control fw-bold text-success" id="productCostCalculated" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label for="productSuggestedPrice" class="form-label fw-medium">Precio Sugerido (Costo BOM + 50%)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control fw-bold text-info" id="productSuggestedPrice" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="productIsActive" name="is_active" checked>
+                                        <label class="form-check-label fw-medium" for="productIsActive">Producto Activo (visible en catálogo)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOM TAB -->
+                        <div class="tab-pane fade" id="panel-bom" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Ingredientes de la Receta (Bill of Materials)</h6>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addBomItem()">
+                                        <i class="bi bi-plus-lg me-1"></i>Agregar Insumo
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="duplicateBomForScaling()">
+                                        <i class="bi bi-files me-1"></i>Duplicar para escalar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info py-2 mb-3" style="font-size: var(--font-size-sm);">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Tip:</strong> Los costos se toman automáticamente del stock de insumos. El costo total de la receta se divide entre las porciones base para obtener el costo por porción.
+                            </div>
+
+                            <div class="table-responsive bom-table-container">
+                                <table class="table table-sm table-hover mb-0" id="bomTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="min-width: 200px;">Insumo</th>
+                                            <th style="width: 100px;">Cantidad</th>
+                                            <th style="width: 80px;">Unidad</th>
+                                            <th style="width: 100px;">Costo Unit.</th>
+                                            <th style="width: 100px;">Subtotal</th>
+                                            <th>Notas</th>
+                                            <th style="width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bomTableBody">
+                                        <tr id="bomEmptyRow">
+                                            <td colspan="7" class="text-center text-muted py-5">
+                                                <i class="bi bi-basket fs-1 d-block mb-2" style="color: var(--color-dorado-claro);"></i>
+                                                No hay insumos en la receta
+                                                <button type="button" class="btn btn-sm btn-primary mt-2" onclick="addBomItem()">
+                                                    <i class="bi bi-plus me-1"></i>Agregar primer insumo
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row g-3 mt-3">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label fw-medium">Costo Total Receta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control fw-bold fs-5 text-success" id="bomTotalCost" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label fw-medium">Costo por Porción (Base)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control fw-bold fs-5 text-primary" id="bomCostPerServing" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label fw-medium">Margen Real (con Precio Venta)</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control fw-bold fs-5" id="bomRealMargin" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SCALED PREVIEW TAB -->
+                        <div class="tab-pane fade" id="panel-scaled" role="tabpanel">
+                            <div class="alert alert-light border" style="border-color: var(--color-dorado-claro) !important;">
+                                <h6 class="mb-2"><i class="bi bi-calculator me-2 text-dorado"></i>Preview de Escalado Automático</h6>
+                                <p class="mb-0 small">La receta base se escala proporcionalmente para 12, 20 y 40 porciones. Los costos se recalculan automáticamente.</p>
+                            </div>
+                            <div id="scaledBomPreview">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-calculator fs-1 d-block mb-2" style="color: var(--color-dorado-claro);"></i>
+                                    Guarda la receta en la pestaña BOM para ver el preview escalado
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="productSubmitBtn">
+                        <i class="bi bi-save me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- PRODUCT DETAIL MODAL (with Scaled BOM) -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cupcake me-2"></i>Detalle del Producto</h5>
+                <button type="button" class class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="productDetailBody">
+                <div class="text-center py-4"><div class="spinner-border text-chocolate"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==================== ESTADO GLOBAL ====================
+let productsCurrentPage = 1;
+let productsSearchTimeout;
+let bomItems = [];
+let bomCounter = 0;
+let categoriesCache = [];
+let ingredientsCache = [];
+let currentViewMode = 'grid'; // 'grid' or 'table'
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadIngredients();
+    loadProducts();
+    setupProductForm();
+    setupPriceCalculations();
+    updateViewMode();
+});
+
+function updateViewMode() {
+    const gridView = document.getElementById('productsGridView');
+    const tableView = document.getElementById('productsTableView');
+
+    if (currentViewMode === 'grid') {
+        gridView.classList.remove('d-none');
+        tableView.classList.add('d-none');
+    } else {
+        gridView.classList.add('d-none');
+        tableView.classList.remove('d-none');
+    }
+}
+
+function toggleView(mode) {
+    currentViewMode = mode;
+    updateViewMode();
+    loadProducts(productsCurrentPage);
+}
+
+// ==================== CARGA DE DATOS ====================
+async function loadCategories() {
+    try {
+        const response = await apiFetch('categories/');
+        if (response.ok) {
+            categoriesCache = await response.json();
+            const selects = ['productCategory', 'productCategoryFilter'];
+            selects.forEach(id => {
+                const select = document.getElementById(id);
+                const currentValue = select.value;
+                select.innerHTML = id === 'productCategoryFilter'
+                    ? '<option value="">Todas las categorías</option>'
+                    : '<option value="">Seleccionar categoría...</option>';
+                categoriesCache.forEach(cat => {
+                    select.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+                });
+                select.value = currentValue;
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+    }
+}
+
+async function loadIngredients() {
+    try {
+        const response = await apiFetch('ingredients/?page_size=200&is_active=true');
+        if (response.ok) {
+            const data = await response.json();
+            ingredientsCache = data.results || data;
+        }
+    } catch (error) {
+        console.error('Error cargando insumos:', error);
+    }
+}
+
+async function loadProducts(page = 1) {
+    productsCurrentPage = page;
+    const search = document.getElementById('productSearch').value;
+    const category = document.getElementById('productCategoryFilter').value;
+    const status = document.getElementById('productStatusFilter').value;
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: currentViewMode === 'grid' ? 20 : 20,
+        ordering: '-created_at'
+    });
+    if (search) params.append('search', search);
+    if (category) params.append('category', category);
+    if (status !== '') params.append('is_active', status);
+
+    try {
+        const response = await apiFetch(`products/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando productos');
+        const data = await response.json();
+        const products = data.results || data;
+
+        if (currentViewMode === 'grid') {
+            renderProductsGrid(products);
+        } else {
+            renderProductsTable(products);
+        }
+
+        if (data.total_pages) {
+            renderPagination(data, 'products');
+        }
+
+        updateProductsStats(products);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar productos', 'danger');
+    }
+}
+
+function debounceSearchProducts() {
+    clearTimeout(productsSearchTimeout);
+    productsSearchTimeout = setTimeout(() => loadProducts(1), 300);
+}
+
+function updateProductsStats(products) {
+    const total = products.length;
+    const active = products.filter(p => p.is_active).length;
+    const withBom = products.filter(p => p.bom_items && p.bom_items.length > 0).length;
+    const avgMargin = products.length > 0
+        ? products.reduce((sum, p) => {
+            if (p.sale_price > 0) return sum + ((p.sale_price - p.base_price) / p.sale_price * 100);
+            return sum;
+        }, 0) / products.length : 0;
+
+    document.getElementById('statTotalProducts').textContent = total;
+    document.getElementById('statActiveProducts').textContent = active;
+    document.getElementById('statWithBom').textContent = withBom;
+    document.getElementById('statAvgMargin').textContent = avgMargin.toFixed(1) + '%';
+}
+
+// ==================== RENDER GRID VIEW ====================
+function renderProductsGrid(products) {
+    const container = document.getElementById('productsGridView');
+
+    if (!products || products.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-grid">
+                <div class="empty-state-icon" style="font-size: 4rem; color: var(--color-dorado-claro);"><i class="bi bi-cupcake"></i></div>
+                <h4>No hay productos</h4>
+                <p class="text-muted mb-4">Comienza creando tu primer producto con receta (BOM)</p>
+                <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openCreateProductModal()">
+                    <i class="bi bi-plus-circle me-2"></i>Crear primer producto
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = products.map(product => {
+        const margin = product.sale_price > 0 ? ((product.sale_price - product.base_price) / product.sale_price * 100) : 0;
+        const marginClass = margin >= 30 ? 'margin-high' : (margin >= 15 ? 'margin-medium' : 'margin-low');
+        const hasBom = product.bom_items && product.bom_items.length > 0;
+        const bomCost = product.cost_calculated || 0;
+
+        return `
+            <article class="product-card" data-id="${product.id}">
+                ${product.image ?
+                    `<img src="${product.image}" alt="${escapeHtml(product.name)}" class="product-card-image">` :
+                    `<div class="product-card-image-placeholder"><i class="bi bi-cupcake"></i></div>`
+                }
+                <div class="product-card-body">
+                    <div class="product-card-header">
+                        <div>
+                            <h3 class="product-card-title">${escapeHtml(product.name)}</h3>
+                            <span class="product-card-category">${escapeHtml(product.category?.name || 'Sin categoría')}</span>
+                        </div>
+                        <span class="badge ${product.is_active ? 'badge-success' : 'badge-light'}">${product.is_active ? 'Activo' : 'Inactivo'}</span>
+                    </div>
+
+                    <p class="product-card-description">${escapeHtml(product.description || 'Sin descripción')}</p>
+
+                    <div class="product-card-meta">
+                        <span class="meta-item"><i class="bi bi-people"></i> <strong>${product.base_servings}</strong> porc. base</span>
+                        <span class="meta-item"><i class="bi bi-clock"></i> <strong>${product.prep_time_minutes || 0}</strong> min</span>
+                        ${hasBom ? `<span class="meta-item"><i class="bi bi-list-ul"></i> <strong>${product.bom_items.length}</strong> insumos</span>` : ''}
+                        ${bomCost > 0 ? `<span class="meta-item"><i class="bi bi-calculator"></i> <strong>${formatCLP(bomCost)}</strong> costo receta</span>` : ''}
+                    </div>
+
+                    <div class="product-card-pricing">
+                        <div class="price-info">
+                            <span class="price-sale">${formatCLP(product.sale_price)}</span>
+                            ${product.base_price > 0 && product.base_price < product.sale_price ? `<span class="price-base">${formatCLP(product.base_price)}</span>` : ''}
+                        </div>
+                        <span class="price-margin ${marginClass}">${margin.toFixed(1)}%</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 px-4 pb-4">
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewProductDetail(${product.id})" title="Ver detalle + BOM escalado">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="editProduct(${product.id})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="previewScaledBom(${product.id})" title="Preview BOM Escalado 12/20/40">
+                            <i class="bi bi-calculator"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteProduct(${product.id})" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+// ==================== RENDER TABLE VIEW ====================
+function renderProductsTable(products) {
+    const tbody = document.getElementById('productsTableBody');
+
+    if (!products || products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-muted">No hay productos registrados</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = products.map(product => {
+        const margin = product.sale_price > 0 ? ((product.sale_price - product.base_price) / product.sale_price * 100).toFixed(1) : 0;
+        const marginClass = margin >= 30 ? 'text-success' : (margin >= 15 ? 'text-warning' : 'text-danger');
+        const hasBom = product.bom_items && product.bom_items.length > 0;
+        const bomCost = product.cost_calculated || 0;
+
+        return `
+            <tr>
+                <td data-label="Imagen">
+                    ${product.image ? `<img src="${product.image}" class="img-thumbnail" style="width:50px;height:50px;object-fit:cover;">` : '<i class="bi bi-cupcake text-muted fs-4"></i>'}
+                </td>
+                <td data-label="Producto">
+                    <strong>${escapeHtml(product.name)}</strong>
+                    ${product.description ? `<br><small class="text-muted">${escapeHtml(product.description.substring(0, 50))}...</small>` : ''}
+                </td>
+                <td data-label="Categoría">${escapeHtml(product.category?.name || '—')}</td>
+                <td data-label="Porciones"><span class="fw-medium">${product.base_servings}</span></td>
+                <td data-label="Costo">${bomCost > 0 ? formatCLP(bomCost) : '<span class="text-muted">—</span>'}</td>
+                <td data-label="Precio Base">${formatCLP(product.base_price)}</td>
+                <td data-label="Precio Venta"><strong class="text-chocolate">${formatCLP(product.sale_price)}</strong></td>
+                <td data-label="Margen"><span class="${marginClass} fw-medium">${margin}%</span></td>
+                <td data-label="Tiempo">${product.prep_time_minutes} min</td>
+                <td data-label="Estado">
+                    <span class="badge ${product.is_active ? 'bg-success' : 'bg-secondary'}">
+                        ${product.is_active ? 'Activo' : 'Inactivo'}
+                    </span>
+                </td>
+                <td data-label="Acciones">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewProductDetail(${product.id})" title="Ver detalle"><i class="bi bi-eye"></i></button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="editProduct(${product.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-outline-info" onclick="previewScaledBom(${product.id})" title="BOM Escalado"><i class="bi bi-calculator"></i></button>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteProduct(${product.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderPagination(data, type) {
+    const container = document.getElementById(`${type}PaginationList`);
+    if (!container) return;
+
+    const current = data.page || 1;
+    const total = data.total_pages || 1;
+    let html = '';
+
+    if (current > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${current - 1})"><i class="bi bi-chevron-left"></i></a></li>`;
+    }
+
+    for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+        html += `<li class="page-item ${i === current ? 'active' : ''}"><a class="page-link" href="#" onclick="loadProducts(${i})">${i}</a></li>`;
+    }
+
+    if (current < total) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${current + 1})"><i class="bi bi-chevron-right"></i></a></li>`;
+    }
+
+    container.innerHTML = html;
+}
+
+// ==================== MODAL PRODUCTO ====================
+function openCreateProductModal() {
+    document.getElementById('productForm').reset();
+    document.getElementById('productId').value = '';
+    document.getElementById('productModalTitle').innerHTML = '<i class="bi bi-cupcake me-2"></i>Nuevo Producto';
+    document.getElementById('productIsActive').checked = true;
+    document.getElementById('productSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Guardar';
+    document.getElementById('productBaseServings').value = 12;
+    document.getElementById('productPrepTime').value = 60;
+    bomItems = [];
+    bomCounter = 0;
+    renderBomTable();
+    updateBomTotals();
+    renderScaledPreview();
+    new bootstrap.Modal(document.getElementById('productModal')).show();
+    new bootstrap.Tab(document.getElementById('tab-general')).show();
+}
+
+function setupProductForm() {
+    const form = document.getElementById('productForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const id = document.getElementById('productId').value;
+        const formData = new FormData();
+        formData.append('name', document.getElementById('productName').value);
+        formData.append('category', document.getElementById('productCategory').value);
+        formData.append('description', document.getElementById('productDescription').value);
+        formData.append('base_servings', document.getElementById('productBaseServings').value);
+        formData.append('prep_time_minutes', document.getElementById('productPrepTime').value);
+        formData.append('base_price', document.getElementById('productBasePrice').value);
+        formData.append('sale_price', document.getElementById('productSalePrice').value);
+        formData.append('is_active', document.getElementById('productIsActive').checked);
+
+        const imageInput = document.getElementById('productImage');
+        if (imageInput.files[0]) {
+            formData.append('image', imageInput.files[0]);
+        }
+
+        // BOM items
+        formData.append('bom_items', JSON.stringify(bomItems));
+
+        try {
+            const url = id ? `products/${id}/` : 'products/';
+            const method = id ? 'PATCH' : 'POST';
+
+            const response = await apiFetch(url, {
+                method,
+                body: formData,
+                headers: {} // FormData sets its own Content-Type
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(JSON.stringify(err));
+            }
+
+            showToast(id ? 'Producto actualizado' : 'Producto creado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+            loadProducts(productsCurrentPage);
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al guardar producto', 'danger');
+        }
+    });
+}
+
+function setupPriceCalculations() {
+    const basePrice = document.getElementById('productBasePrice');
+    const salePrice = document.getElementById('productSalePrice');
+    const baseServings = document.getElementById('productBaseServings');
+
+    function updatePricing() {
+        const bp = parseFloat(basePrice.value) || 0;
+        const sp = parseFloat(salePrice.value) || 0;
+        const bs = parseInt(baseServings.value) || 12;
+        const bomCost = parseFloat(document.getElementById('productCostCalculated').value) || 0;
+
+        // Margin based on sale price vs base price
+        if (sp > 0) {
+            document.getElementById('productMargin').value = ((sp - bp) / sp * 100).toFixed(2);
+        } else {
+            document.getElementById('productMargin').value = '';
+        }
+
+        // Suggested price based on BOM cost + 50%
+        if (bomCost > 0) {
+            document.getElementById('productSuggestedPrice').value = formatCLP(bomCost * 1.5);
+        } else {
+            document.getElementById('productSuggestedPrice').value = '';
+        }
+
+        // Update BOM cost per serving
+        if (bomCost > 0 && bs > 0) {
+            document.getElementById('bomCostPerServing').value = formatCLP(bomCost / bs);
+        }
+    }
+
+    basePrice.addEventListener('input', updatePricing);
+    salePrice.addEventListener('input', updatePricing);
+    baseServings.addEventListener('input', updatePricing);
+}
+
+async function editProduct(id) {
+    try {
+        const response = await apiFetch(`products/${id}/`);
+        if (!response.ok) throw new Error('Error cargando producto');
+        const product = await response.json();
+
+        document.getElementById('productId').value = product.id;
+        document.getElementById('productName').value = product.name;
+        document.getElementById('productCategory').value = product.category?.id || '';
+        document.getElementById('productDescription').value = product.description || '';
+        document.getElementById('productBaseServings').value = product.base_servings;
+        document.getElementById('productPrepTime').value = product.prep_time_minutes || 0;
+        document.getElementById('productBasePrice').value = product.base_price;
+        document.getElementById('productSalePrice').value = product.sale_price;
+        document.getElementById('productIsActive').checked = product.is_active;
+
+        // Load BOM
+        if (product.bom_items) {
+            bomItems = product.bom_items.map(item => ({
+                id: item.id,
+                tempId: item.id,
+                ingredient: item.ingredient,
+                ingredient_name: item.ingredient_name,
+                quantity: item.quantity,
+                unit: item.unit,
+                unit_cost: item.unit_cost || 0,
+                notes: item.notes || ''
+            }));
+            bomCounter = Math.max(...bomItems.map(i => i.tempId || i.id || 0), 0);
+        } else {
+            bomItems = [];
+            bomCounter = 0;
+        }
+        renderBomTable();
+        updateBomTotals();
+        renderScaledPreview();
+
+        document.getElementById('productModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Producto';
+        document.getElementById('productSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Actualizar';
+        new bootstrap.Modal(document.getElementById('productModal')).show();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar producto', 'danger');
+    }
+}
+
+// ==================== DETALLE PRODUCTO + BOM ESCALADO ====================
+async function viewProductDetail(id) {
+    const modal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+    modal.show();
+
+    try {
+        const response = await apiFetch(`products/${id}/`);
+        if (!response.ok) throw new Error('Error cargando producto');
+        const product = await response.json();
+
+        const baseServings = product.base_servings || 12;
+        const scales = [12, 20, 40];
+
+        // Base BOM
+        const baseBomHtml = (product.bom_items || []).map(item => `
+            <tr>
+                <td>${escapeHtml(item.ingredient_name)}</td>
+                <td class="text-center">${item.quantity} ${item.unit}</td>
+                <td>${formatCLP(item.quantity * (item.unit_cost || 0))}</td>
+                <td>${escapeHtml(item.notes || '—')}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Sin insumos en la receta</td></tr>';
+
+        // Scaled BOMs
+        let scaledHtml = '';
+        scales.forEach(s => {
+            const factor = s / baseServings;
+            const itemsHtml = (product.bom_items || []).map(item => `
+                <tr>
+                    <td>${escapeHtml(item.ingredient_name)}</td>
+                    <td class="text-center">${(item.quantity * factor).toFixed(3)} ${item.unit}</td>
+                    <td>${formatCLP(item.quantity * factor * (item.unit_cost || 0))}</td>
+                </tr>
+            `).join('');
+
+            const totalCost = (product.bom_items || []).reduce((sum, item) => sum + item.quantity * factor * (item.unit_cost || 0), 0);
+            const costPerServing = totalCost / s;
+
+            scaledHtml += `
+                <div class="scaled-bom-card">
+                    <div class="scaled-bom-header">
+                        <h6 class="scaled-bom-title mb-0">Escalado ${s} porciones</h6>
+                        <span class="scaled-bom-factor">${factor.toFixed(2)}x</span>
+                    </div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Costo Total</small>
+                            <strong class="text-chocolate">${formatCLP(totalCost)}</strong>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Costo/Porc.</small>
+                            <strong class="text-primary">${formatCLP(costPerServing)}</strong>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Precio Sugerido (+50%)</small>
+                            <strong class="text-info">${formatCLP(costPerServing * 1.5)}</strong>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <small class="text-muted d-block">Margen Estimado</small>
+                            <strong class="text-exito">${((costPerServing * 1.5 - costPerServing) / (costPerServing * 1.5) * 100).toFixed(1)}%</strong>
+                        </div>
+                    </div>
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead><tr><th>Insumo</th><th class="text-center">Cantidad</th><th class="text-end">Costo</th></tr></thead>
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('productDetailBody').innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-3 text-center">
+                    ${product.image ? `<img src="${product.image}" class="img-fluid rounded mb-2" style="max-height:200px;">` : '<div class="avatar avatar-xl mx-auto mb-2" style="background: var(--color-crema); color: var(--color-dorado);"><i class="bi bi-cupcake fs-1"></i></div>'}
+                </div>
+                <div class="col-md-9">
+                    <h4>${escapeHtml(product.name)}</h4>
+                    <p class="text-muted">${escapeHtml(product.description || 'Sin descripción')}</p>
+                    <div class="row g-2 text-muted small">
+                        <div class="col-6 col-md-3"><strong>Categoría:</strong> ${escapeHtml(product.category?.name || '—')}</div>
+                        <div class="col-6 col-md-3"><strong>Porciones Base:</strong> ${baseServings}</div>
+                        <div class="col-6 col-md-3"><strong>Tiempo Prep:</strong> ${product.prep_time_minutes} min</div>
+                        <div class="col-6 col-md-3"><strong>Costo Base:</strong> ${formatCLP(product.base_price)}</div>
+                        <div class="col-6 col-md-3"><strong>Precio Venta:</strong> ${formatCLP(product.sale_price)}</div>
+                        <div class="col-6 col-md-3"><strong>Margen:</strong> ${((product.sale_price - product.base_price) / product.sale_price * 100).toFixed(1)}%</div>
+                        <div class="col-6 col-md-3"><strong>Costo BOM:</strong> ${formatCLP(product.cost_calculated || 0)}</div>
+                        <div class="col-6 col-md-3"><strong>Estado:</strong> <span class="badge ${product.is_active ? 'badge-success' : 'badge-light'}">${product.is_active ? 'Activo' : 'Inactivo'}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <h6 class="mb-3"><i class="bi bi-list-ul me-2"></i>Receta Base (${baseServings} porciones)</h6>
+            <div class="table-responsive table-responsive-stack mb-4">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light"><tr><th>Insumo</th><th class="text-center">Cantidad</th><th class="text-end">Costo</th><th>Notas</th></tr></thead>
+                    <tbody>${baseBomHtml}</tbody>
+                </table>
+            </div>
+
+            <h5 class="mb-3"><i class="bi bi-calculator me-2 text-dorado"></i>Escalado Automático 12 / 20 / 40 Porciones</h5>
+            ${scaledHtml}
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('productDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+async function previewScaledBom(productId) {
+    await viewProductDetail(productId);
+}
+
+// ==================== BOM MANAGEMENT ====================
+async function addBomItem() {
+    if (ingredientsCache.length === 0) {
+        await loadIngredients();
+    }
+
+    if (ingredientsCache.length === 0) {
+        showToast('No hay insumos disponibles. Cree insumos primero en el módulo Insumos.', 'warning');
+        return;
+    }
+
+    bomCounter++;
+    const newItem = {
+        tempId: bomCounter,
+        ingredient: '',
+        ingredient_name: '',
+        quantity: 1,
+        unit: '',
+        unit_cost: 0,
+        notes: ''
+    };
+    bomItems.push(newItem);
+    renderBomTable();
+    updateBomTotals();
+    updateBomItemsCount();
+
+    // Focus the new select
+    setTimeout(() => {
+        const select = document.querySelector(`#bomTableBody select[data-temp-id="${bomCounter}"]`);
+        if (select) select.focus();
+    }, 100);
+}
+
+function renderBomTable() {
+    const tbody = document.getElementById('bomTableBody');
+    const emptyRow = document.getElementById('bomEmptyRow');
+
+    if (bomItems.length === 0) {
+        if (emptyRow) emptyRow.style.display = '';
+        return;
+    }
+    if (emptyRow) emptyRow.style.display = 'none';
+
+    tbody.innerHTML = bomItems.map((item, index) => {
+        return `
+            <tr class="bom-item-row" data-index="${index}">
+                <td>
+                    <select class="form-select form-select-sm bom-ingredient-select" data-temp-id="${item.tempId || item.id}" onchange="updateBomIngredient(this, ${index})" required>
+                        <option value="">Seleccionar insumo...</option>
+                        ${ingredientsCache.map(ing => {
+                            const selected = item.ingredient == ing.id ? 'selected' : '';
+                            return `<option value="${ing.id}" data-unit="${escapeHtml(ing.unit)}" data-cost="${ing.unit_cost}" ${selected}>${escapeHtml(ing.name)} (${formatCLP(ing.unit_cost)}/${ing.unit} · Stock: ${ing.current_stock} ${ing.unit})</option>`;
+                        }).join('')}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm bom-quantity" value="${item.quantity}" step="0.001" min="0.001" onchange="updateBomQuantity(${index}, this.value)" required>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm bom-unit" value="${item.unit}" readonly>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm bom-unit-cost" value="${formatCLP(item.unit_cost)}" readonly>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm bom-subtotal" value="${formatCLP((item.quantity || 0) * (item.unit_cost || 0))}" readonly>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm bom-notes" value="${escapeHtml(item.notes || '')}" onchange="updateBomNotes(${index}, this.value)" placeholder="Opcional">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBomItem(${index})" title="Eliminar"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    updateBomItemsCount();
+}
+
+function updateBomIngredient(select, index) {
+    const option = select.options[select.selectedIndex];
+    const unit = option.dataset.unit || '';
+    const cost = parseFloat(option.dataset.cost) || 0;
+    const ingredientId = select.value;
+    const ingredientName = option.text;
+
+    const row = select.closest('tr');
+    row.querySelector('.bom-unit').value = unit;
+    row.querySelector('.bom-unit-cost').value = formatCLP(cost);
+
+    bomItems[index] = {
+        ...bomItems[index],
+        ingredient: ingredientId ? parseInt(ingredientId) : null,
+        ingredient_name: ingredientName,
+        unit: unit,
+        unit_cost: cost
+    };
+
+    updateBomRowCalculations(index);
+    updateBomTotals();
+    renderScaledPreview();
+}
+
+function updateBomQuantity(index, quantity) {
+    bomItems[index] = { ...bomItems[index], quantity: parseFloat(quantity) || 0 };
+    updateBomRowCalculations(index);
+    updateBomTotals();
+    renderScaledPreview();
+}
+
+function updateBomNotes(index, notes) {
+    bomItems[index] = { ...bomItems[index], notes: notes };
+}
+
+function updateBomRowCalculations(index) {
+    const item = bomItems[index];
+    const row = document.querySelector(`#bomTableBody tr[data-index="${index}"]`);
+    if (!row) return;
+
+    const quantity = item.quantity || 0;
+    const unitCost = item.unit_cost || 0;
+    const subtotal = quantity * unitCost;
+
+    row.querySelector('.bom-subtotal').value = formatCLP(subtotal);
+}
+
+function updateBomTotals() {
+    let totalCost = 0;
+    bomItems.forEach(item => {
+        totalCost += (item.quantity || 0) * (item.unit_cost || 0);
+    });
+
+    const baseServings = parseInt(document.getElementById('productBaseServings').value) || 12;
+    const costPerServing = baseServings > 0 ? totalCost / baseServings : 0;
+    const salePrice = parseFloat(document.getElementById('productSalePrice').value) || 0;
+    const realMargin = (salePrice > 0 && costPerServing > 0) ? ((salePrice - costPerServing) / salePrice * 100) : 0;
+
+    document.getElementById('bomTotalCost').value = formatCLP(totalCost);
+    document.getElementById('bomCostPerServing').value = formatCLP(costPerServing);
+    document.getElementById('bomRealMargin').value = realMargin.toFixed(2) + '%';
+
+    // Update calculated cost in general tab
+    document.getElementById('productCostCalculated').value = totalCost.toFixed(2);
+    // Recalculate margin vs base price
+    const basePrice = parseFloat(document.getElementById('productBasePrice').value) || 0;
+    if (salePrice > 0) {
+        document.getElementById('productMargin').value = ((salePrice - totalCost) / salePrice * 100).toFixed(2);
+    }
+
+    // Update suggested price
+    if (totalCost > 0) {
+        document.getElementById('productSuggestedPrice').value = formatCLP(totalCost * 1.5);
+    }
+}
+
+function updateBomItemsCount() {
+    const countEl = document.getElementById('bomItemsCount');
+    if (countEl) countEl.textContent = bomItems.length;
+}
+
+function removeBomItem(index) {
+    bomItems.splice(index, 1);
+    renderBomTable();
+    updateBomTotals();
+    renderScaledPreview();
+}
+
+function duplicateBomForScaling() {
+    if (bomItems.length === 0) {
+        showToast('No hay insumos para duplicar', 'warning');
+        return;
+    }
+    // This could be used to create variations, for now just show toast
+    showToast('Función para crear variaciones de receta (próximamente)', 'info');
+}
+
+// ==================== SCALED PREVIEW IN MODAL ====================
+function renderScaledPreview() {
+    const container = document.getElementById('scaledBomPreview');
+    const baseServings = parseInt(document.getElementById('productBaseServings').value) || 12;
+    const scales = [12, 20, 40];
+
+    if (bomItems.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-calculator fs-1 d-block mb-2" style="color: var(--color-dorado-claro);"></i>
+                Agrega insumos en la pestaña BOM para ver el preview escalado
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    scales.forEach(s => {
+        const factor = s / baseServings;
+        let totalCost = 0;
+
+        const itemsHtml = bomItems.map(item => {
+            const qty = (item.quantity || 0) * factor;
+            const cost = qty * (item.unit_cost || 0);
+            totalCost += cost;
+            return `
+                <tr>
+                    <td>${escapeHtml(item.ingredient_name)}</td>
+                    <td class="text-center">${qty.toFixed(3)} ${item.unit}</td>
+                    <td class="text-end">${formatCLP(cost)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const costPerServing = totalCost / s;
+
+        html += `
+            <div class="scaled-bom-card">
+                <div class="scaled-bom-header">
+                    <h6 class="scaled-bom-title mb-0">Escalado ${s} porciones</h6>
+                    <span class="scaled-bom-factor">${factor.toFixed(2)}x</span>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Costo Total</small>
+                        <strong class="text-chocolate">${formatCLP(totalCost)}</strong>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Costo/Porc.</small>
+                        <strong class="text-primary">${formatCLP(costPerServing)}</strong>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">P.V. Sugerido (+50%)</small>
+                        <strong class="text-info">${formatCLP(costPerServing * 1.5)}</strong>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Margen</small>
+                        <strong class="text-exito">${((costPerServing * 1.5 - costPerServing) / (costPerServing * 1.5) * 100).toFixed(1)}%</strong>
+                    </div>
+                </div>
+                <div class="table-responsive table-responsive-stack">
+                    <table class="table table-sm table-bordered mb-0" style="font-size: var(--font-size-xs);">
+                        <thead><tr><th>Insumo</th><th class="text-center">Cantidad</th><th class="text-end">Costo</th></tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// ==================== ELIMINAR ====================
+async function deleteProduct(id) {
+    if (!confirm('¿Está seguro de eliminar este producto? Esta acción no se puede deshacer.')) return;
+
+    try {
+        const response = await apiFetch(`products/${id}/`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Error eliminando producto');
+        showToast('Producto eliminado', 'success');
+        loadProducts(productsCurrentPage);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al eliminar producto', 'danger');
+    }
+}
+
+function exportProducts() {
+    showToast('Exportación en desarrollo. Próximamente: CSV, Excel, PDF', 'info');
+}
+</script>
+{% endblock %}

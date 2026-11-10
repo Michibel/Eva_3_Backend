@@ -1,0 +1,2443 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos / Cotizador Visual - Dulce Arte{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Visual Quoter Styles */
+.quoter-layout {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: var(--space-4);
+}
+
+@media (max-width: 1199.98px) {
+    .quoter-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.quoter-sidebar {
+    position: sticky;
+    top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+/* Product Selector Card */
+.product-selector-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.product-selector-header {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-borde);
+    background: var(--color-crema);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.product-search-input {
+    flex: 1;
+    max-width: 300px;
+}
+
+.product-category-tabs {
+    display: flex;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--color-borde);
+    overflow-x: auto;
+    flex-wrap: wrap;
+}
+
+.category-tab {
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-suave);
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transicion);
+}
+
+.category-tab:hover,
+.category-tab.active {
+    background: var(--color-chocolate);
+    border-color: var(--color-chocolate);
+    color: white;
+}
+
+.products-grid-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-3);
+    padding: var(--space-4);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.product-selector-item {
+    border: 2px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transicion);
+    background: var(--color-fondo);
+}
+
+.product-selector-item:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+
+.product-selector-item.selected {
+    border-color: var(--color-chocolate);
+    box-shadow: 0 0 0 2px var(--color-dorado-claro);
+}
+
+.product-selector-image {
+    height: 120px;
+    object-fit: cover;
+    background: var(--color-crema);
+}
+
+.product-selector-info {
+    padding: var(--space-3);
+}
+
+.product-selector-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: var(--space-1);
+    font-size: var(--font-size-sm);
+}
+
+.product-selector-meta {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+}
+
+.product-selector-price {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+    font-size: var(--font-size-lg);
+}
+
+/* Quoter Items */
+.quoter-item {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    overflow: hidden;
+    transition: all var(--transicion);
+}
+
+.quoter-item:hover {
+    border-color: var(--color-dorado);
+}
+
+.quoter-item-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-crema);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.quoter-item-product {
+    flex: 1;
+    min-width: 0;
+}
+
+.quoter-item-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: 0.125rem;
+}
+
+.quoter-item-base-servings {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+}
+
+.quoter-item-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.quoter-servings-selector {
+    display: flex;
+    gap: var(--space-1);
+    background: var(--color-fondo);
+    border-radius: var(--radius-sm);
+    padding: 0.125rem;
+    border: 1px solid var(--color-borde);
+}
+
+.quoter-servings-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-suave);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transicion);
+    min-width: 60px;
+}
+
+.quoter-servings-btn:hover {
+    color: var(--color-cacao);
+    background: var(--color-dorado-claro);
+}
+
+.quoter-servings-btn.active {
+    background: var(--color-chocolate);
+    color: white;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.quantity-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-crema);
+    border: none;
+    color: var(--color-texto);
+    cursor: pointer;
+    transition: all var(--transicion);
+}
+
+.quantity-btn:hover {
+    background: var(--color-dorado-claro);
+    color: var(--color-chocolate);
+}
+
+.quantity-input {
+    width: 60px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    -moz-appearance: textfield;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quoter-item-subtotal {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+    font-size: var(--font-size-lg);
+    min-width: 100px;
+    text-align: right;
+}
+
+.quoter-item-remove {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-texto-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transicion);
+}
+
+.quoter-item-remove:hover {
+    color: var(--color-error);
+    background: var(--color-crema);
+}
+
+/* BOM Preview Expandable */
+.quoter-bom-preview {
+    background: var(--color-crema);
+    border-top: 1px solid var(--color-dorado-claro);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.quoter-bom-preview.open {
+    max-height: 300px;
+    padding: var(--space-3) var(--space-4);
+}
+
+.bom-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-dorado-claro);
+}
+
+.bom-preview-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-chocolate);
+    margin: 0;
+    font-size: var(--font-size-sm);
+}
+
+.bom-preview-factor {
+    background: var(--color-dorado);
+    color: var(--color-cacao);
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+.bom-preview-table {
+    font-size: var(--font-size-xs);
+}
+
+.bom-preview-table th,
+.bom-preview-table td {
+    padding: 0.375rem 0.5rem;
+}
+
+.bom-preview-summary {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-dorado-claro);
+    font-size: var(--font-size-sm);
+}
+
+.bom-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.bom-summary-label {
+    color: var(--color-texto-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+}
+
+.bom-summary-value {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+}
+
+/* Totals Panel */
+.totals-panel {
+    background: linear-gradient(135deg, var(--color-crema) 0%, var(--color-dorado-claro) 100%);
+    border: 1px solid var(--color-dorado);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+}
+
+.totals-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-dorado-claro);
+}
+
+.totals-row:last-of-type {
+    border-bottom: none;
+    padding-top: var(--space-3);
+    margin-top: var(--space-2);
+    border-top: 2px solid var(--color-dorado);
+}
+
+.totals-label {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto);
+}
+
+.totals-value {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+}
+
+.totals-final {
+    font-size: var(--font-size-xl);
+    color: var(--color-cacao);
+}
+
+.discount-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 200px;
+}
+
+/* Orders Table with Visual Indicators */
+.orders-table th,
+.orders-table td {
+    vertical-align: middle;
+}
+
+.order-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.order-status-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Progress Steps for Order */
+.order-progress-mini {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.order-progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    flex: 1;
+    position: relative;
+}
+
+.order-progress-step::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    right: -50%;
+    height: 2px;
+    background: var(--color-crema-oscuro);
+    z-index: 0;
+}
+
+.order-progress-step:last-child::before {
+    display: none;
+}
+
+.order-progress-step.completed::before,
+.order-progress-step.current::before {
+    background: var(--color-dorado);
+}
+
+.order-progress-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid var(--color-fondo);
+    background: var(--color-crema-oscuro);
+    position: relative;
+    z-index: 1;
+    transition: all var(--transicion);
+}
+
+.order-progress-step.completed .order-progress-dot {
+    background: var(--color-exito);
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.2);
+}
+
+.order-progress-step.current .order-progress-dot {
+    background: var(--color-chocolate);
+    box-shadow: 0 0 0 3px var(--color-dorado-claro);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.order-progress-step.pending .order-progress-dot {
+    background: var(--color-crema-oscuro);
+}
+
+.order-progress-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.order-progress-step.completed .order-progress-label,
+.order-progress-step.current .order-progress-label {
+    color: var(--color-cacao);
+    font-weight: var(--font-weight-medium);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--color-dorado-claro); }
+    50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* Empty State */
+.empty-state-quoter {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--color-texto-muted);
+}
+
+.empty-state-quoter .icon {
+    font-size: 4rem;
+    color: var(--color-dorado-claro);
+    margin-bottom: var(--space-3);
+}
+
+/* Modal Full Screen on Mobile */
+@media (max-width: 767.98px) {
+    .modal-fullscreen-sm-down {
+        max-width: 100%;
+        margin: 0;
+    }
+    .modal-fullscreen-sm-down .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+        height: 100%;
+    }
+    .modal-fullscreen-sm-down .modal-content {
+        height: 100%;
+        border-radius: 0;
+    }
+}
+
+/* Stats Cards for Orders */
+.order-stats-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transicion);
+}
+
+.order-stats-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+
+.order-stats-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.order-stats-info {
+    flex: 1;
+}
+
+.order-stats-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+}
+
+.order-stats-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Client Quick Select */
+.client-selector-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transicion);
+    width: 100%;
+    text-align: left;
+}
+
+.client-selector-btn:hover {
+    border-color: var(--color-dorado);
+    background: var(--color-crema);
+}
+
+.client-selector-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-bold);
+}
+
+.client-selector-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.client-selector-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-cacao);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-selector-email {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-cart me-2 text-dorado"></i>Pedidos / Cotizador Visual</h1>
+        <p class="text-muted mb-0">Gestiona pedidos y crea cotizaciones con preview BOM escalado 12/20/40 porciones</p>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quotationModal" onclick="openCreateQuotationModal()">
+            <i class="bi bi-file-text me-1"></i>Nueva Cotización
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal" onclick="openCreateOrderModal()">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo Pedido
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="order-stats-card">
+            <div class="order-stats-icon" style="background: var(--color-chocolate);"><i class="bi bi-cart"></i></div>
+            <div class="order-stats-info">
+                <div class="order-stats-value" id="statTotalOrders">—</div>
+                <div class="order-stats-label">Total Pedidos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="order-stats-card">
+            <div class="order-stats-icon" style="background: var(--color-info);"><i class="bi bi-file-text"></i></div>
+            <div class="order-stats-info">
+                <div class="order-stats-value" id="statPendingQuotes">—</div>
+                <div class="order-stats-label">Cotizaciones Pendientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="order-stats-card">
+            <div class="order-stats-icon" style="background: var(--color-exito);"><i class="bi bi-check-circle"></i></div>
+            <div class="order-stats-info">
+                <div class="order-stats-value" id="statConfirmedOrders">—</div>
+                <div class="order-stats-label">Confirmados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="order-stats-card">
+            <div class="order-stats-icon" style="background: var(--color-advertencia);"><i class="bi bi-clock"></i></div>
+            <div class="order-stats-info">
+                <div class="order-stats-value" id="statInProduction">—</div>
+                <div class="order-stats-label">En Producción</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Tabs -->
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="orderTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-pedidos" data-bs-toggle="tab" data-bs-target="#panel-pedidos" type="button" role="tab">
+                    <i class="bi bi-cart me-1"></i>Pedidos
+                    <span class="badge badge-secondary ms-1" id="ordersCountBadge">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-cotizaciones" data-bs-toggle="tab" data-bs-target="#panel-cotizaciones" type="button" role="tab">
+                    <i class="bi bi-file-text me-1"></i>Cotizaciones
+                    <span class="badge badge-secondary ms-1" id="quotesCountBadge">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-cotizador" data-bs-toggle="tab" data-bs-target="#panel-cotizador" type="button" role="tab">
+                    <i class="bi bi-calculator me-1"></i>Cotizador Visual
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        <div class="tab-content">
+
+            <!-- PEDIDOS TAB -->
+            <div class="tab-pane fade show active" id="panel-pedidos" role="tabpanel">
+                <div class="p-3 p-md-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="orderSearch" placeholder="Buscar por cliente, N° pedido..." onkeyup="debounceSearchOrders()">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <select class="form-select" id="orderStatusFilter" onchange="loadOrders()">
+                                <option value="">Todos los estados</option>
+                                <option value="COTIZACION">Cotización</option>
+                                <option value="CONFIRMADO">Confirmado</option>
+                                <option value="EN_PRODUCCION">En Producción</option>
+                                <option value="LISTO">Listo</option>
+                                <option value="DESPACHADO">Despachado</option>
+                                <option value="ENTREGADO">Entregado</option>
+                                <option value="CANCELADO">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <select class="form-select" id="orderPaymentFilter" onchange="loadOrders()">
+                                <option value="">Todos los pagos</option>
+                                <option value="PENDIENTE">Pendiente</option>
+                                <option value="PAGADO_PARCIAL">Parcial</option>
+                                <option value="PAGADO_TOTAL">Total</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="exportOrders()">
+                                <i class="bi bi-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0 orders-table" id="ordersTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Pedido</th>
+                                    <th>Cliente</th>
+                                    <th style="width: 120px;">Entrega</th>
+                                    <th style="width: 180px;">Estado / Progreso</th>
+                                    <th style="width: 130px;">Pago</th>
+                                    <th style="width: 120px;">Total</th>
+                                    <th style="width: 150px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                        <p class="text-muted mt-2 mb-0">Cargando pedidos...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Paginación pedidos" class="p-3">
+                        <ul class="pagination pagination-sm mb-0 justify-content-center" id="ordersPaginationList"></ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- COTIZACIONES TAB -->
+            <div class="tab-pane fade" id="panel-cotizaciones" role="tabpanel">
+                <div class="p-3 p-md-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="quotationSearch" placeholder="Buscar por cliente..." onkeyup="debounceSearchQuotations()">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <select class="form-select" id="quotationStatusFilter" onchange="loadQuotations()">
+                                <option value="">Todos</option>
+                                <option value="BORRADOR">Borrador</option>
+                                <option value="ENVIADA">Enviada</option>
+                                <option value="ACEPTADA">Aceptada</option>
+                                <option value="RECHAZADA">Rechazada</option>
+                                <option value="EXPIRADA">Expirada</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <button class="btn btn-outline-secondary w-100" onclick="exportQuotations()">
+                                <i class="bi bi-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0 orders-table" id="quotationsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 100px;">Cotización</th>
+                                    <th>Cliente</th>
+                                    <th style="width: 130px;">Válida hasta</th>
+                                    <th style="width: 150px;">Estado</th>
+                                    <th style="width: 120px;">Total</th>
+                                    <th style="width: 150px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quotationsTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Paginación cotizaciones" class="p-3">
+                        <ul class="pagination pagination-sm mb-0 justify-content-center" id="quotationsPaginationList"></ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- COTIZADOR VISUAL TAB -->
+            <div class="tab-pane fade" id="panel-cotizador" role="tabpanel">
+                <div class="p-3 p-md-4">
+                    <div class="quoter-layout">
+                        <!-- Left: Product Selector + Items -->
+                        <div>
+                            <!-- Client Selector -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-person me-2"></i>Cliente</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-12 col-md-8">
+                                            <label class="form-label fw-medium">Seleccionar Cliente</label>
+                                            <div class="dropdown">
+                                                <button class="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="clientDropdownBtn">
+                                                    <span id="selectedClientName">
+                                                        <i class="bi bi-person-plus me-2"></i>Seleccionar cliente...
+                                                    </span>
+                                                    <i class="bi bi-chevron-down"></i>
+                                                </button>
+                                                <ul class="dropdown-menu w-100" id="clientDropdownMenu" style="max-height: 300px; overflow-y: auto;">
+                                                    <li><h6 class="dropdown-header">Buscar cliente</h6></li>
+                                                    <li>
+                                                        <input type="text" class="form-control form-control-sm px-3 py-2" id="clientSearchInput" placeholder="Escribir para filtrar..." onkeyup="filterClients()">
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><h6 class="dropdown-header">Clientes</h6></li>
+                                                    <li id="clientDropdownList"></li>
+                                                </ul>
+                                            </div>
+                                            <input type="hidden" id="quotationClientId" name="client">
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label fw-medium">Válida hasta</label>
+                                            <input type="date" class="form-control" id="quotationValidUntil" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Product Selector -->
+                            <div class="card mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="bi bi-cupcake me-2"></i>Agregar Productos</h6>
+                                    <span class="badge badge-secondary" id="productsInQuoteCount">0 items</span>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="product-category-tabs" id="productCategoryTabs">
+                                        <button class="category-tab active" data-category="">Todos</button>
+                                    </div>
+                                    <div class="products-grid-selector" id="productsSelectorGrid">
+                                        <div class="text-center py-5">
+                                            <div class="spinner-border text-chocolate" role="status"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quote Items -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items de la Cotización</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addQuickItem()">
+                                        <i class="bi bi-plus-lg me-1"></i>Agregar manual
+                                    </button>
+                                </div>
+                                <div class="card-body p-0" id="quotationItemsContainer">
+                                    <div class="empty-state-quoter">
+                                        <div class="icon"><i class="bi bi-basket"></i></div>
+                                        <h5>No hay items en la cotización</h5>
+                                        <p class="text-muted">Selecciona productos del panel izquierdo o agrégalos manualmente</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Sidebar with Totals & BOM Preview -->
+                        <div class="quoter-sidebar">
+                            <!-- Totals Panel -->
+                            <div class="totals-panel mb-3">
+                                <h6 class="mb-3"><i class="bi bi-currency-dollar me-2"></i>Resumen de Cotización</h6>
+
+                                <div class="totals-row">
+                                    <span class="totals-label">Subtotal</span>
+                                    <span class="totals-value" id="quoteSubtotal">$0</span>
+                                </div>
+
+                                <div class="totals-row">
+                                    <span class="totals-label">Descuento</span>
+                                    <div class="discount-input-group">
+                                        <input type="number" class="form-control form-control-sm" id="quoteDiscount" value="0" min="0" max="100" step="0.01" onchange="calculateQuoteTotals()">
+                                        <span class="text-muted">%</span>
+                                    </div>
+                                </div>
+
+                                <div class="totals-row">
+                                    <span class="totals-label">Total</span>
+                                    <span class="totals-value totals-final" id="quoteTotal">$0</span>
+                                </div>
+
+                                <hr class="my-3" style="border-color: var(--color-dorado);">
+
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="saveQuotation('BORRADOR')" id="saveDraftBtn">
+                                        <i class="bi bi-save me-1"></i>Guardar Borrador
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="saveQuotation('ENVIADA')" id="sendQuoteBtn">
+                                        <i class="bi bi-send me-1"></i>Guardar y Enviar
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="convertToOrder()">
+                                        <i class="bi bi-cart-plus me-1"></i>Convertir a Pedido
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Global BOM Preview -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="bi bi-calculator me-2"></i>Preview BOM Escalado (Global)</h6>
+                                </div>
+                                <div class="card-body p-0" id="globalBomPreview">
+                                    <div class="empty-state-quoter p-4">
+                                        <div class="icon" style="font-size: 2rem;"><i class="bi bi-calculator"></i></div>
+                                        <p class="mb-0 small">Agrega productos para ver el BOM escalado</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="card mt-3">
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="clearQuotation()">
+                                            <i class="bi bi-trash me-1"></i>Limpiar Cotización
+                                        </button>
+                                        <button type="button" class="btn btn-ghost" onclick="duplicateQuotation()">
+                                            <i class="bi bi-files me-1"></i>Duplicar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODALS (Legacy - kept for compatibility) -->
+<div class="modal fade" id="quotationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="quotationModalTitle"><i class="bi bi-file-text me-2"></i>Nueva Cotización</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="quotationForm" novalidate>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="quotationClient" class="form-label fw-medium">Cliente <span class="text-danger">*</span></label>
+                            <select class="form-select" id="quotationClient" name="client" required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="quotationValidUntil" class="form-label fw-medium">Válida hasta <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="quotationValidUntil" name="valid_until" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium"><i class="bi bi-list-ul me-2"></i>Items</label>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover" id="quotationItemsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Porciones</th>
+                                        <th>Precio Unit.</th>
+                                        <th>BOM Escalado</th>
+                                        <th>Subtotal</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quotationItemsTableBody">
+                                    <tr id="quotationEmptyRow"><td colspan="7" class="text-center text-muted py-4">No hay items</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addQuotationItem()"><i class="bi bi-plus-lg me-1"></i>Agregar Producto</button>
+                    </div>
+                    <div id="quotationBomPreview" class="mb-3" style="display: none;">
+                        <h6 class="mb-2"><i class="bi bi-calculator me-2"></i>Preview BOM Escalado</h6>
+                        <div class="table-responsive" id="quotationBomPreviewBody"></div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-medium">Subtotal</label>
+                            <div class="input-group"><span class="input-group-text">$</span><input type="text" class="form-control fw-bold" id="quotationSubtotal" readonly></div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="quotationDiscount" class="form-label fw-medium">Descuento %</label>
+                            <div class="input-group"><input type="number" class="form-control" id="quotationDiscount" name="discount_percent" step="0.01" min="0" max="100" value="0" onchange="calculateQuotationTotals()"><span class="input-group-text">%</span></div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-medium">Total</label>
+                            <div class="input-group"><span class="input-group-text">$</span><input type="text" class="form-control fw-bold text-primary" id="quotationTotal" readonly></div>
+                        </div>
+                    </div>
+                    <div class="mb-3"><label for="quotationNotes" class="form-label fw-medium">Notas</label><textarea class="form-control" id="quotationNotes" name="notes" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-success" onclick="saveQuotation('BORRADOR')"><i class="bi bi-save me-1"></i>Guardar Borrador</button>
+                    <button type="button" class="btn btn-success" onclick="saveQuotation('ENVIADA')"><i class="bi bi-send me-1"></i>Guardar y Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="orderModalTitle"><i class="bi bi-cart-plus me-2"></i>Nuevo Pedido</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="orderForm" novalidate>
+                <input type="hidden" name="id" id="orderId">
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="orderClient" class="form-label fw-medium">Cliente <span class="text-danger">*</span></label>
+                            <select class="form-select" id="orderClient" name="client" required><option value="">Seleccionar cliente...</option></select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="orderDeliveryDate" class="form-label fw-medium">Fecha Entrega <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="orderDeliveryDate" name="delivery_date" required>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="orderDeliveryAddress" class="form-label fw-medium">Dirección Entrega</label>
+                            <input type="text" class="form-control" id="orderDeliveryAddress" name="delivery_address">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="orderStatus" class="form-label fw-medium">Estado</label>
+                            <select class="form-select" id="orderStatus" name="status">
+                                <option value="COTIZACION">Cotización</option>
+                                <option value="CONFIRMADO" selected>Confirmado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium"><i class="bi bi-list-ul me-2"></i>Items (Porciones: 12 | 20 | 40)</label>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover" id="orderItemsTable">
+                                <thead class="table-light"><tr><th>Producto</th><th>Cantidad</th><th>Porciones</th><th>Precio Unit.</th><th>Validar Stock</th><th>Subtotal</th><th></th></tr></thead>
+                                <tbody id="orderItemsTableBody"><tr id="orderEmptyRow"><td colspan="7" class="text-center text-muted py-4">No hay items</td></tr></tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOrderItem()"><i class="bi bi-plus-lg me-1"></i>Agregar Producto</button>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4"><label class="form-label fw-medium">Subtotal</label><div class="input-group"><span class="input-group-text">$</span><input type="text" class="form-control fw-bold" id="orderSubtotal" readonly></div></div>
+                        <div class="col-12 col-md-4"><label for="orderDiscount" class="form-label fw-medium">Descuento %</label><div class="input-group"><input type="number" class="form-control" id="orderDiscount" name="discount_percent" step="0.01" min="0" max="100" value="0" onchange="calculateOrderTotals()"><span class="input-group-text">%</span></div></div>
+                        <div class="col-12 col-md-4"><label class="form-label fw-medium">Total</label><div class="input-group"><span class="input-group-text">$</span><input type="text" class="form-control fw-bold text-success" id="orderTotal" readonly></div></div>
+                    </div>
+                    <div class="mb-3"><label for="orderNotes" class="form-label fw-medium">Notas</label><textarea class="form-control" id="orderNotes" name="notes" rows="2"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="saveOrder('COTIZACION')"><i class="bi bi-file-text me-1"></i>Guardar como Cotización</button>
+                    <button type="button" class="btn btn-success" onclick="saveOrder('CONFIRMADO')"><i class="bi bi-check-circle me-1"></i>Confirmar Pedido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-cart me-2"></i>Detalle del Pedido</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="orderDetailBody"><div class="text-center py-4"><div class="spinner-border text-chocolate"></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark"><h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar Pedido - Validación de Stock</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="confirmOrderBody"><div class="text-center py-4"><div class="spinner-border text-warning"></div><p class="mt-2">Validando stock...</p></div></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning text-dark" id="confirmOrderBtn" onclick="executeOrderConfirm()"><i class="bi bi-check-circle me-1"></i>Confirmar y Descontar Stock</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="webpayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="bi bi-credit-card me-2"></i>Pagar con WebPay</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="webpayModalBody"><div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Redirigiendo a WebPay...</p></div></div>
+    </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==================== ESTADO GLOBAL ====================
+let ordersCurrentPage = 1;
+let ordersSearchTimeout;
+let quotationsCurrentPage = 1;
+let quotationsSearchTimeout;
+let clientsCache = [];
+let productsCache = [];
+let productsByCategory = {};
+let currentCategories = [];
+let currentCategoryFilter = '';
+let currentOrderIdForConfirm = null;
+
+// Visual Quoter State
+let visualQuoteClient = null;
+let visualQuoteItems = [];
+let visualQuoteCounter = 0;
+
+// Legacy Quotation Modal State
+let quotationItems = [];
+let quotationCounter = 0;
+
+// Legacy Order Modal State
+let orderItems = [];
+let orderCounter = 0;
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Ensure JWT tokens are ready before loading data
+    if (window.API && window.API.initJWTTokens) {
+        await window.API.initJWTTokens();
+    }
+    loadClientsForSelects();
+    loadProductsForSelects();
+    loadOrders();
+    loadQuotations();
+    setupOrderTabs();
+    initVisualQuoter();
+});
+
+function setupOrderTabs() {
+    document.getElementById('tab-pedidos').addEventListener('shown.bs.tab', () => loadOrders());
+    document.getElementById('tab-cotizaciones').addEventListener('shown.bs.tab', () => loadQuotations());
+    document.getElementById('tab-cotizador').addEventListener('shown.bs.tab', () => loadProductsForVisualQuoter());
+
+    // Set default valid until date (30 days)
+    const validUntil = document.getElementById('quotationValidUntil');
+    if (validUntil) {
+        validUntil.valueAsDate = new Date(Date.now() + 30*24*60*60*1000);
+    }
+}
+
+// ==================== CARGA DE DATOS BASE ====================
+async function loadClientsForSelects() {
+    try {
+        const response = await apiFetch('clients/?page_size=200&is_active=true');
+        if (response.ok) {
+            clientsCache = await response.json();
+            const clients = clientsCache.results || clientsCache;
+
+            // Legacy modals
+            [document.getElementById('quotationClient'), document.getElementById('orderClient')].forEach(select => {
+                if (select) {
+                    clients.forEach(c => {
+                        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+                    });
+                }
+            });
+
+            // Visual Quoter dropdown
+            renderClientDropdown(clients);
+        }
+    } catch (error) {
+        console.error('Error cargando clientes:', error);
+    }
+}
+
+function renderClientDropdown(clients) {
+    const list = document.getElementById('clientDropdownList');
+    if (!list) return;
+
+    list.innerHTML = clients.map(c => `
+        <li><button class="dropdown-item client-selector-btn" type="button" onclick="selectClient(${c.id}, '${escapeHtml(c.name)}', '${escapeHtml(c.email || '')}')">
+            <div class="client-selector-avatar">${(c.name || 'C').charAt(0).toUpperCase()}</div>
+            <div class="client-selector-info">
+                <div class="client-selector-name">${escapeHtml(c.name)}</div>
+                <div class="client-selector-email">${escapeHtml(c.email || 'Sin email')}</div>
+            </div>
+        </button></li>
+    `).join('');
+}
+
+function filterClients() {
+    const search = document.getElementById('clientSearchInput').value.toLowerCase();
+    const items = document.querySelectorAll('#clientDropdownList .client-selector-btn');
+
+    items.forEach(item => {
+        const name = item.querySelector('.client-selector-name').textContent.toLowerCase();
+        const email = item.querySelector('.client-selector-email').textContent.toLowerCase();
+        item.style.display = (name.includes(search) || email.includes(search)) ? 'flex' : 'none';
+    });
+}
+
+function selectClient(id, name, email) {
+    visualQuoteClient = { id, name, email };
+    document.getElementById('quotationClientId').value = id;
+    document.getElementById('selectedClientName').innerHTML = `
+        <div class="client-selector-avatar">${name.charAt(0).toUpperCase()}</div>
+        <div class="client-selector-info">
+            <div class="client-selector-name">${escapeHtml(name)}</div>
+            <div class="client-selector-email">${escapeHtml(email || 'Sin email')}</div>
+        </div>
+    `;
+    // Close dropdown
+    const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('clientDropdownBtn'));
+    if (dropdown) dropdown.hide();
+}
+
+async function loadProductsForSelects() {
+    try {
+        const response = await apiFetch('products/?page_size=200&is_active=true');
+        if (response.ok) {
+            productsCache = await response.json();
+        }
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+    }
+}
+
+// ==================== PEDIDOS TAB ====================
+async function loadOrders(page = 1) {
+    ordersCurrentPage = page;
+    const search = document.getElementById('orderSearch')?.value || '';
+    const status = document.getElementById('orderStatusFilter')?.value || '';
+    const payment = document.getElementById('orderPaymentFilter')?.value || '';
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: 20,
+        ordering: '-created_at'
+    });
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    if (payment) params.append('payment_status', payment);
+
+    try {
+        const response = await apiFetch(`orders/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error al consultar pedidos (' + response.status + ')');
+        const data = await response.json();
+        const ordersList = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
+        renderOrdersTable(ordersList);
+        renderPagination(data, 'orders');
+        updateOrderStats(ordersList);
+    } catch (error) {
+        console.error('Error cargando pedidos:', error);
+        showToast('Error al cargar pedidos: ' + error.message, 'danger');
+        const tbody = document.getElementById('ordersTableBody');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error al cargar pedidos: ${error.message} <button class="btn btn-sm btn-outline-danger ms-2" onclick="loadOrders(${page})"><i class="bi bi-arrow-clockwise me-1"></i>Reintentar</button></td></tr>`;
+        }
+    }
+}
+
+function debounceSearchOrders() {
+    clearTimeout(ordersSearchTimeout);
+    ordersSearchTimeout = setTimeout(() => loadOrders(1), 300);
+}
+
+function updateOrderStats(orders) {
+    if (!Array.isArray(orders)) orders = [];
+    const total = orders.length;
+    const confirmed = orders.filter(o => o.status === 'CONFIRMADO').length;
+    const inProduction = orders.filter(o => o.status === 'EN_PRODUCCION').length;
+    const quotes = orders.filter(o => o.status === 'COTIZACION').length;
+
+    const elTotal = document.getElementById('statTotalOrders');
+    if (elTotal) elTotal.textContent = total;
+    const elConfirmed = document.getElementById('statConfirmedOrders');
+    if (elConfirmed) elConfirmed.textContent = confirmed;
+    const elInProduction = document.getElementById('statInProduction');
+    if (elInProduction) elInProduction.textContent = inProduction;
+    const elQuotes = document.getElementById('statPendingQuotes');
+    if (elQuotes) elQuotes.textContent = quotes;
+    const elBadge = document.getElementById('ordersCountBadge');
+    if (elBadge) elBadge.textContent = total;
+}
+
+function renderOrdersTable(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    if (!tbody) return;
+
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No hay pedidos</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = orders.map(order => {
+        const statusConfig = getOrderStatusConfig(order.status);
+        const paymentConfig = getPaymentStatusConfig(order.payment_status);
+        const dDate = order.delivery_date ? (window.parseCustomDate ? window.parseCustomDate(order.delivery_date) : new Date(order.delivery_date)) : null;
+        const isOverdue = dDate && !isNaN(dDate.getTime()) && dDate < new Date() && order.status !== 'ENTREGADO';
+        const clientName = order.client_name || (typeof order.client === 'object' ? order.client?.name : null) || '—';
+        const clientEmail = (typeof order.client === 'object' ? order.client?.email : null) || '';
+
+        return `
+            <tr>
+                <td data-label="Pedido">
+                    <strong>#${order.id}</strong>
+                    ${order.quotation ? `<small class="text-muted d-block">Cot: #${order.quotation}</small>` : ''}
+                </td>
+                <td data-label="Cliente">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="avatar avatar-sm" style="background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);">
+                            ${clientName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="fw-medium">${escapeHtml(clientName)}</div>
+                            <small class="text-muted">${escapeHtml(clientEmail)}</small>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Fecha Entrega">
+                    ${formatDate(order.delivery_date)}
+                    ${isOverdue ? '<i class="bi bi-exclamation-triangle text-danger ms-1" title="Vencido"></i>' : ''}
+                </td>
+                <td data-label="Estado / Progreso">
+                    <span class="order-status-badge" style="color: var(--${statusConfig.colorVar}); background: var(--${statusConfig.bgVar});">
+                        ${statusConfig.label}
+                    </span>
+                    <div class="order-progress-mini">
+                        ${renderOrderProgressMini(order.status)}
+                    </div>
+                </td>
+                <td data-label="Pago">
+                    <span class="badge badge-${paymentConfig.badgeClass}">${paymentConfig.label}</span>
+                </td>
+                <td data-label="Total" class="fw-bold text-chocolate">${formatCLP(order.total)}</td>
+                <td data-label="Acciones">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewOrderDetail(${order.id})" title="Ver detalle"><i class="bi bi-eye"></i></button>
+                        ${(order.status === 'CONFIRMADO' || order.status === 'COTIZACION') ? `
+                            <button type="button" class="btn btn-outline-success" onclick="openConfirmOrderModal(${order.id})" title="Confirmar y descontar stock"><i class="bi bi-check-circle"></i></button>
+                        ` : ''}
+                        ${(order.payment_status === 'PENDIENTE' || order.payment_status === 'PAGADO_PARCIAL') ? `
+                            <button type="button" class="btn btn-outline-primary" onclick="openWebpayModal(${order.id})" title="Pagar"><i class="bi bi-credit-card"></i></button>
+                        ` : ''}
+                        <button type="button" class="btn btn-outline-secondary" onclick="editOrder(${order.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderOrderProgressMini(status) {
+    const steps = [
+        { key: 'COTIZACION', label: 'Cot.' },
+        { key: 'CONFIRMADO', label: 'Conf.' },
+        { key: 'EN_PRODUCCION', label: 'Prod.' },
+        { key: 'LISTO', label: 'Listo' },
+        { key: 'DESPACHADO', label: 'Desp.' },
+        { key: 'ENTREGADO', label: 'Ent.' }
+    ];
+
+    const currentIndex = steps.findIndex(s => s.key === status);
+
+    return steps.map((step, i) => {
+        let className = 'pending';
+        if (i < currentIndex) className = 'completed';
+        else if (i === currentIndex) className = 'current';
+
+        return `
+            <div class="order-progress-step ${className}">
+                <div class="order-progress-dot"></div>
+                <span class="order-progress-label">${step.label}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function getOrderStatusConfig(status) {
+    const configs = {
+        'COTIZACION': { label: 'Cotización', colorVar: 'color-texto-muted', bgVar: 'color-crema-oscuro' },
+        'CONFIRMADO': { label: 'Confirmado', colorVar: 'color-info', bgVar: 'color-info' },
+        'EN_PRODUCCION': { label: 'En Producción', colorVar: 'color-chocolate', bgVar: 'color-chocolate' },
+        'LISTO': { label: 'Listo', colorVar: 'color-advertencia', bgVar: 'color-advertencia' },
+        'DESPACHADO': { label: 'Despachado', colorVar: 'color-info', bgVar: 'color-info' },
+        'ENTREGADO': { label: 'Entregado', colorVar: 'color-exito', bgVar: 'color-exito' },
+        'CANCELADO': { label: 'Cancelado', colorVar: 'color-error', bgVar: 'color-error' },
+    };
+    return configs[status] || { label: status, colorVar: 'color-texto-muted', bgVar: 'color-crema-oscuro' };
+}
+
+function getPaymentStatusConfig(status) {
+    const configs = {
+        'PENDIENTE': { label: 'Pendiente', badgeClass: 'badge-warning' },
+        'PAGADO_PARCIAL': { label: 'Parcial', badgeClass: 'badge-info' },
+        'PAGADO_TOTAL': { label: 'Total', badgeClass: 'badge-success' },
+    };
+    return configs[status] || { label: status, badgeClass: 'badge-secondary' };
+}
+
+// ==================== COTIZACIONES TAB ====================
+async function loadQuotations(page = 1) {
+    quotationsCurrentPage = page;
+    const search = document.getElementById('quotationSearch')?.value || '';
+    const status = document.getElementById('quotationStatusFilter')?.value || '';
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: 20,
+        ordering: '-created_at'
+    });
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+
+    try {
+        const response = await apiFetch(`quotations/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error al consultar cotizaciones (' + response.status + ')');
+        const data = await response.json();
+        const quotesList = Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []);
+        renderQuotationsTable(quotesList);
+        renderPagination(data, 'quotations');
+        const badge = document.getElementById('quotesCountBadge');
+        if (badge) badge.textContent = data.count || quotesList.length;
+    } catch (error) {
+        console.error('Error cargando cotizaciones:', error);
+        showToast('Error al cargar cotizaciones: ' + error.message, 'danger');
+        const tbody = document.getElementById('quotationsTableBody');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error al cargar cotizaciones: ${error.message} <button class="btn btn-sm btn-outline-danger ms-2" onclick="loadQuotations(${page})"><i class="bi bi-arrow-clockwise me-1"></i>Reintentar</button></td></tr>`;
+        }
+    }
+}
+
+function debounceSearchQuotations() {
+    clearTimeout(quotationsSearchTimeout);
+    quotationsSearchTimeout = setTimeout(() => loadQuotations(1), 300);
+}
+
+function renderQuotationsTable(quotations) {
+    const tbody = document.getElementById('quotationsTableBody');
+
+    if (!quotations || quotations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No hay cotizaciones</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = quotations.map(q => {
+        const statusConfig = getQuotationStatusConfig(q.status);
+        const vDate = q.valid_until ? (window.parseCustomDate ? window.parseCustomDate(q.valid_until) : new Date(q.valid_until)) : null;
+        const isExpired = vDate && !isNaN(vDate.getTime()) && vDate < new Date() && q.status !== 'ACEPTADA';
+        const clientName = q.client_name || q.client_detail?.name || (typeof q.client === 'object' ? q.client?.name : null) || '—';
+        const clientEmail = q.client_detail?.email || (typeof q.client === 'object' ? q.client?.email : null) || '';
+
+        return `
+            <tr>
+                <td data-label="Cotización"><strong>#${q.id}</strong></td>
+                <td data-label="Cliente">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="avatar avatar-sm" style="background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);">
+                            ${clientName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="fw-medium">${escapeHtml(clientName)}</div>
+                            <small class="text-muted">${escapeHtml(clientEmail)}</small>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Válida hasta">
+                    <span class="${isExpired ? 'text-danger fw-medium' : ''}">
+                        ${formatDate(q.valid_until)}
+                        ${isExpired ? ' <i class="bi bi-exclamation-triangle"></i>' : ''}
+                    </span>
+                </td>
+                <td data-label="Estado">
+                    <span class="badge badge-${statusConfig.badgeClass}">${statusConfig.label}</span>
+                </td>
+                <td data-label="Total" class="fw-bold text-chocolate">${formatCLP(q.total)}</td>
+                <td data-label="Acciones">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewQuotationDetail(${q.id})" title="Ver"><i class="bi bi-eye"></i></button>
+                        <button type="button" class="btn btn-outline-success" onclick="convertQuotationToOrder(${q.id})" title="Convertir a Pedido"><i class="bi bi-cart-plus"></i></button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="editQuotation(${q.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getQuotationStatusConfig(status) {
+    const configs = {
+        'BORRADOR': { label: 'Borrador', badgeClass: 'badge-secondary' },
+        'ENVIADA': { label: 'Enviada', badgeClass: 'badge-info' },
+        'ACEPTADA': { label: 'Aceptada', badgeClass: 'badge-success' },
+        'RECHAZADA': { label: 'Rechazada', badgeClass: 'badge-danger' },
+        'EXPIRADA': { label: 'Expirada', badgeClass: 'badge-warning' },
+    };
+    return configs[status] || { label: status, badgeClass: 'badge-secondary' };
+}
+
+function renderPagination(data, type) {
+    const container = document.getElementById(`${type}PaginationList`);
+    if (!container) return;
+
+    const current = data.page || 1;
+    const total = data.total_pages || 1;
+    let html = '';
+
+    if (current > 1) {
+        const fn = type === 'orders' ? 'loadOrders' : 'loadQuotations';
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${fn}(${current - 1})"><i class="bi bi-chevron-left"></i></a></li>`;
+    }
+
+    for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+        const fn = type === 'orders' ? 'loadOrders' : 'loadQuotations';
+        html += `<li class="page-item ${i === current ? 'active' : ''}"><a class="page-link" href="#" onclick="${fn}(${i})">${i}</a></li>`;
+    }
+
+    if (current < total) {
+        const fn = type === 'orders' ? 'loadOrders' : 'loadQuotations';
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${fn}(${current + 1})"><i class="bi bi-chevron-right"></i></a></li>`;
+    }
+
+    container.innerHTML = html;
+}
+
+// ==================== VISUAL COTIZADOR ====================
+function initVisualQuoter() {
+    // Already initialized in DOMContentLoaded
+}
+
+async function loadProductsForVisualQuoter() {
+    try {
+        const response = await apiFetch('products/?page_size=200&is_active=true');
+        if (!response.ok) throw new Error('Error cargando productos');
+        const data = await response.json();
+        const products = data.results || data;
+
+        // Group by category
+        productsByCategory = {};
+        currentCategories = [''];
+        products.forEach(p => {
+            const cat = p.category_name || (typeof p.category === 'object' ? p.category?.name : null) || 'Sin categoría';
+            if (!productsByCategory[cat]) {
+                productsByCategory[cat] = [];
+                if (!currentCategories.includes(cat)) currentCategories.push(cat);
+            }
+            productsByCategory[cat].push(p);
+        });
+
+        renderCategoryTabs();
+        renderProductsSelector(''); // Show all
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error cargando productos para cotizador', 'danger');
+    }
+}
+
+function renderCategoryTabs() {
+    const container = document.getElementById('productCategoryTabs');
+    if (!container) return;
+
+    const tabs = ['Todos', ...currentCategories.filter(c => c !== '')].map(cat => `
+        <button class="category-tab ${cat === currentCategoryFilter ? 'active' : ''}"
+                data-category="${cat}"
+                onclick="filterProductsByCategory('${cat}')">
+            ${cat === '' ? 'Todos' : cat}
+        </button>
+    `).join('');
+
+    container.innerHTML = tabs;
+}
+
+function filterProductsByCategory(category) {
+    currentCategoryFilter = category === 'Todos' ? '' : category;
+    renderCategoryTabs();
+    renderProductsSelector(category === 'Todos' ? '' : category);
+}
+
+function renderProductsSelector(category) {
+    const container = document.getElementById('productsSelectorGrid');
+    if (!container) return;
+
+    let products = [];
+    if (category) {
+        products = productsByCategory[category] || [];
+    } else {
+        // All products
+        Object.values(productsByCategory).forEach(arr => products.push(...arr));
+    }
+
+    if (products.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-quoter p-4">
+                <div class="icon" style="font-size: 2rem;"><i class="bi bi-box"></i></div>
+                <p class="mb-0 small">No hay productos en esta categoría</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = products.map(product => {
+        const inQuote = visualQuoteItems.some(item => item.product == product.id);
+        return `
+            <div class="product-selector-item ${inQuote ? 'selected' : ''}" onclick="addProductToVisualQuote(${product.id})" data-product-id="${product.id}">
+                ${product.image ? `<img src="${product.image}" alt="" class="product-selector-image">` : '<div class="product-selector-image d-flex align-items-center justify-content-center"><i class="bi bi-cupcake fs-1 text-muted"></i></div>'}
+                <div class="product-selector-info">
+                    <div class="product-selector-name">${escapeHtml(product.name)}</div>
+                    <div class="product-selector-meta">
+                        <span>${product.base_servings} porc. base</span>
+                        <span>${formatCLP(product.sale_price)}</span>
+                    </div>
+                    <div class="product-selector-price">${formatCLP(product.sale_price)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function addProductToVisualQuote(productId) {
+    const product = Object.values(productsByCategory).flat().find(p => p.id === productId);
+    if (!product) return;
+
+    // Check if already in quote
+    const existingIndex = visualQuoteItems.findIndex(item => item.product == productId);
+    if (existingIndex >= 0) {
+        // Increase quantity
+        visualQuoteItems[existingIndex].quantity += 1;
+    } else {
+        // Add new item
+        visualQuoteCounter++;
+        visualQuoteItems.push({
+            tempId: visualQuoteCounter,
+            product: product.id,
+            product_name: product.name,
+            product_base_servings: product.base_servings,
+            product_image: product.image,
+            quantity: 1,
+            servings: 12,
+            unit_price: product.sale_price,
+            bom_scaled: []
+        });
+    }
+
+    renderVisualQuoteItems();
+    calculateQuoteTotals();
+    renderGlobalBomPreview();
+    renderProductsSelector(currentCategoryFilter); // Refresh to show selected state
+
+    showToast(`${escapeHtml(product.name)} agregado a la cotización`, 'success');
+}
+
+function addQuickItem() {
+    // Open a modal to select product manually
+    if (productsCache.length === 0) {
+        loadProductsForSelects().then(() => addQuickItem());
+        return;
+    }
+
+    const products = productsCache.results || productsCache;
+    if (products.length === 0) {
+        showToast('No hay productos disponibles', 'warning');
+        return;
+    }
+
+    // Simple prompt for now - could be a modal
+    const productNames = products.map((p, i) => `${i + 1}. ${p.name} (${p.base_servings} porc.) - ${formatCLP(p.sale_price)}`).join('\n');
+    const choice = prompt(`Selecciona un producto por número:\n${productNames}`);
+    const index = parseInt(choice) - 1;
+
+    if (index >= 0 && index < products.length) {
+        addProductToVisualQuote(products[index].id);
+    }
+}
+
+function renderVisualQuoteItems() {
+    const container = document.getElementById('quotationItemsContainer');
+    if (!container) return;
+
+    const badge = document.getElementById('productsInQuoteCount');
+    if (badge) badge.textContent = `${visualQuoteItems.length} item${visualQuoteItems.length !== 1 ? 's' : ''}`;
+
+    if (visualQuoteItems.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-quoter p-5">
+                <div class="icon"><i class="bi bi-basket"></i></div>
+                <h5>No hay items en la cotización</h5>
+                <p class="text-muted small mb-0">Selecciona productos del panel izquierdo o agrégalos manualmente</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = visualQuoteItems.map((item, index) => {
+        const baseServings = item.product_base_servings || 12;
+        const factor = item.servings / baseServings;
+        const hasBom = item.bom_scaled && item.bom_scaled.length > 0;
+
+        return `
+            <div class="quoter-item" data-index="${index}">
+                <div class="quoter-item-header">
+                    <div class="quoter-item-product">
+                        <div class="quoter-item-name">${escapeHtml(item.product_name)}</div>
+                        <div class="quoter-item-base-servings">
+                            <i class="bi bi-people"></i> Base: ${baseServings} porc.
+                            <span class="ms-2"><i class="bi bi-tag"></i> ${formatCLP(item.unit_price)}/und</span>
+                        </div>
+                    </div>
+                    <div class="quoter-item-controls">
+                        <div class="quoter-servings-selector" role="group" aria-label="Porciones">
+                            ${[12, 20, 40].map(s => `
+                                <button type="button" class="quoter-servings-btn ${item.servings === s ? 'active' : ''}"
+                                        onclick="updateVisualQuoteServings(${index}, ${s})"
+                                        title="${s} porciones (factor ${(s/baseServings).toFixed(2)}x)">
+                                    ${s} pers.
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn" onclick="updateVisualQuoteQuantity(${index}, ${item.quantity - 1})" ${item.quantity <= 1 ? 'disabled' : ''}><i class="bi bi-dash"></i></button>
+                            <input type="number" class="quantity-input" value="${item.quantity}" min="1" max="999" onchange="updateVisualQuoteQuantity(${index}, this.value)">
+                            <button type="button" class="quantity-btn" onclick="updateVisualQuoteQuantity(${index}, ${item.quantity + 1})"><i class="bi bi-plus"></i></button>
+                        </div>
+                        <span class="quoter-item-subtotal">${formatCLP(item.quantity * item.unit_price)}</span>
+                        <button type="button" class="quoter-item-remove" onclick="removeVisualQuoteItem(${index})" title="Eliminar"><i class="bi bi-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-info ms-2" onclick="toggleItemBomPreview(${index})" title="Ver BOM escalado" ${!hasBom ? 'disabled' : ''}>
+                            <i class="bi bi-calculator"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BOM Preview (collapsed by default) -->
+                <div class="quoter-bom-preview" id="bomPreview_${index}">
+                    <div class="bom-preview-header">
+                        <h6 class="bom-preview-title mb-0">${escapeHtml(item.product_name)} - ${item.servings} porciones</h6>
+                        <span class="bom-preview-factor">${factor.toFixed(2)}x</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered bom-preview-table mb-0">
+                            <thead><tr><th>Insumo</th><th class="text-center">Cant. Base</th><th class="text-center">Cant. Escalada</th><th class="text-end">Costo Est.</th></tr></thead>
+                            <tbody id="bomPreviewBody_${index}">
+                                ${hasBom ? item.bom_scaled.map(b => `
+                                    <tr>
+                                        <td>${escapeHtml(b.ingredient_name)}</td>
+                                        <td class="text-center">${b.base_quantity} ${b.unit}</td>
+                                        <td class="text-center fw-bold">${b.scaled_quantity} ${b.unit}</td>
+                                        <td class="text-end">${formatCLP(b.estimated_cost)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="4" class="text-center text-muted py-3">Cargando BOM...</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bom-preview-summary" id="bomSummary_${index}"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateVisualQuoteQuantity(index, quantity) {
+    quantity = parseInt(quantity) || 1;
+    if (quantity < 1) quantity = 1;
+    if (quantity > 999) quantity = 999;
+
+    visualQuoteItems[index].quantity = quantity;
+    renderVisualQuoteItems();
+    calculateQuoteTotals();
+}
+
+function updateVisualQuoteServings(index, servings) {
+    visualQuoteItems[index].servings = servings;
+    // Fetch BOM preview for new servings
+    fetchVisualQuoteBomPreview(index);
+    renderVisualQuoteItems();
+    calculateQuoteTotals();
+    renderGlobalBomPreview();
+}
+
+async function fetchVisualQuoteBomPreview(index) {
+    const item = visualQuoteItems[index];
+    if (!item.product) return;
+
+    try {
+        const response = await apiFetch(`products/${item.product}/bom-scaled/?servings=${item.servings}`);
+        if (response.ok) {
+            const data = await response.json();
+            visualQuoteItems[index].bom_scaled = data.bom_scaled || [];
+        }
+    } catch (error) {
+        console.error('Error fetching BOM preview:', error);
+    }
+}
+
+function toggleItemBomPreview(index) {
+    const preview = document.getElementById(`bomPreview_${index}`);
+    if (preview) {
+        preview.classList.toggle('open');
+    }
+}
+
+function removeVisualQuoteItem(index) {
+    visualQuoteItems.splice(index, 1);
+    renderVisualQuoteItems();
+    calculateQuoteTotals();
+    renderGlobalBomPreview();
+    renderProductsSelector(currentCategoryFilter);
+}
+
+function calculateQuoteTotals() {
+    let subtotal = 0;
+    visualQuoteItems.forEach(item => {
+        subtotal += (item.quantity || 0) * (item.unit_price || 0);
+    });
+
+    const discount = parseFloat(document.getElementById('quoteDiscount').value) || 0;
+    const discountAmount = subtotal * discount / 100;
+    const total = subtotal - discountAmount;
+
+    document.getElementById('quoteSubtotal').textContent = formatCLP(subtotal);
+    document.getElementById('quoteTotal').textContent = formatCLP(total);
+}
+
+async function renderGlobalBomPreview() {
+    const container = document.getElementById('globalBomPreview');
+    if (!container) return;
+
+    if (visualQuoteItems.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-quoter p-4">
+                <div class="icon" style="font-size: 2rem;"><i class="bi bi-calculator"></i></div>
+                <p class="mb-0 small">Agrega productos para ver el BOM escalado</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Aggregate BOM across all items
+    const aggregatedBom = {};
+    let totalBomCost = 0;
+
+    visualQuoteItems.forEach(item => {
+        if (item.bom_scaled) {
+            item.bom_scaled.forEach(b => {
+                const key = b.ingredient_id || b.ingredient_name;
+                if (!aggregatedBom[key]) {
+                    aggregatedBom[key] = {
+                        ingredient_name: b.ingredient_name,
+                        unit: b.unit,
+                        total_quantity: 0,
+                        total_cost: 0
+                    };
+                }
+                aggregatedBom[key].total_quantity += b.scaled_quantity;
+                aggregatedBom[key].total_cost += b.estimated_cost;
+                totalBomCost += b.estimated_cost;
+            });
+        }
+    });
+
+    if (Object.keys(aggregatedBom).length === 0) {
+        container.innerHTML = `
+            <div class="p-3">
+                <p class="text-muted small mb-2">Cargando BOM para los items...</p>
+                <div class="d-flex gap-2">
+                    ${visualQuoteItems.map((item, i) => `
+                        <button class="btn btn-sm btn-outline-info" onclick="fetchVisualQuoteBomPreview(${i}); renderGlobalBomPreview();">
+                            <i class="bi bi-arrow-clockwise me-1"></i>${escapeHtml(item.product_name)}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const quoteSubtotal = visualQuoteItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.unit_price || 0), 0);
+    const discount = parseFloat(document.getElementById('quoteDiscount').value) || 0;
+    const quoteTotal = quoteSubtotal * (1 - discount / 100);
+    const margin = quoteTotal > 0 ? ((quoteTotal - totalBomCost) / quoteTotal * 100) : 0;
+
+    container.innerHTML = `
+        <div class="p-3">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-3" style="font-size: var(--font-size-xs);">
+                    <thead class="table-light"><tr><th>Insumo</th><th class="text-center">Total Requerido</th><th class="text-end">Costo Estimado</th></tr></thead>
+                    <tbody>
+                        ${Object.values(aggregatedBom).map(b => `
+                            <tr>
+                                <td>${escapeHtml(b.ingredient_name)}</td>
+                                <td class="text-center fw-medium">${b.total_quantity.toFixed(3)} ${b.unit}</td>
+                                <td class="text-end">${formatCLP(b.total_cost)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="row g-2 text-center">
+                <div class="col-4">
+                    <small class="text-muted d-block">Costo Total BOM</small>
+                    <strong class="text-chocolate">${formatCLP(totalBomCost)}</strong>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted d-block">Venta (con desc.)</small>
+                    <strong class="text-primary">${formatCLP(quoteTotal)}</strong>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted d-block">Margen Estimado</small>
+                    <strong class="${margin >= 30 ? 'text-exito' : (margin >= 15 ? 'text-advertencia' : 'text-danger')}">${margin.toFixed(1)}%</strong>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function clearQuotation() {
+    if (visualQuoteItems.length === 0) return;
+    if (!confirm('¿Limpiar toda la cotización?')) return;
+
+    visualQuoteItems = [];
+    visualQuoteClient = null;
+    document.getElementById('quotationClientId').value = '';
+    document.getElementById('selectedClientName').innerHTML = '<i class="bi bi-person-plus me-2"></i>Seleccionar cliente...';
+    document.getElementById('quoteDiscount').value = 0;
+
+    renderVisualQuoteItems();
+    calculateQuoteTotals();
+    renderGlobalBomPreview();
+    renderProductsSelector(currentCategoryFilter);
+}
+
+function duplicateQuotation() {
+    showToast('Función duplicar en desarrollo', 'info');
+}
+
+async function saveQuotation(status) {
+    if (!visualQuoteClient) {
+        showToast('Seleccione un cliente', 'warning');
+        return;
+    }
+    if (visualQuoteItems.length === 0) {
+        showToast('Agregue al menos un item', 'warning');
+        return;
+    }
+
+    const validUntil = document.getElementById('quotationValidUntil').value;
+    if (!validUntil) {
+        showToast('Seleccione fecha de validez', 'warning');
+        return;
+    }
+
+    const items = visualQuoteItems.map(item => ({
+        product: item.product,
+        quantity: item.quantity,
+        servings: item.servings,
+        unit_price: item.unit_price
+    }));
+
+    const data = {
+        client: visualQuoteClient.id,
+        valid_until: validUntil,
+        status: status,
+        items: items,
+        discount_percent: parseFloat(document.getElementById('quoteDiscount').value) || 0,
+        notes: `Cotización creada desde Cotizador Visual`
+    };
+
+    const btn = status === 'ENVIADA' ? document.getElementById('sendQuoteBtn') : document.getElementById('saveDraftBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+
+    try {
+        const response = await apiFetch('quotations/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(JSON.stringify(err));
+        }
+
+        showToast('Cotización ' + (status === 'ENVIADA' ? 'enviada' : 'guardada como borrador'), 'success');
+        clearQuotation();
+        loadQuotations();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al guardar cotización', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function convertToOrder() {
+    if (!visualQuoteClient) {
+        showToast('Seleccione un cliente', 'warning');
+        return;
+    }
+    if (visualQuoteItems.length === 0) {
+        showToast('Agregue al menos un item', 'warning');
+        return;
+    }
+
+    // Open order modal with pre-filled data
+    const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+    modal.show();
+
+    // Fill order modal
+    document.getElementById('orderClient').value = visualQuoteClient.id;
+    document.getElementById('orderDeliveryDate').valueAsDate = new Date(Date.now() + 2*24*60*60*1000);
+
+    // Convert items
+    orderItems = visualQuoteItems.map(item => ({
+        tempId: item.tempId,
+        product: item.product,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        servings: item.servings,
+        unit_price: item.unit_price,
+        custom_notes: ''
+    }));
+
+    renderOrderItemsTable();
+    calculateOrderTotals();
+
+    // Close quotation modal if open
+    const quoteModal = bootstrap.Modal.getInstance(document.getElementById('quotationModal'));
+    if (quoteModal) quoteModal.hide();
+}
+
+// ==================== LEGACY QUOTATION MODAL ====================
+function openCreateQuotationModal() {
+    quotationItems = [];
+    quotationCounter = 0;
+    document.getElementById('quotationForm').reset();
+    document.getElementById('quotationValidUntil').valueAsDate = new Date(Date.now() + 30*24*60*60*1000);
+    document.getElementById('quotationModalTitle').innerHTML = '<i class="bi bi-file-text me-2"></i>Nueva Cotización';
+    renderQuotationItemsTable();
+    calculateQuotationTotals();
+    document.getElementById('quotationBomPreview').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('quotationModal')).show();
+}
+
+function renderQuotationItemsTable() {
+    const tbody = document.getElementById('quotationItemsTableBody');
+    const emptyRow = document.getElementById('quotationEmptyRow');
+    const products = (productsCache.results || productsCache);
+
+    if (quotationItems.length === 0) {
+        if (emptyRow) emptyRow.style.display = '';
+        return;
+    }
+    if (emptyRow) emptyRow.style.display = 'none';
+
+    tbody.innerHTML = quotationItems.map((item, index) => {
+        let productOptions = '<option value="">Seleccionar producto...</option>';
+        products.forEach(p => {
+            const selected = item.product == p.id ? 'selected' : '';
+            productOptions += `<option value="${p.id}" data-price="${p.sale_price}" data-base-servings="${p.base_servings}" ${selected}>${escapeHtml(p.name)} (${p.base_servings} porc.) - ${formatCLP(p.sale_price)}</option>`;
+        });
+
+        const servingsOptions = [12, 20, 40].map(s =>
+            `<option value="${s}" ${item.servings == s ? 'selected' : ''}>${s} personas</option>`
+        ).join('');
+
+        return `
+            <tr data-index="${index}">
+                <td><select class="form-select form-select-sm quot-product-select" data-index="${index}" onchange="updateQuotationProduct(this, ${index})" required>${productOptions}</select></td>
+                <td><input type="number" class="form-control form-control-sm quot-quantity" value="${item.quantity}" min="1" onchange="updateQuotationQuantity(${index}, this.value)" required></td>
+                <td><select class="form-select form-select-sm quot-servings" value="${item.servings}" onchange="updateQuotationServings(${index}, this.value)">${servingsOptions}</select></td>
+                <td><input type="number" class="form-control form-control-sm quot-unit-price" value="${item.unit_price}" step="0.01" min="0" readonly></td>
+                <td><button type="button" class="btn btn-sm btn-outline-info quot-bom-preview" onclick="showQuotationBomPreview(${index})" title="Ver BOM escalado" ${!item.product ? 'disabled' : ''}><i class="bi bi-calculator"></i></button></td>
+                <td><input type="text" class="form-control form-control-sm quot-subtotal" value="0" readonly></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuotationItem(${index})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function updateQuotationProduct(select, index) {
+    const option = select.options[select.selectedIndex];
+    const price = parseFloat(option.dataset.price) || 0;
+    const baseServings = parseInt(option.dataset.baseServings) || 12;
+    const productId = select.value;
+    const productName = option.text;
+
+    quotationItems[index] = { ...quotationItems[index], product: productId ? parseInt(productId) : null, product_name: productName, unit_price: price, base_servings: baseServings, servings: 12 };
+
+    const row = select.closest('tr');
+    row.querySelector('.quot-unit-price').value = price.toFixed(2);
+    row.querySelector('.quot-servings').value = 12;
+    row.querySelector('.quot-bom-preview').disabled = !productId;
+
+    calculateQuotationTotals();
+}
+
+function updateQuotationQuantity(index, quantity) {
+    quotationItems[index] = { ...quotationItems[index], quantity: parseInt(quantity) || 1 };
+    calculateQuotationTotals();
+}
+
+function updateQuotationServings(index, servings) {
+    quotationItems[index] = { ...quotationItems[index], servings: parseInt(servings) || 12 };
+    fetchQuotationBomPreview(index);
+    calculateQuotationTotals();
+}
+
+async function fetchQuotationBomPreview(index) {
+    const item = quotationItems[index];
+    if (!item.product) return;
+
+    try {
+        const response = await apiFetch(`products/${item.product}/bom-scaled/?servings=${item.servings}`);
+        if (response.ok) {
+            const data = await response.json();
+            quotationItems[index].bom_scaled = data.bom_scaled || [];
+            const row = document.querySelector(`#quotationItemsTableBody tr[data-index="${index}"]`);
+            if (row) {
+                row.querySelector('.quot-bom-preview').classList.remove('btn-outline-info');
+                row.querySelector('.quot-bom-preview').classList.add('btn-info');
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching BOM preview:', error);
+    }
+}
+
+function showQuotationBomPreview(index) {
+    const item = quotationItems[index];
+    if (!item.bom_scaled || item.bom_scaled.length === 0) {
+        fetchQuotationBomPreview(index).then(() => showQuotationBomPreview(index));
+        return;
+    }
+
+    const previewBody = document.getElementById('quotationBomPreviewBody');
+    previewBody.innerHTML = `
+        <h6 class="mb-2">${escapeHtml(item.product_name)} - ${item.servings} porciones (factor ${(item.servings / (item.base_servings || 12)).toFixed(2)}x)</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead><tr><th>Insumo</th><th>Cantidad Base</th><th>Cantidad Escalada</th><th>Costo Est.</th></tr></thead>
+                <tbody>${item.bom_scaled.map(b => `<tr><td>${escapeHtml(b.ingredient_name)}</td><td>${b.base_quantity} ${b.unit}</td><td class="fw-bold">${b.scaled_quantity} ${b.unit}</td><td>${formatCLP(b.estimated_cost)}</td></tr>`).join('')}</tbody>
+            </table>
+        </div>
+    `;
+    document.getElementById('quotationBomPreview').style.display = 'block';
+}
+
+function calculateQuotationTotals() {
+    let subtotal = 0;
+    quotationItems.forEach(item => { subtotal += (item.quantity || 0) * (item.unit_price || 0); });
+    const discount = parseFloat(document.getElementById('quotationDiscount').value) || 0;
+    const total = subtotal - (subtotal * discount / 100);
+    document.getElementById('quotationSubtotal').value = formatCLP(subtotal);
+    document.getElementById('quotationTotal').value = formatCLP(total);
+}
+
+function removeQuotationItem(index) {
+    quotationItems.splice(index, 1);
+    renderQuotationItemsTable();
+    calculateQuotationTotals();
+}
+
+async function addQuotationItem() {
+    if (productsCache.length === 0) await loadProductsForSelects();
+    const products = (productsCache.results || productsCache);
+    if (products.length === 0) { showToast('No hay productos disponibles', 'warning'); return; }
+
+    quotationCounter++;
+    quotationItems.push({ tempId: quotationCounter, product: '', product_name: '', quantity: 1, servings: 12, unit_price: 0, bom_scaled: [] });
+    renderQuotationItemsTable();
+}
+
+// ==================== LEGACY ORDER MODAL ====================
+function openCreateOrderModal() {
+    orderItems = [];
+    orderCounter = 0;
+    document.getElementById('orderForm').reset();
+    document.getElementById('orderId').value = '';
+    document.getElementById('orderDeliveryDate').valueAsDate = new Date(Date.now() + 2*24*60*60*1000);
+    document.getElementById('orderModalTitle').innerHTML = '<i class="bi bi-cart-plus me-2"></i>Nuevo Pedido';
+    renderOrderItemsTable();
+    calculateOrderTotals();
+    new bootstrap.Modal(document.getElementById('orderModal')).show();
+}
+
+function renderOrderItemsTable() {
+    const tbody = document.getElementById('orderItemsTableBody');
+    const emptyRow = document.getElementById('orderEmptyRow');
+    const products = (productsCache.results || productsCache);
+
+    if (orderItems.length === 0) { if (emptyRow) emptyRow.style.display = ''; return; }
+    if (emptyRow) emptyRow.style.display = 'none';
+
+    tbody.innerHTML = orderItems.map((item, index) => {
+        let productOptions = '<option value="">Seleccionar producto...</option>';
+        products.forEach(p => { const selected = item.product == p.id ? 'selected' : ''; productOptions += `<option value="${p.id}" data-price="${p.sale_price}" data-base-servings="${p.base_servings}" ${selected}>${escapeHtml(p.name)} (${p.base_servings} porc.) - ${formatCLP(p.sale_price)}</option>`; });
+        const servingsOptions = [12, 20, 40].map(s => `<option value="${s}" ${item.servings == s ? 'selected' : ''}>${s} personas</option>`).join('');
+        return `<tr data-index="${index}"><td><select class="form-select form-select-sm order-product-select" data-index="${index}" onchange="updateOrderProduct(this, ${index})" required>${productOptions}</select></td><td><input type="number" class="form-control form-control-sm order-quantity" value="${item.quantity}" min="1" onchange="updateOrderQuantity(${index}, this.value)" required></td><td><select class="form-select form-select-sm order-servings" value="${item.servings}" onchange="updateOrderServings(${index}, this.value)">${servingsOptions}</select></td><td><input type="number" class="form-control form-control-sm order-unit-price" value="${item.unit_price}" step="0.01" min="0" readonly></td><td><button type="button" class="btn btn-sm btn-outline-success order-validate-stock" onclick="validateOrderItemStock(${index})" title="Validar stock" ${!item.product ? 'disabled' : ''}><i class="bi bi-check-circle"></i></button></td><td><input type="text" class="form-control form-control-sm order-subtotal" value="0" readonly></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeOrderItem(${index})"><i class="bi bi-trash"></i></button></td></tr>`;
+    }).join('');
+}
+
+function updateOrderProduct(select, index) {
+    const option = select.options[select.selectedIndex];
+    const price = parseFloat(option.dataset.price) || 0;
+    const baseServings = parseInt(option.dataset.baseServings) || 12;
+    const productId = select.value;
+    const productName = option.text;
+
+    orderItems[index] = { ...orderItems[index], product: productId ? parseInt(productId) : null, product_name: productName, unit_price: price, base_servings: baseServings, servings: 12 };
+    const row = select.closest('tr');
+    row.querySelector('.order-unit-price').value = price.toFixed(2);
+    row.querySelector('.order-servings').value = 12;
+    row.querySelector('.order-validate-stock').disabled = !productId;
+    calculateOrderTotals();
+}
+
+function updateOrderQuantity(index, quantity) { orderItems[index] = { ...orderItems[index], quantity: parseInt(quantity) || 1 }; calculateOrderTotals(); }
+function updateOrderServings(index, servings) { orderItems[index] = { ...orderItems[index], servings: parseInt(servings) || 12 }; calculateOrderTotals(); }
+
+async function validateOrderItemStock(index) {
+    const item = orderItems[index];
+    if (!item.product) return;
+    const btn = document.querySelector(`#orderItemsTableBody tr[data-index="${index}"] .order-validate-stock`);
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; btn.disabled = true;
+
+    try {
+        const response = await apiFetch(`products/${item.product}/stock-check/?servings=${item.servings}&quantity=${item.quantity}`);
+        const data = await response.json();
+        if (data.has_stock) { btn.classList.remove('btn-outline-success'); btn.classList.add('btn-success'); btn.innerHTML = '<i class="bi bi-check-circle-fill"></i>'; showToast(`Stock OK para ${item.product_name}`, 'success'); }
+        else { btn.classList.remove('btn-outline-success'); btn.classList.add('btn-danger'); btn.innerHTML = '<i class="bi bi-x-circle-fill"></i>'; showToast(`Stock INSUFICIENTE: ${data.shortages.map(s => s.ingredient).join(', ')}`, 'danger'); }
+    } catch (error) { console.error('Error:', error); btn.classList.add('btn-danger'); btn.innerHTML = '<i class="bi bi-x-circle-fill"></i>'; showToast('Error validando stock', 'danger'); }
+    finally { setTimeout(() => { btn.innerHTML = originalHtml; btn.classList.remove('btn-success', 'btn-danger'); btn.classList.add('btn-outline-success'); btn.disabled = false; }, 3000); }
+}
+
+function calculateOrderTotals() {
+    let subtotal = 0;
+    orderItems.forEach(item => { subtotal += (item.quantity || 0) * (item.unit_price || 0); });
+    const discount = parseFloat(document.getElementById('orderDiscount').value) || 0;
+    const total = subtotal - (subtotal * discount / 100);
+    document.getElementById('orderSubtotal').value = formatCLP(subtotal);
+    document.getElementById('orderTotal').value = formatCLP(total);
+}
+
+function removeOrderItem(index) { orderItems.splice(index, 1); renderOrderItemsTable(); calculateOrderTotals(); }
+
+async function addOrderItem() {
+    if (productsCache.length === 0) await loadProductsForSelects();
+    const products = (productsCache.results || productsCache);
+    if (products.length === 0) { showToast('No hay productos disponibles', 'warning'); return; }
+    orderCounter++;
+    orderItems.push({ tempId: orderCounter, product: '', product_name: '', quantity: 1, servings: 12, unit_price: 0, custom_notes: '' });
+    renderOrderItemsTable();
+}
+
+async function saveOrder(status) {
+    const client = document.getElementById('orderClient').value;
+    if (!client) { showToast('Seleccione un cliente', 'warning'); return; }
+    if (orderItems.length === 0) { showToast('Agregue al menos un item', 'warning'); return; }
+
+    const items = orderItems.map(item => ({ product: item.product, quantity: item.quantity, servings: item.servings, unit_price: item.unit_price, custom_notes: item.custom_notes }));
+    const data = { client: parseInt(client), delivery_date: document.getElementById('orderDeliveryDate').value, delivery_address: document.getElementById('orderDeliveryAddress').value, status: status, items: items, discount_percent: parseFloat(document.getElementById('orderDiscount').value) || 0, notes: document.getElementById('orderNotes').value };
+
+    const id = document.getElementById('orderId').value;
+    const url = id ? `orders/${id}/` : 'orders/';
+    const method = id ? 'PATCH' : 'POST';
+
+    try {
+        const response = await apiFetch(url, { method, body: JSON.stringify(data) });
+        if (!response.ok) { const err = await response.json(); throw new Error(JSON.stringify(err)); }
+        showToast('Pedido ' + (status === 'CONFIRMADO' ? 'confirmado' : 'guardado como cotización'), 'success');
+        bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+        loadOrders();
+    } catch (error) { console.error('Error:', error); showToast('Error al guardar pedido', 'danger'); }
+}
+
+// ==================== CONFIRMAR PEDIDO (Stock) ====================
+async function openConfirmOrderModal(orderId) {
+    currentOrderIdForConfirm = orderId;
+    const modal = new bootstrap.Modal(document.getElementById('confirmOrderModal'));
+    modal.show();
+    document.getElementById('confirmOrderBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-warning"></div><p class="mt-2">Validando stock...</p></div>';
+
+    try {
+        const response = await apiFetch(`orders/${orderId}/validate-stock/`);
+        const data = await response.json();
+        if (data.ok) {
+            document.getElementById('confirmOrderBody').innerHTML = `<div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i><strong>Stock suficiente para todos los items.</strong></div><p class="text-muted">Al confirmar se descontará automáticamente el stock escalado según las porciones de cada item.</div><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Producto</th><th>Porciones</th><th>Cant.</th><th>Stock Requerido</th></tr></thead><tbody>${data.items.map(item => `<tr><td>${escapeHtml(item.product_name)}</td><td>${item.servings}</td><td>${item.quantity}</td><td>${item.bom_summary}</td></tr>`).join('')}</tbody></table></div>`;
+            document.getElementById('confirmOrderBtn').disabled = false;
+        } else {
+            document.getElementById('confirmOrderBody').innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle-fill me-2"></i><strong>Stock INSUFICIENTE</strong></div><p>Los siguientes insumos no tienen stock suficiente:</p><ul class="list-group">${data.missing.map(m => `<li class="list-group-item d-flex justify-content-between"><span>${escapeHtml(m.ingredient_name)}</span><span class="text-danger">Faltan ${m.missing_quantity} ${m.unit}</span></li>`).join('')}</ul>`;
+            document.getElementById('confirmOrderBtn').disabled = true;
+        }
+    } catch (error) { console.error('Error:', error); document.getElementById('confirmOrderBody').innerHTML = '<div class="alert alert-danger">Error validando stock</div>'; document.getElementById('confirmOrderBtn').disabled = true; }
+}
+
+async function executeOrderConfirm() {
+    if (!currentOrderIdForConfirm) return;
+    const btn = document.getElementById('confirmOrderBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Confirmando...';
+    try {
+        const response = await apiFetch(`orders/${currentOrderIdForConfirm}/confirm/`, { method: 'POST' });
+        if (!response.ok) { const err = await response.json(); throw new Error(JSON.stringify(err)); }
+        showToast('Pedido confirmado y stock descontado', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('confirmOrderModal')).hide();
+        loadOrders();
+    } catch (error) { console.error('Error:', error); showToast('Error al confirmar pedido', 'danger'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar y Descontar Stock'; }
+}
+
+// ==================== DETALLE PEDIDO ====================
+async function viewOrderDetail(id) {
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    modal.show();
+    try {
+        const response = await apiFetch(`orders/${id}/`);
+        if (!response.ok) throw new Error('Error cargando pedido');
+        const order = await response.json();
+        const itemsHtml = (order.items || []).map(item => `<tr><td>${escapeHtml(item.product_name)}</td><td>${item.quantity}</td><td>${item.servings} personas</td><td>${formatCLP(item.unit_price)}</td><td>${formatCLP(item.subtotal)}</td></tr>`).join('');
+        const paymentsHtml = (order.payments || []).map(p => `<tr><td>${formatDate(p.created_at)}</td><td>${getPaymentMethodLabel(p.method)}</td><td>${formatCLP(p.amount)}</td><td><span class="badge bg-${getPaymentStatusColor(p.status)}">${getPaymentStatusLabel(p.status)}</span></td></tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted">Sin pagos</td></tr>';
+        document.getElementById('orderDetailBody').innerHTML = `<div class="row mb-4"><div class="col-md-6"><h5>${escapeHtml(order.client?.name || '—')}</h5><p class="text-muted mb-1"><i class="bi bi-geo-alt me-2"></i>${escapeHtml(order.delivery_address || '—')}</p><p class="text-muted mb-1"><i class="bi bi-calendar me-2"></i>Entrega: ${formatDate(order.delivery_date)}</p></div><div class="col-md-6 text-md-end"><div class="badge-status badge bg-${getStatusColor(order.status)} fs-6 px-3 py-2">${getStatusLabel(order.status)}</div><div class="mt-2"><span class="badge bg-${getPaymentStatusColor(order.payment_status)}">${getPaymentStatusLabel(order.payment_status)}</span></div></div></div><div class="row g-3 mb-4"><div class="col-4"><div class="p-2 bg-light rounded text-center"><div class="fw-bold fs-4 text-primary">${formatCLP(order.subtotal)}</div><small class="text-muted">Subtotal</small></div></div><div class="col-4"><div class="p-2 bg-light rounded text-center"><div class="fw-bold fs-4 text-warning">${order.discount_percent}%</div><small class="text-muted">Descuento</small></div></div><div class="col-4"><div class="p-2 bg-light rounded text-center"><div class="fw-bold fs-4 text-success">${formatCLP(order.total)}</div><small class="text-muted">Total</small></div></div></div><h6 class="mb-3"><i class="bi bi-list-ul me-2"></i>Items</h6><div class="table-responsive table-responsive-stack mb-4"><table class="table table-sm table-hover"><thead><tr><th>Producto</th><th>Cant.</th><th>Porciones</th><th>Precio Unit.</th><th>Subtotal</th></tr></thead><tbody>${itemsHtml}</tbody></table></div><h6 class="mb-3"><i class="bi bi-credit-card me-2"></i>Pagos</h6><div class="table-responsive table-responsive-stack"><table class="table table-sm table-hover"><thead><tr><th>Fecha</th><th>Método</th><th>Monto</th><th>Estado</th></tr></thead><tbody>${paymentsHtml}</tbody></table></div>${order.notes ? `<hr><p><strong>Notas:</strong> ${escapeHtml(order.notes)}</p>` : ''}`;
+    } catch (error) { console.error('Error:', error); document.getElementById('orderDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>'; }
+}
+
+function getStatusColor(status) {
+    const colors = { 'COTIZACION': 'secondary', 'CONFIRMADO': 'info', 'EN_PRODUCCION': 'primary', 'LISTO': 'warning', 'DESPACHADO': 'purple', 'ENTREGADO': 'success', 'CANCELADO': 'danger' };
+    return colors[status] || 'secondary';
+}
+
+function getStatusLabel(status) {
+    const labels = { 'COTIZACION': 'Cotización', 'CONFIRMADO': 'Confirmado', 'EN_PRODUCCION': 'En Producción', 'LISTO': 'Listo', 'DESPACHADO': 'Despachado', 'ENTREGADO': 'Entregado', 'CANCELADO': 'Cancelado' };
+    return labels[status] || status;
+}
+
+function getPaymentStatusLabel(status) { const labels = { 'PENDIENTE': 'Pendiente', 'PAGADO_PARCIAL': 'Parcial', 'PAGADO_TOTAL': 'Total' }; return labels[status] || status; }
+function getPaymentStatusColor(status) { const colors = { 'PENDIENTE': 'warning', 'PAGADO_PARCIAL': 'info', 'PAGADO_TOTAL': 'success' }; return colors[status] || 'secondary'; }
+function getPaymentMethodLabel(method) { const labels = { 'WEBPAY': 'WebPay', 'EFECTIVO': 'Efectivo', 'TRANSFERENCIA': 'Transferencia' }; return labels[method] || method; }
+
+async function openWebpayModal(orderId) {
+    const modal = new bootstrap.Modal(document.getElementById('webpayModal'));
+    modal.show();
+    try {
+        const orderRes = await apiFetch(`orders/${orderId}/`);
+        const orderData = await orderRes.json();
+        const response = await apiFetch('webpay-transactions/init/', {
+            method: 'POST',
+            body: JSON.stringify({
+                order_id: orderId,
+                amount: orderData.total,
+                return_url: window.location.origin + '/pagos/'
+            })
+        });
+        const data = await response.json();
+        if (data.url && data.token) window.location.href = `${data.url}?token_ws=${data.token}`;
+        else document.getElementById('webpayModalBody').innerHTML = `<div class="alert alert-danger">Error iniciando pago: ${data.detail || data.error || 'Desconocido'}</div>`;
+    } catch (error) { console.error('Error:', error); document.getElementById('webpayModalBody').innerHTML = '<div class="alert alert-danger">Error al iniciar pago WebPay</div>'; }
+}
+
+function exportOrders() { showToast('Generando exportación de pedidos...', 'info'); window.open('/api/v1/reports/sales/', '_blank'); }
+function exportQuotations() { showToast('Generando listado de cotizaciones...', 'info'); }
+function editOrder(id) { showToast('Para modificar, edite los items desde el detalle', 'info'); openOrderDetailModal(id); }
+function viewQuotationDetail(id) { showToast(`Cotización #${id}`, 'info'); }
+async function convertQuotationToOrder(id) {
+    if (!confirm('¿Desea convertir esta cotización en un pedido confirmado?')) return;
+    try {
+        const response = await apiFetch(`quotations/${id}/convert_to_order/`, { method: 'POST' });
+        if (response.ok) {
+            showToast('Cotización convertida en pedido exitosamente', 'success');
+            loadQuotations();
+            loadOrders();
+        } else {
+            const err = await response.json();
+            showToast(err.detail || 'Error al convertir cotización', 'danger');
+        }
+    } catch (e) {
+        showToast('Error de red al convertir cotización', 'danger');
+    }
+}
+function editQuotation(id) { showToast('Editar cotización - en desarrollo', 'info'); }
+</script>
+{% endblock %}

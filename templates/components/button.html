@@ -1,0 +1,21 @@
+{# Button Component #}
+{# Usage: {% include 'components/button.html' with variant='primary' size='md' text='Guardar' icon='bi-save' %} #}
+{% load static %}
+
+{% if href %}
+<a href="{{ href }}"
+   class="btn btn-{{ variant|default:'primary' }} btn-{{ size|default:'md' }} {% if disabled %}disabled{% endif %} {% if block %}w-100{% endif %} {% if extra_class %}{{ extra_class }}{% endif %}"
+   {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+   {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+    {% if icon %}<i class="bi {{ icon }} me-1"></i>{% endif %}
+    {{ text|default:'Enlace' }}
+</a>
+{% else %}
+<button type="{{ type|default:'button' }}"
+        class="btn btn-{{ variant|default:'primary' }} btn-{{ size|default:'md' }} {% if disabled %}disabled{% endif %} {% if block %}w-100{% endif %} {% if extra_class %}{{ extra_class }}{% endif %}"
+        {% if disabled %}disabled{% endif %}
+        {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+    {% if icon %}<i class="bi {{ icon }} me-1"></i>{% endif %}
+    {{ text|default:'Botón' }}
+</button>
+{% endif %}

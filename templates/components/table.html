@@ -1,0 +1,123 @@
+{# Table Component #}
+{# Usage: {% include 'components/table.html' with headers=headers rows=rows %} #}
+
+<div class="table-responsive {% if stack_on_mobile %}table-responsive-stack{% endif %}">
+    <table class="table table-hover {% if striped %}table-striped{% endif %} {% if extra_class %}{{ extra_class }}{% endif %}">
+        {% if headers %}
+        <thead class="table-light">
+            <tr>
+                {% for header in headers %}
+                <th scope="col" {% if header.width %}style="width: {{ header.width }};"{% endif %}>
+                    {% if header.sortable %}
+                    <a href="?sort={{ header.key }}&dir={{ header.current_dir|default:'asc' }}" class="text-decoration-none">
+                        {{ header.label }}
+                        {% if header.current_sort == header.key %}
+                        <i class="bi bi-chevron-{{ header.current_dir|default:'down' }} ms-1"></i>
+                        {% else %}
+                        <i class="bi bi-chevron-expand ms-1 text-muted"></i>
+                        {% endif %}
+                    </a>
+                    {% else %}
+                    {{ header.label }}
+                    {% endif %}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        {% endif %}
+
+        <tbody>
+            {% if rows %}
+                {% for row in rows %}
+                <tr {% if row.id %}data-id="{{ row.id }}"{% endif %} {% if row.class %}class="{{ row.class }}"{% endif %}>
+                    {% for cell in row.cells %}
+                    <td data-label="{{ cell.label|default:'' }}" {% if cell.class %}class="{{ cell.class }}"{% endif %}>
+                        {% if cell.html %}
+                        {{ cell.html|safe }}
+                        {% elif cell.badge %}
+                        <span class="badge badge-{{ cell.badge.variant }}">{{ cell.badge.text }}</span>
+                        {% elif cell.link %}
+                        <a href="{{ cell.link.url }}" class="{{ cell.link.class|default:'' }}">{{ cell.link.text }}</a>
+                        {% elif cell.actions %}
+                        <div class="btn-group btn-group-sm" role="group">
+                            {% for action in cell.actions %}
+                            <button type="button"
+                                    class="btn btn-outline-{{ action.variant|default:'secondary' }} {% if action.class %}{{ action.class }}{% endif %}"
+                                    {% if action.onclick %}onclick="{{ action.onclick }}"{% endif %}
+                                    {% if action.href %}href="{{ action.href }}"{% endif %}
+                                    title="{{ action.title|default:'' }}">
+                                <i class="bi {{ action.icon }}"></i>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% elif cell.avatar %}
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar avatar-{{ cell.avatar.size|default:'sm' }}"
+                                 style="background-image: url('{{ cell.avatar.src }}')">
+                                {% if not cell.avatar.src %}{{ cell.avatar.initials|default:'?' }}{% endif %}
+                            </div>
+                            <div>
+                                <div class="fw-medium">{{ cell.avatar.name }}</div>
+                                {% if cell.avatar.subtitle %}
+                                <small class="text-muted">{{ cell.avatar.subtitle }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        {{ cell.text|default:'—' }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ headers|length }}" class="text-center py-5">
+                        <i class="bi bi-inbox fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                        <p class="text-muted mb-0">{{ empty_text|default:'No hay datos disponibles' }}</p>
+                        {% if empty_action %}
+                        <a href="{{ empty_action.url }}" class="btn btn-primary btn-sm mt-2">
+                            <i class="bi {{ empty_action.icon|default:'bi-plus' }} me-1"></i>
+                            {{ empty_action.text }}
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+
+    {% if pagination %}
+    <div class="card-footer bg-white">
+        <nav aria-label="Paginación">
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                {% if pagination.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagination.previous_page_number }}{{ pagination.query_string|safe }}">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                {% endif %}
+
+                {% for num in pagination.page_range %}
+                {% if num == '...' %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% elif num == pagination.current_page %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}{{ pagination.query_string|safe }}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagination.next_page_number }}{{ pagination.query_string|safe }}">Siguiente</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>

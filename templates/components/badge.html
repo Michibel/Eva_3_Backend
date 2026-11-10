@@ -1,0 +1,22 @@
+{# Badge Component #}
+{# Usage: {% include 'components/badge.html' with text='Activo' variant='success' size='md' %} #}
+
+{% if status %}
+    {% with status_config=status_configs|default:{} %}
+        {% if status in status_config %}
+            {% with cfg=status_config.status %}
+            <span class="badge badge-{{ cfg.color }} badge-{{ size|default:'md' }} {% if extra_class %}{{ extra_class }}{% endif %}">
+                {% if cfg.icon %}<i class="bi {{ cfg.icon }} me-1"></i>{% endif %}
+                {{ cfg.label }}
+            </span>
+            {% endwith %}
+        {% else %}
+            <span class="badge badge-secondary badge-{{ size|default:'md' }} {% if extra_class %}{{ extra_class }}{% endif %}">{{ status }}</span>
+        {% endif %}
+    {% endwith %}
+{% else %}
+    <span class="badge badge-{{ variant|default:'secondary' }} badge-{{ size|default:'md' }} {% if extra_class %}{{ extra_class }}{% endif %}">
+        {% if icon %}<i class="bi {{ icon }} me-1"></i>{% endif %}
+        {{ text|default:'Badge' }}
+    </span>
+{% endif %}

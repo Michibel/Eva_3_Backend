@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Dulce Arte Pastelería Fina{% endblock %}
+
+{% block page_title %}Dashboard General{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Contenido específico según el rol del usuario -->
+    <div id="roleContent">
+        {% if user.role == 'ADMIN' %}
+            {% include 'dashboard/admin_content.html' %}
+        {% elif user.role == 'VENTAS' %}
+            {% include 'dashboard/sales_content.html' %}
+        {% elif user.role == 'COCINERO' %}
+            {% include 'dashboard/production_content.html' %}
+        {% elif user.role == 'BODEGA' %}
+            {% include 'dashboard/warehouse_content.html' %}
+        {% elif user.role == 'REPARTIDOR' %}
+            {% include 'dashboard/driver_content.html' %}
+        {% elif user.role == 'CLIENTE' %}
+            {% include 'dashboard/client_content.html' %}
+        {% else %}
+            {% include 'dashboard/admin_content.html' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

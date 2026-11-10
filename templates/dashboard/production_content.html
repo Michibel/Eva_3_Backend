@@ -1,0 +1,594 @@
+<!-- Dashboard Producción Content - Redesigned for Cocinero -->
+<div class="stagger">
+    <!-- Quick Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-kanban"></i>
+                    </div>
+                    <div class="kpi-trend" id="prodTotalTrend">
+                        <i class="bi bi-arrow-right"></i> —
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiTotalCards">—</div>
+                <div class="kpi-label">Total en Producción</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="prodMyTrend">
+                        <i class="bi bi-arrow-up"></i> +3
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiMyCards">—</div>
+                <div class="kpi-label">Mis Tarjetas Asignadas</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="prodDoneTrend">
+                        <i class="bi bi-arrow-up"></i> +5
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiCompletedToday">—</div>
+                <div class="kpi-label">Completados Hoy</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="kpi-trend negative" id="prodDelayedTrend">
+                        <i class="bi bi-arrow-up"></i> +2
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiDelayedCards">—</div>
+                <div class="kpi-label">Con Retraso</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- Kanban Summary Visual -->
+        <div class="col-12 col-xl-5">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-kanban me-2"></i>Resumen Tablero Kanban</h5>
+                    <a href="{% url 'production' %}" class="btn btn-ghost btn-sm">Ver tablero completo</a>
+                </div>
+                <div class="card-body">
+                    <div class="kanban-summary-visual" id="kanbanSummaryVisual">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-chocolate" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Assigned Cards -->
+        <div class="col-12 col-xl-7">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>Mis Tarjetas Asignadas</h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="myCardsFilter" style="width: auto;">
+                            <option value="all">Todas</option>
+                            <option value="RECIBIDO">Recibido</option>
+                            <option value="EN_PREPARACION">En Preparación</option>
+                            <option value="HORNEADO_DECORADO">Horneado/Decorad</option>
+                            <option value="CONTROL_CALIDAD">Control Calidad</option>
+                            <option value="LISTO">Listo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="myProductionCardsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Pedido</th>
+                                    <th>Producto</th>
+                                    <th style="width: 100px;">Porciones</th>
+                                    <th style="width: 160px;">Estado</th>
+                                    <th style="width: 140px;">Prioridad</th>
+                                    <th style="width: 100px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row: Timer & Completed Today -->
+    <div class="row g-4 mt-2">
+        <!-- Production Timer / Quick Actions -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-stopwatch me-2"></i>Temporizador de Producción</h5>
+                    <span class="badge badge-secondary" id="activeTimerCount">0 activos</span>
+                </div>
+                <div class="card-body" id="productionTimerArea">
+                    <div class="text-center py-5">
+                        <i class="bi bi-stopwatch fs-1 text-muted mb-3" style="color: var(--color-dorado-claro) !important;"></i>
+                        <p class="text-muted mb-4">No hay temporizadores activos</p>
+                        <button class="btn btn-primary" onclick="startNewTimer()">
+                            <i class="bi bi-plus-circle me-2"></i>Iniciar Temporizador
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Today -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Completados Hoy</h5>
+                    <a href="{% url 'production' %}?filter=completed" class="btn btn-ghost btn-sm">Ver historial</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="completedTodayTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Pedido</th>
+                                    <th>Producto</th>
+                                    <th style="width: 100px;">Porciones</th>
+                                    <th style="width: 140px;">Finalizado</th>
+                                    <th style="width: 100px;">Tiempo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadProductionDashboardData();
+    initMyCardsFilter();
+});
+
+async function loadProductionDashboardData() {
+    try {
+        const response = await apiFetch('reports/dashboard/');
+        if (!response.ok) throw new Error('Error cargando dashboard producción');
+        const data = await response.json();
+
+        // Update KPIs
+        if (data.kpis) {
+            updateElement('kpiTotalCards', data.kpis.total_production_cards || 0);
+            updateElement('kpiMyCards', data.kpis.my_cards_count || 0);
+            updateElement('kpiCompletedToday', data.kpis.completed_today || 0);
+            updateElement('kpiDelayedCards', data.kpis.delayed_cards || 0);
+        }
+
+        // Render kanban summary
+        if (data.kanban_summary) {
+            renderKanbanSummary(data.kanban_summary);
+        }
+
+        // Render my cards
+        if (data.my_cards) {
+            renderMyProductionCards(data.my_cards);
+        }
+
+        // Render completed today
+        if (data.completed_today) {
+            renderCompletedToday(data.completed_today);
+        }
+
+        // Render active timers
+        if (data.active_timers) {
+            renderActiveTimers(data.active_timers);
+        }
+    } catch (error) {
+        console.error('Error cargando dashboard producción:', error);
+        showToast('Error al cargar dashboard producción', 'danger');
+    }
+}
+
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        if (!isNaN(parseFloat(value)) && typeof value !== 'string') {
+            animateNumber(el, value);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+function animateNumber(element, target) {
+    const start = parseFloat(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const end = parseFloat(target);
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (end - start) * eased;
+        element.textContent = Math.round(current);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+function renderKanbanSummary(summary) {
+    const container = document.getElementById('kanbanSummaryVisual');
+    if (!summary || summary.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted">Sin datos de producción</div>';
+        return;
+    }
+
+    const columnColors = {
+        'RECIBIDO': 'var(--kanban-recibido)',
+        'EN_PREPARACION': 'var(--kanban-preparacion)',
+        'HORNEADO_DECORADO': 'var(--kanban-horneado)',
+        'CONTROL_CALIDAD': 'var(--kanban-calidad)',
+        'LISTO': 'var(--kanban-listo)'
+    };
+
+    const columnLabels = {
+        'RECIBIDO': 'Recibido',
+        'EN_PREPARACION': 'En Preparación',
+        'HORNEADO_DECORADO': 'Horneado/Decorad',
+        'CONTROL_CALIDAD': 'Control Calidad',
+        'LISTO': 'Listo'
+    };
+
+    const total = summary.reduce((sum, col) => sum + (col.count || 0), 0);
+
+    container.innerHTML = summary.map(col => {
+        const percentage = total > 0 ? (col.count / total * 100) : 0;
+        const color = columnColors[col.name] || 'var(--color-chocolate)';
+        const label = columnLabels[col.name] || col.name;
+
+        return `
+            <div class="kanban-summary-item">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-medium d-flex align-items-center gap-2">
+                        <span class="kanban-color-dot" style="background: ${color};"></span>
+                        ${label}
+                    </span>
+                    <span class="fw-bold text-chocolate">${col.count}</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar" style="width: ${percentage}%; background: ${color};"
+                         role="progressbar" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderMyProductionCards(cards) {
+    const tbody = document.getElementById('myProductionCardsTable').querySelector('tbody');
+    if (!cards || cards.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5">
+                    <i class="bi bi-check-circle fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-0">No tienes tarjetas asignadas</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const priorityLabels = {
+        'ALTA': { label: 'Alta', class: 'badge-danger' },
+        'MEDIA': { label: 'Media', class: 'badge-warning' },
+        'BAJA': { label: 'Baja', class: 'badge-info' }
+    };
+
+    const columnColors = {
+        'RECIBIDO': 'var(--kanban-recibido)',
+        'EN_PREPARACION': 'var(--kanban-preparacion)',
+        'HORNEADO_DECORADO': 'var(--kanban-horneado)',
+        'CONTROL_CALIDAD': 'var(--kanban-calidad)',
+        'LISTO': 'var(--kanban-listo)'
+    };
+
+    tbody.innerHTML = cards.map(card => {
+        const priority = card.priority || 'MEDIA';
+        const priorityInfo = priorityLabels[priority] || priorityLabels['MEDIA'];
+        const columnColor = columnColors[card.column__name] || 'var(--color-chocolate)';
+        const isDelayed = card.is_delayed;
+
+        return `
+            <tr data-id="${card.id}" ${isDelayed ? 'class="table-danger"' : ''}>
+                <td data-label="Pedido"><strong>#${card.order_item__order__id}</strong></td>
+                <td data-label="Producto">
+                    <div class="d-flex align-items-center gap-2">
+                        ${card.order_item__product__image ? `
+                            <img src="${card.order_item__product__image}" alt="" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                        ` : `
+                            <div class="avatar avatar-sm" style="background: var(--color-crema); color: var(--color-dorado-claro);">
+                                <i class="bi bi-cupcake"></i>
+                            </div>
+                        `}
+                        <div>
+                            <div class="fw-medium">${escapeHtml(card.order_item__product__name)}</div>
+                            <small class="text-muted">Item #${card.order_item__id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Porciones">${card.order_item__servings} porc.</td>
+                <td data-label="Estado">
+                    <span class="badge" style="background: ${columnColor}20; color: ${color}; border: 1px solid ${color}40;">
+                        ${UI.getStatusLabel(card.column__name, 'kanban')}
+                    </span>
+                </td>
+                <td data-label="Prioridad">
+                    <span class="badge ${priorityInfo.class}">${priorityInfo.label}</span>
+                </td>
+                <td data-label="Acciones">
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'production' %}${card.id}/" class="btn btn-ghost" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                        ${!isDelayed && card.column__name !== 'LISTO' ? `
+                            <button class="btn btn-outline-primary" onclick="moveToNextStage(${card.id})" title="Avanzar etapa">
+                                <i class="bi bi-arrow-right"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderCompletedToday(cards) {
+    const tbody = document.getElementById('completedTodayTable').querySelector('tbody');
+    if (!cards || cards.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-5">
+                    <i class="bi bi-check-circle fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-0">No hay tarjetas completadas hoy</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = cards.map(card => {
+        const duration = card.production_time_minutes;
+        const hours = Math.floor(duration / 60);
+        const minutes = duration % 60;
+        const timeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+        return `
+            <tr>
+                <td data-label="Pedido"><strong>#${card.order_item__order__id}</strong></td>
+                <td data-label="Producto">${escapeHtml(card.order_item__product__name)}</td>
+                <td data-label="Porciones">${card.order_item__servings} porc.</td>
+                <td data-label="Finalizado">${formatDateTime(card.completed_at)}</td>
+                <td data-label="Tiempo">
+                    <span class="badge badge-success">${timeStr}</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderActiveTimers(timers) {
+    const container = document.getElementById('productionTimerArea');
+    const countEl = document.getElementById('activeTimerCount');
+
+    if (countEl) countEl.textContent = `${timers.length} activo${timers.length !== 1 ? 's' : ''}`;
+
+    if (!timers || timers.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-stopwatch fs-1 text-muted mb-3" style="color: var(--color-dorado-claro) !important;"></i>
+                <p class="text-muted mb-4">No hay temporizadores activos</p>
+                <button class="btn btn-primary" onclick="startNewTimer()">
+                    <i class="bi bi-plus-circle me-2"></i>Iniciar Temporizador
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = timers.map(timer => `
+        <div class="timer-card mb-3 p-3 bg-crema rounded-lg">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <div class="fw-medium">${escapeHtml(timer.product_name)}</div>
+                    <small class="text-muted">Pedido #${timer.order_id} · ${timer.servings} porc.</small>
+                </div>
+                <div class="timer-display fw-bold fs-4 text-chocolate font-mono" data-end-time="${timer.end_time}">00:00</div>
+            </div>
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-chocolate" style="width: ${timer.progress}%"></div>
+            </div>
+            <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-sm btn-outline-secondary flex-grow-1" onclick="pauseTimer(${timer.id})">
+                    <i class="bi bi-pause"></i> Pausar
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="stopTimer(${timer.id})">
+                    <i class="bi bi-stop"></i> Detener
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    // Start timer updates
+    startTimerUpdates();
+}
+
+let timerInterval = null;
+
+function startTimerUpdates() {
+    if (timerInterval) clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+        document.querySelectorAll('.timer-display[data-end-time]').forEach(el => {
+            const endTime = new Date(el.dataset.endTime).getTime();
+            const now = Date.now();
+            const diff = endTime - now;
+
+            if (diff <= 0) {
+                el.textContent = '00:00';
+                el.classList.add('text-danger');
+            } else {
+                const minutes = Math.floor(diff / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                el.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        });
+    }, 1000);
+}
+
+function initMyCardsFilter() {
+    const filter = document.getElementById('myCardsFilter');
+    if (filter) {
+        filter.addEventListener('change', function() {
+            const value = this.value;
+            const rows = document.querySelectorAll('#myProductionCardsTable tbody tr[data-id]');
+
+            rows.forEach(row => {
+                if (value === 'all') {
+                    row.style.display = '';
+                } else {
+                    const statusBadge = row.querySelector('.badge[style*="background"]');
+                    // Simple filter - in real app, use data attribute
+                    row.style.display = row.textContent.includes(value.replace('_', ' ')) ? '' : 'none';
+                }
+            });
+        });
+    }
+}
+
+function moveToNextStage(cardId) {
+    const stages = ['RECIBIDO', 'EN_PREPARACION', 'HORNEADO_DECORADO', 'CONTROL_CALIDAD', 'LISTO'];
+
+    // Find current stage from the row
+    const row = document.querySelector(`#myProductionCardsTable tbody tr[data-id="${cardId}"]`);
+    if (!row) return;
+
+    // This would call the API to move the card
+    API.patch(`production/cards/${cardId}/`, { action: 'next_stage' })
+        .then(response => {
+            if (response.ok) {
+                showToast('Tarjeta avanzada a la siguiente etapa', 'success');
+                loadProductionDashboardData();
+            } else {
+                showToast('Error al avanzar la tarjeta', 'danger');
+            }
+        })
+        .catch(() => showToast('Error de conexión', 'danger'));
+}
+
+function startNewTimer() {
+    // In a real app, this would open a modal to select a card and set duration
+    showToast('Funcionalidad de temporizador en desarrollo', 'info');
+}
+
+function pauseTimer(timerId) {
+    showToast('Temporizador pausado', 'info');
+}
+
+function stopTimer(timerId) {
+    showToast('Temporizador detenido', 'info');
+}
+</script>
+
+<style>
+/* Kanban summary visual */
+.kanban-summary-item {
+    padding: var(--space-3) 0;
+}
+
+.kanban-summary-item:not(:last-child) {
+    border-bottom: 1px solid var(--color-crema-oscuro);
+}
+
+.kanban-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+.progress {
+    background-color: var(--color-crema-oscuro);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Timer card */
+.timer-card {
+    transition: var(--transicion-normal);
+}
+
+.timer-card:hover {
+    box-shadow: var(--sombra-suave);
+}
+
+.timer-display {
+    font-family: var(--font-mono);
+    min-width: 80px;
+    text-align: right;
+}
+
+.font-mono { font-family: var(--font-mono); }
+
+/* Avatar */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--color-cacao);
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+}
+.avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-sm); }
+
+/* Utilities */
+.bg-crema { background-color: var(--color-crema) !important; }
+.text-chocolate { color: var(--color-chocolate) !important; }
+.bg-chocolate { background-color: var(--color-chocolate) !important; }
+</style>

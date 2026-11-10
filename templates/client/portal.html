@@ -1,0 +1,2373 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Cuenta - Dulce Arte{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+/* Timeline vertical para pedidos */
+.order-timeline {
+    position: relative;
+    padding-left: 2.5rem;
+}
+.order-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--color-dorado-claro) 0%, var(--color-dorado) 100%);
+    border-radius: 1px;
+}
+.order-timeline-item {
+    position: relative;
+    padding-bottom: 2.5rem;
+}
+.order-timeline-item:last-child {
+    padding-bottom: 0;
+}
+.order-timeline-marker {
+    position: absolute;
+    left: -2.5rem;
+    top: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 3px solid var(--color-fondo);
+    box-shadow: 0 0 0 2px var(--color-dorado-claro);
+    background: var(--color-dorado);
+    z-index: 1;
+    transition: all var(--transicion);
+}
+.order-timeline-item.active .order-timeline-marker {
+    background: var(--color-exito);
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.2);
+    transform: scale(1.15);
+}
+.order-timeline-item.completed .order-timeline-marker {
+    background: var(--color-exito);
+    box-shadow: 0 0 0 2px var(--color-exito);
+}
+.order-timeline-item.cancelled .order-timeline-marker {
+    background: var(--color-error);
+    box-shadow: 0 0 0 2px var(--color-error);
+}
+.order-timeline-content {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    transition: all var(--transicion);
+}
+.order-timeline-item:hover .order-timeline-content {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+.order-timeline-item.active .order-timeline-content {
+    border-color: var(--color-exito);
+    box-shadow: 0 0 0 1px var(--color-exito);
+}
+
+/* Product card en catálogo */
+.catalog-product-card {
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transicion);
+    background: var(--color-fondo);
+}
+.catalog-product-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+.catalog-product-card.in-cart {
+    border-color: var(--color-chocolate);
+    box-shadow: 0 0 0 2px var(--color-dorado-claro);
+}
+.catalog-product-image {
+    height: 180px;
+    object-fit: cover;
+    background: var(--color-crema);
+}
+.catalog-product-image-placeholder {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-crema) 0%, var(--color-dorado-claro) 100%);
+}
+
+/* Cart sidebar */
+.cart-sidebar {
+    position: fixed;
+    right: -420px;
+    top: 0;
+    bottom: 0;
+    width: 400px;
+    max-width: 100vw;
+    background: var(--color-fondo);
+    border-left: 1px solid var(--color-borde);
+    box-shadow: var(--sombra-fuerte);
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cart-sidebar.open {
+    right: 0;
+}
+.cart-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 27, 14, 0.4);
+    z-index: 1099;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+.cart-sidebar-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Avatar upload */
+.avatar-upload {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+.avatar-upload input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.avatar-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    border: 3px solid var(--color-dorado-claro);
+    transition: all var(--transicion);
+}
+.avatar-upload:hover .avatar-preview {
+    border-color: var(--color-dorado);
+    transform: scale(1.02);
+}
+
+/* Payment method cards */
+.payment-method-card {
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    transition: all var(--transicion);
+    background: var(--color-fondo);
+}
+.payment-method-card:hover {
+    border-color: var(--color-dorado);
+}
+.payment-method-card.primary {
+    border-color: var(--color-chocolate);
+    box-shadow: 0 0 0 2px var(--color-dorado-claro);
+}
+.payment-method-card .method-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Favorites grid */
+.favorite-product-card {
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transicion);
+    background: var(--color-fondo);
+}
+.favorite-product-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+
+/* Status badges con nuevos colores */
+.badge-status {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.badge-status-cotizacion { background: var(--color-texto-muted); color: var(--color-fondo); }
+.badge-status-confirmado { background: var(--color-info); color: var(--color-fondo); }
+.badge-status-en_produccion { background: var(--color-chocolate); color: var(--color-fondo); }
+.badge-status-listo { background: var(--color-advertencia); color: var(--color-fondo); }
+.badge-status-despachado { background: var(--color-info); color: var(--color-fondo); }
+.badge-status-entregado { background: var(--color-exito); color: var(--color-fondo); }
+.badge-status-cancelado { background: var(--color-error); color: var(--color-fondo); }
+.badge-status-rechazado { background: var(--color-error); color: var(--color-fondo); }
+
+.badge-payment-pendiente { background: var(--color-advertencia); color: var(--color-fondo); }
+.badge-payment-pagado_parcial { background: var(--color-info); color: var(--color-fondo); }
+.badge-payment-pagado_total { background: var(--color-exito); color: var(--color-fondo); }
+
+/* Profile completion indicator */
+.profile-completion {
+    height: 6px;
+    background: var(--color-crema-oscuro);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+.profile-completion-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);
+    border-radius: var(--radius-full);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Empty states */
+.empty-state {
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+}
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-crema) 0%, var(--color-dorado-claro) 100%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+    color: var(--color-dorado);
+    font-size: 2rem;
+}
+
+/* Tab panels */
+.tab-panel {
+    animation: fadeInUp 0.3s ease;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .order-timeline {
+        padding-left: 2rem;
+    }
+    .order-timeline::before {
+        left: 0.5rem;
+    }
+    .order-timeline-marker {
+        left: -2rem;
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    .cart-sidebar {
+        width: 100vw;
+        right: -100vw;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-person-circle me-2 text-dorado"></i>Mi Cuenta</h1>
+        <p class="text-muted mb-0">Gestiona tus pedidos, pagos y preferencias</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'dashboard' %}" class="btn btn-ghost">
+            <i class="bi bi-house me-1"></i>Volver a la tienda
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Header + KPIs -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-xl-4">
+        <div class="card h-100">
+            <div class="card-body text-center py-5">
+                <div class="avatar-upload mb-3" id="avatarUpload">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar-preview" id="avatarPreview"
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23E8D5B7%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22%23C9A86C%22 font-size=%2240%22 font-family=%22Georgia%22>%7B%7B%20user.get_full_name|first|upper|default:user.username|first|upper%20%7D%7D<%2Ftext><%2Fsvg>'">
+                    {% else %}
+                        <img src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23E8D5B7%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22%23C9A86C%22 font-size=%2240%22 font-family=%22Georgia%22>%7B%7B%20user.get_full_name|first|upper|default:user.username|first|upper%20%7D%7D<%2Ftext><%2Fsvg>" alt="Avatar" class="avatar-preview" id="avatarPreview">
+                    {% endif %}
+                    <input type="file" accept="image/*" id="avatarInput" onchange="previewAvatar(this)">
+                </div>
+                <h4 class="mb-1" id="displayName">{{ user.get_full_name|default:user.username }}</h4>
+                <p class="text-muted small mb-1" id="displayEmail">{{ user.email }}</p>
+                <p class="text-muted small mb-3" id="displayPhone">{{ user.profile.phone|default:'Sin teléfono registrado' }}</p>
+
+                <!-- Profile completion -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Perfil completado</span>
+                        <span class="fw-medium text-chocolate" id="profileCompletionText">0%</span>
+                    </div>
+                    <div class="profile-completion" id="profileCompletionBar">
+                        <div class="profile-completion-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="bi bi-pencil me-1"></i>Editar Perfil
+                    </button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <i class="bi bi-key me-1"></i>Contraseña
+                    </button>
+                    <button class="btn btn-ghost" data-bs-toggle="modal" data-bs-target="#notificationPreferencesModal">
+                        <i class="bi bi-bell me-1"></i>Notificaciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <div class="kpi-card h-100">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="bi bi-bag"></i></div>
+                        <div class="kpi-trend positive" id="ordersTrend">+2 este mes</div>
+                    </div>
+                    <div class="kpi-value" id="kpiMyOrders">—</div>
+                    <div class="kpi-label">Total Pedidos</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="kpi-card h-100">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+                        <div class="kpi-trend positive" id="spentTrend">+15%</div>
+                    </div>
+                    <div class="kpi-value" id="kpiMySpent">—</div>
+                    <div class="kpi-label">Total Gastado</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="kpi-card h-100">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="bi bi-credit-card"></i></div>
+                        <div class="kpi-trend" id="pendingTrend" data-count="0"></div>
+                    </div>
+                    <div class="kpi-value" id="kpiMyPendingPayments">—</div>
+                    <div class="kpi-label">Pagos Pendientes</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="kpi-card h-100">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="bi bi-star"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiMyFavorites">—</div>
+                    <div class="kpi-label">Favoritos</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="kpi-card h-100">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="bi bi-calendar-check"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiThisMonth">—</div>
+                    <div class="kpi-label">Pedidos Este Mes</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="kpi-card h-100">
+                    <div class="kpi-header">
+                        <div class="kpi-icon"><i class="bi bi-gift"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpiAvgOrder">—</div>
+                    <div class="kpi-label">Ticket Promedio</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Tabs -->
+<div class="card">
+    <div class="card-header border-0 bg-transparent pt-3 pb-0">
+        <ul class="nav nav-tabs nav-tabs-bordered card-header-tabs" id="clientTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-timeline" data-bs-toggle="tab" data-bs-target="#panel-timeline" type="button" role="tab">
+                    <i class="bi bi-diagram-3 me-1"></i>Mi Timeline
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-payments" data-bs-toggle="tab" data-bs-target="#panel-payments" type="button" role="tab">
+                    <i class="bi bi-credit-card me-1"></i>Pagos
+                    <span class="badge badge-warning ms-1" id="pendingPaymentsBadge" style="display: none;">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-favorites" data-bs-toggle="tab" data-bs-target="#panel-favorites" type="button" role="tab">
+                    <i class="bi bi-heart me-1"></i>Favoritos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-payment-methods" data-bs-toggle="tab" data-bs-target="#panel-payment-methods" type="button" role="tab">
+                    <i class="bi bi-wallet me-1"></i>Métodos de Pago
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-new-order" data-bs-toggle="tab" data-bs-target="#panel-new-order" type="button" role="tab">
+                    <i class="bi bi-plus-circle me-1"></i>Nuevo Pedido
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        <div class="tab-content p-3 p-md-4">
+
+            <!-- TIMELINE TAB -->
+            <div class="tab-pane fade show active" id="panel-timeline" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                    <h5 class="mb-0"><i class="bi bi-bag me-2"></i>Historial de Pedidos</h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="timelineStatusFilter" style="width: auto;" onchange="filterTimeline()">
+                            <option value="all">Todos los estados</option>
+                            <option value="COTIZACION">Cotizaciones</option>
+                            <option value="CONFIRMADO">Confirmados</option>
+                            <option value="EN_PRODUCCION">En Producción</option>
+                            <option value="LISTO">Listos para entregar</option>
+                            <option value="DESPACHADO">En camino</option>
+                            <option value="ENTREGADO">Entregados</option>
+                            <option value="CANCELADO">Cancelados</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="order-timeline" id="ordersTimeline">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-chocolate" role="status"></div>
+                        <p class="text-muted mt-2 mb-0">Cargando tu historial...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENTS TAB -->
+            <div class="tab-pane fade" id="panel-payments" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                    <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Gestión de Pagos</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-payment-tab="pending">Pendientes</button>
+                        <button type="button" class="btn btn-outline-secondary" data-payment-tab="history">Historial</button>
+                    </div>
+                </div>
+
+                <!-- Pending Payments -->
+                <div id="paymentsPendingView">
+                    <div id="pendingPaymentsList" class="row g-3">
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-chocolate" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment History -->
+                <div id="paymentsHistoryView" class="d-none">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="paymentHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Pago</th>
+                                    <th>Pedido</th>
+                                    <th>Método</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Comprobante</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentHistoryTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAVORITES TAB -->
+            <div class="tab-pane fade" id="panel-favorites" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                    <h5 class="mb-0"><i class="bi bi-heart me-2"></i>Mis Favoritos</h5>
+                    <a href="{% url 'products' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-grid me-1"></i>Ver catálogo completo
+                    </a>
+                </div>
+                <div class="row g-3" id="favoritesGrid">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-chocolate" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENT METHODS TAB -->
+            <div class="tab-pane fade" id="panel-payment-methods" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                    <h5 class="mb-0"><i class="bi bi-wallet me-2"></i>Métodos de Pago Guardados</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPaymentMethodModal">
+                        <i class="bi bi-plus me-1"></i>Agregar método
+                    </button>
+                </div>
+                <div class="row g-3" id="paymentMethodsList">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-chocolate" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW ORDER TAB -->
+            <div class="tab-pane fade" id="panel-new-order" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Product Catalog -->
+                    <div class="col-12 col-xl-8">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <h5 class="mb-0"><i class="bi bi-cupcake me-2"></i>Catálogo de Productos</h5>
+                            <div class="d-flex gap-2">
+                                <div class="input-group input-group-sm" style="width: 280px;">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="catalogSearch" placeholder="Buscar productos..." onkeyup="debounceCatalogSearch()">
+                                </div>
+                                <select class="form-select form-select-sm" id="catalogCategoryFilter" onchange="loadCatalogForOrder()" style="width: auto;">
+                                    <option value="">Todas las categorías</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3" id="catalogProducts">
+                            <div class="col-12 text-center py-5">
+                                <div class="spinner-border text-chocolate" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="col-12 col-xl-4">
+                        <div class="card sticky-top" style="top: 100px;">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="bi bi-cart me-2"></i>Mi Carrito</h5>
+                                <span class="badge badge-primary" id="cartItemsCount">0</span>
+                            </div>
+                            <div class="card-body" id="cartItemsList">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon"><i class="bi bi-cart"></i></div>
+                                    <h6>Carrito vacío</h6>
+                                    <p class="text-muted small mb-3">Agrega productos del catálogo para comenzar tu pedido</p>
+                                </div>
+                            </div>
+                            <div class="card-footer" id="cartFooter" class="d-none">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal</span>
+                                    <span class="fw-bold" id="cartSubtotal">$0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span>Envío</span>
+                                    <span class="text-success" id="cartShipping">Gratis</span>
+                                </div>
+                                <div class="d-flex justify-content-between fw-bold fs-5 mb-3 border-top pt-3">
+                                    <span>Total</span>
+                                    <span class="text-chocolate" id="cartTotal">$0</span>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary btn-lg" onclick="createOrderFromCart()" id="checkoutBtn">
+                                        <i class="bi bi-check-circle me-2"></i>Confirmar Pedido
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="clearCart()">
+                                        <i class="bi bi-trash me-1"></i>Vaciar Carrito
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Cart Sidebar (Mobile) -->
+<div class="cart-sidebar-overlay" id="cartOverlay" onclick="toggleCartSidebar()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+    <div class="card h-100 border-0" style="border-radius: 0;">
+        <div class="card-header bg-chocolate text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-cart me-2"></i>Mi Carrito</h5>
+            <button type="button" class="btn-close btn-close-white" onclick="toggleCartSidebar()"></button>
+        </div>
+        <div class="card-body flex-grow-1 overflow-auto" id="mobileCartItemsList">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-cart"></i></div>
+                <h6>Carrito vacío</h6>
+                <p class="text-muted small">Agrega productos para comenzar</p>
+            </div>
+        </div>
+        <div class="card-footer border-0" id="mobileCartFooter" class="d-none">
+            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                <span>Total</span>
+                <span class="text-chocolate" id="mobileCartTotal">$0</span>
+            </div>
+            <button class="btn btn-primary btn-lg w-100" onclick="createOrderFromCart(); toggleCartSidebar();">
+                <i class="bi bi-check-circle me-2"></i>Confirmar Pedido
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- Order Detail Modal -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bag me-2"></i>Detalle del Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailBody">
+                <div class="text-center py-4"><div class="spinner-border text-chocolate"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WebPay Modal -->
+<div class="modal fade" id="webpayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-chocolate text-white">
+                <h5 class="modal-title"><i class="bi bi-credit-card me-2"></i>Pagar con WebPay Transbank</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="webpayModalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-white" role="status"></div>
+                    <p class="mt-2">Iniciando pago seguro...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProfileForm" novalidate>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-upload" id="modalAvatarUpload">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar-preview" id="modalAvatarPreview"
+                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23E8D5B7%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22%23C9A86C%22 font-size=%2240%22 font-family=%22Georgia%22>%7B%7B%20user.get_full_name|first|upper|default:user.username|first|upper%20%7D%7D<%2Ftext><%2Fsvg>'">
+                            {% else %}
+                                <img src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23E8D5B7%22/><text x=%2250%22 y=%2260%22 text-anchor=%22middle%22 fill=%22%23C9A86C%22 font-size=%2240%22 font-family=%22Georgia%22>%7B%7B%20user.get_full_name|first|upper|default:user.username|first|upper%20%7D%7D<%2Ftext><%2Fsvg>" alt="Avatar" class="avatar-preview" id="modalAvatarPreview">
+                            {% endif %}
+                            <input type="file" accept="image/*" id="modalAvatarInput" onchange="previewModalAvatar(this)">
+                        </div>
+                        <p class="text-muted small mt-2">Haz clic en la imagen para cambiarla</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Nombre Completo</label>
+                        <input type="text" class="form-control" id="profileFullName" name="full_name" value="{{ user.get_full_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Email</label>
+                        <input type="email" class="form-control" id="profileEmail" name="email" value="{{ user.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Teléfono</label>
+                        <input type="tel" class="form-control" id="profilePhone" name="phone" value="{{ user.profile.phone|default:'' }}" placeholder="+56 9 XXXX XXXX">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Dirección de Entrega</label>
+                        <textarea class="form-control" id="profileAddress" name="address" rows="3" placeholder="Calle, número, comuna, ciudad">{{ user.profile.address|default:'' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Fecha de Cumpleaños (para sorpresas 🎂)</label>
+                        <input type="date" class="form-control" id="profileBirthdate" name="birthdate" value="{{ user.profile.birthdate|date:'Y-m-d'|default:'' }}">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="profileNewsletter" name="newsletter" {% if user.profile.newsletter %}checked{% endif %}>
+                        <label class="form-check-label" for="profileNewsletter">Recibir novedades y promociones por email</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-key me-2"></i>Cambiar Contraseña</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="changePasswordForm" novalidate>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Contraseña Actual</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="currentPassword" name="old_password" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('currentPassword')"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Nueva Contraseña</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword1" name="new_password1" required minlength="8">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('newPassword1')"><i class="bi bi-eye"></i></button>
+                        </div>
+                        <div class="form-text">Mínimo 8 caracteres. Usa mayúsculas, números y símbolos.</div>
+                        <div class="password-strength mt-1" id="passwordStrength">
+                            <div class="d-flex gap-1">
+                                <div class="strength-bar flex-grow-1" style="height: 4px; border-radius: 2px; background: var(--color-crema-oscuro);"></div>
+                                <div class="strength-bar flex-grow-1" style="height: 4px; border-radius: 2px; background: var(--color-crema-oscuro);"></div>
+                                <div class="strength-bar flex-grow-1" style="height: 4px; border-radius: 2px; background: var(--color-crema-oscuro);"></div>
+                                <div class="strength-bar flex-grow-1" style="height: 4px; border-radius: 2px; background: var(--color-crema-oscuro);"></div>
+                            </div>
+                            <small class="text-muted" id="passwordStrengthText">Seguridad: Muy débil</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Confirmar Nueva Contraseña</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="newPassword2" name="new_password2" required minlength="8">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('newPassword2')"><i class="bi bi-eye"></i></button>
+                        </div>
+                        <div class="form-text text-success d-none" id="passwordMatchText"><i class="bi bi-check-circle me-1"></i>Las contraseñas coinciden</div>
+                        <div class="form-text text-danger d-none" id="passwordMismatchText"><i class="bi bi-x-circle me-1"></i>Las contraseñas no coinciden</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Preferences Modal -->
+<div class="modal fade" id="notificationPreferencesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bell me-2"></i>Preferencias de Notificaciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="notificationPreferencesForm">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <h6 class="fw-medium mb-3">Pedidos</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifOrderConfirm" checked>
+                                    <label class="form-check-label" for="notifOrderConfirm">Confirmación de pedido</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifOrderStatus" checked>
+                                    <label class="form-check-label" for="notifOrderStatus">Cambios de estado (producción, despacho, entrega)</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifOrderDelivery" checked>
+                                    <label class="form-check-label" for="notifOrderDelivery">Llegada del repartidor (15 min antes)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="fw-medium mb-3">Pagos</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifPaymentDue" checked>
+                                    <label class="form-check-label" for="notifPaymentDue">Recordatorio de pago pendiente</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifPaymentConfirmed" checked>
+                                    <label class="form-check-label" for="notifPaymentConfirmed">Confirmación de pago recibido</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h6 class="fw-medium mb-3">Marketing</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifPromotions" {% if user.profile.newsletter %}checked{% endif %}>
+                                    <label class="form-check-label" for="notifPromotions">Promociones y ofertas especiales</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifNewProducts">
+                                    <label class="form-check-label" for="notifNewProducts">Lanzamiento de nuevos productos</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifBirthday">
+                                    <label class="form-check-label" for="notifBirthday">Regalo de cumpleaños</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Payment Method Modal -->
+<div class="modal fade" id="addPaymentMethodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Agregar Método de Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPaymentMethodForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Tipo</label>
+                        <select class="form-select" id="paymentMethodType" name="type" required>
+                            <option value="">Seleccionar tipo</option>
+                            <option value="WEBPAY">WebPay (Tarjeta Débito/Crédito)</option>
+                            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                            <option value="EFECTIVO">Efectivo (Pago en local/entrega)</option>
+                        </select>
+                    </div>
+                    <div id="webpayFields" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Últimos 4 dígitos</label>
+                            <input type="text" class="form-control" name="last_four" placeholder="1234" maxlength="4" pattern="\d{4}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Banco Emisor</label>
+                            <input type="text" class="form-control" name="bank" placeholder="Ej: Banco de Chile, Santander, BCI">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Tipo de Tarjeta</label>
+                            <select class="form-select" name="card_type">
+                                <option value="CREDITO">Crédito</option>
+                                <option value="DEBITO">Débito</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="transferFields" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Banco</label>
+                            <input type="text" class="form-control" name="bank" placeholder="Ej: Banco Estado, Banco Chile">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Tipo de Cuenta</label>
+                            <select class="form-select" name="account_type">
+                                <option value="CORRIENTE">Cuenta Corriente</option>
+                                <option value="AHORRO">Cuenta de Ahorro</option>
+                                <option value="RUT">Cuenta RUT</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Número de Cuenta (últimos 4 dígitos)</label>
+                            <input type="text" class="form-control" name="account_last_four" placeholder="1234" maxlength="4" pattern="\d{4}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Alias / Nombre para identificar</label>
+                        <input type="text" class="form-control" name="alias" placeholder="Ej: Mi tarjeta principal, Cuenta RUT personal" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="setDefaultPayment" name="is_default">
+                        <label class="form-check-label" for="setDefaultPayment">Establecer como método predeterminado</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar Método</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reorder Confirmation Modal -->
+<div class="modal fade" id="reorderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2"></i>Volver a Pedir</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4" id="reorderModalBody">
+                <i class="bi bi-question-circle fs-1 text-chocolate"></i>
+                <h5 class="mt-3">¿Deseas volver a ordenar este pedido?</h5>
+                <p class="text-muted">Se agregarán los mismos productos a tu carrito para que puedas modificarlos antes de confirmar.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmReorderBtn">Sí, agregar al carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==================== ESTADO GLOBAL ====================
+let clientCart = [];
+let catalogProductsCache = [];
+let catalogCategoriesCache = [];
+let catalogSearchTimeout;
+let currentOrdersData = [];
+let reorderOrderId = null;
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', function() {
+    loadClientKpis();
+    loadOrdersTimeline();
+    loadPendingPayments();
+    loadPaymentHistory();
+    loadFavorites();
+    loadPaymentMethods();
+    loadCatalogCategories();
+    loadCatalogForOrder();
+    setupForms();
+    setupPaymentTabSwitcher();
+    setupPaymentMethodTypeSelector();
+    setupPasswordStrength();
+    updateCartUI();
+});
+
+// ==================== KPIs ====================
+async function loadClientKpis() {
+    try {
+        const response = await apiFetch('reports/dashboard/');
+        if (response.ok) {
+            const data = await response.json();
+            updateElement('kpiMyOrders', data.orders_count || 0);
+            updateElement('kpiMySpent', formatCLP(data.total_spent || 0));
+            updateElement('kpiMyPendingPayments', data.pending_payments_count || 0);
+            updateElement('kpiMyFavorites', data.favorites_count || 0);
+            updateElement('kpiThisMonth', data.orders_this_month || 0);
+            updateElement('kpiAvgOrder', formatCLP(data.avg_order_value || 0));
+
+            // Update pending payments badge
+            const badge = document.getElementById('pendingPaymentsBadge');
+            if (badge) {
+                badge.textContent = data.pending_payments_count || 0;
+                badge.style.display = (data.pending_payments_count || 0) > 0 ? 'inline-block' : 'none';
+            }
+
+            // Update profile completion
+            updateProfileCompletion(data.profile_completion || {});
+        }
+    } catch (error) {
+        console.error('Error cargando KPIs cliente:', error);
+    }
+}
+
+function updateProfileCompletion(profile) {
+    const fields = ['full_name', 'email', 'phone', 'address', 'birthdate', 'avatar'];
+    let completed = 0;
+    fields.forEach(f => {
+        if (profile[f]) completed++;
+    });
+    const percentage = Math.round((completed / fields.length) * 100);
+
+    const textEl = document.getElementById('profileCompletionText');
+    const barEl = document.querySelector('#profileCompletionBar .profile-completion-fill');
+    if (textEl) textEl.textContent = percentage + '%';
+    if (barEl) barEl.style.width = percentage + '%';
+}
+
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        if (!isNaN(parseFloat(value)) && typeof value !== 'string') {
+            animateNumber(el, value);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+function animateNumber(element, target) {
+    const start = parseFloat(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const end = parseFloat(target);
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (end - start) * eased;
+        element.textContent = typeof target === 'string' && target.startsWith('$') ? formatCLP(current) : Math.round(current);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+// ==================== TIMELINE DE PEDIDOS ====================
+async function loadOrdersTimeline() {
+    try {
+        const response = await apiFetch('orders/my-orders/?page_size=100&ordering=-created_at');
+        if (!response.ok) throw new Error('Error cargando pedidos');
+        const data = await response.json();
+        currentOrdersData = data.results || data;
+        renderOrdersTimeline(currentOrdersData);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar pedidos', 'danger');
+    }
+}
+
+function renderOrdersTimeline(orders) {
+    const container = document.getElementById('ordersTimeline');
+
+    if (!orders || orders.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-bag"></i></div>
+                <h5>No tienes pedidos aún</h5>
+                <p class="text-muted mb-4">¡Haz tu primer pedido y disfruta de nuestras delicias artesanales!</p>
+                <button class="btn btn-primary btn-lg" onclick="switchToNewOrderTab()">
+                    <i class="bi bi-plus-circle me-2"></i>Hacer mi primer pedido
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort by date descending
+    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    container.innerHTML = orders.map((order, index) => {
+        const isActive = ['CONFIRMADO', 'EN_PRODUCCION', 'LISTO', 'DESPACHADO'].includes(order.status);
+        const isCompleted = order.status === 'ENTREGADO';
+        const isCancelled = ['CANCELADO', 'RECHAZADO'].includes(order.status);
+        const statusConfig = getOrderStatusConfig(order.status);
+        const paymentConfig = getPaymentStatusConfig(order.payment_status);
+
+        return `
+            <div class="order-timeline-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isCancelled ? 'cancelled' : ''}" data-status="${order.status}" data-id="${order.id}">
+                <div class="order-timeline-marker"></div>
+                <div class="order-timeline-content">
+                    <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-start align-items-md-center mb-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <h6 class="mb-0 fw-bold">Pedido <span class="text-chocolate">#${order.id}</span></h6>
+                                <span class="badge-status badge-status-${order.status.toLowerCase()}">${statusConfig.label}</span>
+                                <span class="badge badge-${paymentConfig.badgeClass}">${paymentConfig.label}</span>
+                            </div>
+                            <p class="text-muted small mb-0 mt-1">
+                                <i class="bi bi-calendar me-1"></i>${formatDateTime(order.created_at)}
+                                ${order.delivery_date ? ` · <i class="bi bi-truck me-1"></i>Entrega: ${formatDate(order.delivery_date)}` : ''}
+                            </p>
+                        </div>
+                        <div class="text-md-end">
+                            <div class="fw-bold fs-4 text-chocolate">${formatCLP(order.total)}</div>
+                            <small class="text-muted">${order.items_count || 0} productos</small>
+                        </div>
+                    </div>
+
+                    <!-- Progress steps for active orders -->
+                    ${isActive ? renderOrderProgress(order.status) : ''}
+
+                    <!-- Details expandable -->
+                    <div class="order-details" style="display: none;">
+                        <hr class="my-3">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Dirección de entrega</small>
+                                <p class="mb-0">${escapeHtml(order.delivery_address || 'Retiro en local')}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Método de pago</small>
+                                <p class="mb-0">${getPaymentMethodLabel(order.payment_method)}</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive table-responsive-stack mb-3">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead><tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-center">Porc.</th><th class="text-end">Precio</th><th class="text-end">Subtotal</th></tr></thead>
+                                <tbody>
+                                    ${(order.items || []).map(item => `
+                                        <tr>
+                                            <td>${escapeHtml(item.product_name)}</td>
+                                            <td class="text-center">${item.quantity}</td>
+                                            <td class="text-center">${item.servings} porc.</td>
+                                            <td class="text-end">${formatCLP(item.unit_price)}</td>
+                                            <td class="text-end fw-medium">${formatCLP(item.subtotal)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <div class="text-muted small">
+                                ${order.notes ? `<i class="bi bi-chat me-1"></i>${escapeHtml(order.notes)}` : ''}
+                            </div>
+                            <div class="d-flex gap-2">
+                                ${order.payment_status !== 'PAGADO_TOTAL' ? `
+                                    <button class="btn btn-primary btn-sm" onclick="openWebpayModal(${order.id})">
+                                        <i class="bi bi-credit-card me-1"></i>Pagar ${formatCLP(order.balance_due || order.total)}
+                                    </button>
+                                ` : ''}
+                                ${isCompleted ? `
+                                    <button class="btn btn-outline-primary btn-sm" onclick="showReorderModal(${order.id})">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Volver a pedir
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-ghost btn-sm" onclick="viewOrderDetail(${order.id})">
+                                    <i class="bi bi-eye me-1"></i>Ver detalle completo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Add click handlers to expand details
+    container.querySelectorAll('.order-timeline-content').forEach((content, index) => {
+        content.style.cursor = 'pointer';
+        content.addEventListener('click', function(e) {
+            if (e.target.closest('button, a')) return;
+            const details = this.querySelector('.order-details');
+            if (details) {
+                const isHidden = details.style.display === 'none';
+                details.style.display = isHidden ? 'block' : 'none';
+                this.parentElement.classList.toggle('expanded', isHidden);
+            }
+        });
+    });
+}
+
+function renderOrderProgress(currentStatus) {
+    const steps = [
+        { key: 'CONFIRMADO', label: 'Confirmado', icon: 'bi-check-circle' },
+        { key: 'EN_PRODUCCION', label: 'En Producción', icon: 'bi-gear' },
+        { key: 'LISTO', label: 'Listo', icon: 'bi-box-seam' },
+        { key: 'DESPACHADO', label: 'Despachado', icon: 'bi-truck' },
+        { key: 'ENTREGADO', label: 'Entregado', icon: 'bi-check-circle-fill' }
+    ];
+
+    const currentIndex = steps.findIndex(s => s.key === currentStatus);
+
+    return `
+        <div class="order-progress mb-3">
+            <div class="d-flex justify-content-between position-relative">
+                <div class="progress-line" style="flex: 1; height: 3px; background: var(--color-crema-oscuro); border-radius: 2px; margin-top: 12px; position: relative; z-index: 0;">
+                    <div class="progress-fill" style="width: ${currentIndex >= 0 ? ((currentIndex + 1) / steps.length * 100) : 0}%; height: 100%; background: linear-gradient(90deg, var(--color-dorado) 0%, var(--color-chocolate) 100%); border-radius: 2px; transition: width 0.6s ease;"></div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+                ${steps.map((step, i) => `
+                    <div class="progress-step text-center" style="flex: 1; position: relative; z-index: 1;">
+                        <div class="step-marker mx-auto mb-1" style="width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--color-fondo); background: ${i <= currentIndex ? 'var(--color-exito)' : 'var(--color-crema-oscuro)'}; box-shadow: ${i <= currentIndex ? '0 0 0 2px var(--color-exito)' : '0 0 0 2px var(--color-dorado-claro)'}; transition: all var(--transicion);"></div>
+                        <small class="${i <= currentIndex ? 'fw-medium text-chocolate' : 'text-muted'}">${step.label}</small>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function filterTimeline() {
+    const filter = document.getElementById('timelineStatusFilter').value;
+    const items = document.querySelectorAll('#ordersTimeline .order-timeline-item');
+
+    items.forEach(item => {
+        if (filter === 'all') {
+            item.style.display = '';
+        } else {
+            item.style.display = item.dataset.status === filter ? '' : 'none';
+        }
+    });
+}
+
+function switchToNewOrderTab() {
+    const tab = new bootstrap.Tab(document.getElementById('tab-new-order'));
+    tab.show();
+}
+
+// ==================== PAGOS PENDIENTES ====================
+async function loadPendingPayments() {
+    try {
+        const response = await apiFetch('payments/my-pending/');
+        if (!response.ok) throw new Error('Error cargando pagos pendientes');
+        const payments = await response.json();
+        renderPendingPayments(payments);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('pendingPaymentsList').innerHTML = '<div class="col-12 text-center py-4 text-danger">Error al cargar pagos</div>';
+    }
+}
+
+function renderPendingPayments(payments) {
+    const container = document.getElementById('pendingPaymentsList');
+
+    if (!payments || payments.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="empty-state">
+                    <div class="empty-state-icon" style="background: linear-gradient(135deg, var(--color-exito) 0%, var(--color-exito-claro) 100%); color: white;"><i class="bi bi-check-circle"></i></div>
+                    <h5>¡Todo al día!</h5>
+                    <p class="text-muted mb-0">No tienes pagos pendientes</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = payments.map(p => {
+        const isOverdue = p.due_date && new Date(p.due_date) < new Date();
+        return `
+            <div class="col-12">
+                <div class="card payment-card ${isOverdue ? 'border-danger' : ''}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                    <h5 class="mb-0">Pedido #${p.order_id}</h5>
+                                    ${isOverdue ? '<span class="badge badge-danger">Vencido</span>' : '<span class="badge badge-warning">Pendiente</span>'}
+                                </div>
+                                <p class="text-muted mb-1">${p.description || 'Pago de pedido'}</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>Vence: ${p.due_date ? formatDate(p.due_date) : '—'}
+                                    ${p.order_number ? ` · Pedido #${p.order_number}` : ''}
+                                </small>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="fw-bold fs-3 text-chocolate">${formatCLP(p.amount)}</div>
+                                <button class="btn btn-primary mt-2 w-100 w-md-auto" onclick="openWebpayModal(${p.order_id}, ${p.id})">
+                                    <i class="bi bi-credit-card me-1"></i>Pagar Ahora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== HISTORIAL DE PAGOS ====================
+async function loadPaymentHistory() {
+    try {
+        const response = await apiFetch('payments/my-history/?page_size=50');
+        if (!response.ok) throw new Error('Error cargando historial');
+        const data = await response.json();
+        renderPaymentHistory(data.results || data);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function renderPaymentHistory(payments) {
+    const tbody = document.getElementById('paymentHistoryTableBody');
+
+    if (!payments || payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-clock-history"></i></div><p class="mb-0">Sin historial de pagos</p></div></td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = payments.map(p => `
+        <tr>
+            <td data-label="Pago"><strong>#${p.id}</strong></td>
+            <td data-label="Pedido"><a href="#" onclick="viewOrderDetail(${p.order_id}); return false;">#${p.order_id}</a></td>
+            <td data-label="Método"><span class="badge badge-${getPaymentMethodColor(p.method)}">${getPaymentMethodLabel(p.method)}</span></td>
+            <td data-label="Monto" class="fw-semibold text-chocolate">${formatCLP(p.amount)}</td>
+            <td data-label="Estado"><span class="badge badge-${getPaymentStatusColor(p.status)}">${getPaymentStatusLabel(p.status)}</span></td>
+            <td data-label="Fecha">${formatDateTime(p.paid_at || p.created_at)}</td>
+            <td data-label="Comprobante">
+                ${p.receipt_url ? `
+                    <a href="${p.receipt_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-file-earmark-text"></i> Ver
+                    </a>
+                ` : '<span class="text-muted">—</span>'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ==================== FAVORITOS ====================
+async function loadFavorites() {
+    try {
+        const response = await apiFetch('products/favorites/');
+        if (!response.ok) throw new Error('Error cargando favoritos');
+        const favorites = await response.json();
+        renderFavorites(favorites);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('favoritesGrid').innerHTML = '<div class="col-12 text-center py-4 text-danger">Error al cargar favoritos</div>';
+    }
+}
+
+function renderFavorites(favorites) {
+    const container = document.getElementById('favoritesGrid');
+
+    if (!favorites || favorites.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="empty-state">
+                    <div class="empty-state-icon" style="color: var(--color-dorado);"><i class="bi bi-heart"></i></div>
+                    <h5>No tienes favoritos aún</h5>
+                    <p class="text-muted mb-3">Marca productos con el corazón para acceder rápido a ellos</p>
+                    <a href="{% url 'products' %}" class="btn btn-primary">
+                        <i class="bi bi-grid me-1"></i>Ver catálogo
+                    </a>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = favorites.map(fav => `
+        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+            <div class="favorite-product-card h-100">
+                ${fav.image ? `<img src="${fav.image}" alt="${escapeHtml(fav.name)}" class="card-img-top catalog-product-image">` : '<div class="card-img-top catalog-product-image-placeholder"><i class="bi bi-cupcake fs-1 text-muted"></i></div>'}
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">${escapeHtml(fav.name)}</h6>
+                        <button class="btn btn-ghost btn-sm" onclick="toggleFavorite(${fav.id}, this)" title="Quitar de favoritos">
+                            <i class="bi bi-heart-fill text-danger"></i>
+                        </button>
+                    </div>
+                    <p class="card-text text-muted small flex-grow-1">${escapeHtml(fav.description || '')}</p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-chocolate fs-5">${formatCLP(fav.sale_price || fav.base_price || 0)}</span>
+                        <span class="badge badge-secondary">${fav.base_servings} porc. base</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary flex-grow-1" onclick="addToCartFromFavorite(${fav.id})">
+                            <i class="bi bi-cart-plus me-1"></i>Agregar
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="viewProductDetail(${fav.id})" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function toggleFavorite(productId, button) {
+    try {
+        const response = await apiFetch(`products/${productId}/toggle_favorite/`, { method: 'POST' });
+        if (response.ok) {
+            showToast('Eliminado de favoritos', 'success');
+            loadFavorites();
+            loadClientKpis();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al quitar favorito', 'danger');
+    }
+}
+
+function addToCartFromFavorite(productId) {
+    const product = catalogProductsCache.find(p => p.id === productId);
+    if (!product) {
+        // Fetch if not in cache
+        apiFetch(`products/${productId}/`).then(r => r.json()).then(p => addToCart(p));
+        return;
+    }
+    addToCart(product);
+}
+
+// ==================== MÉTODOS DE PAGO ====================
+async function loadPaymentMethods() {
+    try {
+        const response = await apiFetch('payments/methods/');
+        if (!response.ok) throw new Error('Error cargando métodos');
+        const methods = await response.json();
+        renderPaymentMethods(methods);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('paymentMethodsList').innerHTML = '<div class="col-12 text-center py-4 text-danger">Error al cargar métodos</div>';
+    }
+}
+
+function renderPaymentMethods(methods) {
+    const container = document.getElementById('paymentMethodsList');
+
+    if (!methods || methods.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-wallet"></i></div>
+                    <h5>No tienes métodos de pago guardados</h5>
+                    <p class="text-muted mb-3">Agrega uno para pagos más rápidos</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPaymentMethodModal">
+                        <i class="bi bi-plus me-1"></i>Agregar método
+                    </button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = methods.map(m => `
+        <div class="col-12 col-md-6">
+            <div class="payment-method-card ${m.is_default ? 'primary' : ''}">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="method-icon" style="background: ${getMethodIconBg(m.type)}; color: ${getMethodIconColor(m.type)};">
+                            <i class="bi ${getMethodIcon(m.type)}"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">${escapeHtml(m.alias)}</h6>
+                            <small class="text-muted">${getPaymentMethodLabel(m.type)}</small>
+                        </div>
+                    </div>
+                    ${m.is_default ? '<span class="badge badge-success">Predeterminado</span>' : ''}
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        ${m.last_four ? `Termina en ${m.last_four}` : ''}
+                        ${m.bank ? ` · ${escapeHtml(m.bank)}` : ''}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        ${!m.is_default ? `<button class="btn btn-outline-primary" onclick="setDefaultPaymentMethod(${m.id})"><i class="bi bi-star"></i></button>` : ''}
+                        <button class="btn btn-outline-danger" onclick="deletePaymentMethod(${m.id})"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getMethodIcon(type) {
+    const icons = {
+        'WEBPAY': 'bi-credit-card-2-front',
+        'TRANSFERENCIA': 'bi-bank',
+        'EFECTIVO': 'bi-cash'
+    };
+    return icons[type] || 'bi-credit-card';
+}
+
+function getMethodIconBg(type) {
+    const bg = {
+        'WEBPAY': 'var(--color-chocolate)',
+        'TRANSFERENCIA': 'var(--color-info)',
+        'EFECTIVO': 'var(--color-exito)'
+    };
+    return bg[type] || 'var(--color-texto-muted)';
+}
+
+function getMethodIconColor(type) {
+    return 'white';
+}
+
+async function setDefaultPaymentMethod(methodId) {
+    try {
+        const response = await apiFetch(`payments/methods/${methodId}/set_default/`, { method: 'POST' });
+        if (response.ok) {
+            showToast('Método predeterminado actualizado', 'success');
+            loadPaymentMethods();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al actualizar', 'danger');
+    }
+}
+
+async function deletePaymentMethod(methodId) {
+    if (!confirm('¿Eliminar este método de pago?')) return;
+    try {
+        const response = await apiFetch(`payments/methods/${methodId}/`, { method: 'DELETE' });
+        if (response.ok) {
+            showToast('Método eliminado', 'success');
+            loadPaymentMethods();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al eliminar', 'danger');
+    }
+}
+
+// ==================== CATÁLOGO Y CARRITO ====================
+async function loadCatalogCategories() {
+    try {
+        const response = await apiFetch('categories/');
+        if (response.ok) {
+            catalogCategoriesCache = await response.json();
+            const select = document.getElementById('catalogCategoryFilter');
+            catalogCategoriesCache.forEach(cat => {
+                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+    }
+}
+
+async function loadCatalogForOrder() {
+    const category = document.getElementById('catalogCategoryFilter').value;
+    const search = document.getElementById('catalogSearch').value;
+
+    const params = new URLSearchParams({
+        page_size: 50,
+        is_active: 'true',
+        ordering: 'name'
+    });
+    if (category) params.append('category', category);
+    if (search) params.append('search', search);
+
+    try {
+        const response = await apiFetch(`products/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando catálogo');
+        const data = await response.json();
+        catalogProductsCache = data.results || data;
+        renderCatalogProducts(catalogProductsCache);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar catálogo', 'danger');
+    }
+}
+
+function debounceCatalogSearch() {
+    clearTimeout(catalogSearchTimeout);
+    catalogSearchTimeout = setTimeout(() => loadCatalogForOrder(), 300);
+}
+
+function renderCatalogProducts(products) {
+    const container = document.getElementById('catalogProducts');
+
+    if (!products || products.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center py-4"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-search"></i></div><p class="mb-0">No hay productos disponibles</p></div></div>';
+        return;
+    }
+
+    container.innerHTML = products.map(product => {
+        const inCart = clientCart.find(item => item.product_id === product.id);
+        const cartQty = inCart ? inCart.quantity : 0;
+
+        return `
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card catalog-product-card h-100 ${cartQty > 0 ? 'in-cart' : ''}" data-product-id="${product.id}">
+                    ${product.image ? `<img src="${product.image}" class="card-img-top catalog-product-image" alt="${escapeHtml(product.name)}">` : '<div class="card-img-top catalog-product-image-placeholder"><i class="bi bi-cupcake fs-1 text-muted"></i></div>'}
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="card-title mb-0">${escapeHtml(product.name)}</h6>
+                            <button class="btn btn-ghost btn-sm" onclick="toggleFavorite(${product.id}, this)" title="Agregar a favoritos">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                        </div>
+                        <p class="card-text text-muted small flex-grow-1">${escapeHtml(product.description || '')}</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-chocolate fs-5">${formatCLP(product.sale_price || product.base_price || 0)}</span>
+                            <span class="badge badge-secondary">${product.base_servings} porc. base</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            ${cartQty > 0 ? `
+                                <div class="input-group input-group-sm flex-grow-1">
+                                    <button class="btn btn-outline-secondary" onclick="updateCartQty(${product.id}, ${cartQty - 1})" ${cartQty <= 1 ? 'disabled' : ''}><i class="bi bi-dash"></i></button>
+                                    <input type="text" class="form-control text-center" value="${cartQty}" readonly style="width: 50px;">
+                                    <button class="btn btn-outline-secondary" onclick="updateCartQty(${product.id}, ${cartQty + 1})"><i class="bi bi-plus"></i></button>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${product.id})" title="Quitar"><i class="bi bi-trash"></i></button>
+                            ` : `
+                                <button class="btn btn-primary flex-grow-1" onclick="addToCart(${product.id})">
+                                    <i class="bi bi-cart-plus me-1"></i>Agregar
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== CARRITO ====================
+function addToCart(product) {
+    const existing = clientCart.find(item => item.product_id === product.id);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        clientCart.push({
+            product_id: product.id,
+            product_name: product.name,
+            price: product.sale_price || product.base_price || 0,
+            quantity: 1,
+            servings: product.base_servings || 12,
+            image: product.image
+        });
+    }
+    updateCartUI();
+    loadCatalogForOrder();
+    showToast(`${escapeHtml(product.name)} agregado al carrito`, 'success');
+    toggleCartSidebar(true);
+}
+
+function updateCartQty(productId, newQty) {
+    if (newQty <= 0) {
+        removeFromCart(productId);
+        return;
+    }
+    const item = clientCart.find(i => i.product_id === productId);
+    if (item) {
+        item.quantity = newQty;
+        updateCartUI();
+        loadCatalogForOrder();
+    }
+}
+
+function removeFromCart(productId) {
+    clientCart = clientCart.filter(item => item.product_id !== productId);
+    updateCartUI();
+    loadCatalogForOrder();
+}
+
+function clearCart() {
+    clientCart = [];
+    updateCartUI();
+    loadCatalogForOrder();
+    toggleCartSidebar(false);
+}
+
+function updateCartUI() {
+    const count = clientCart.reduce((sum, item) => sum + item.quantity, 0);
+    const subtotal = clientCart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shipping = subtotal >= 50000 ? 0 : 5000; // Envío gratis sobre $50.000
+    const total = subtotal + shipping;
+
+    // Desktop cart
+    document.getElementById('cartItemsCount').textContent = count;
+    document.getElementById('cartSubtotal').textContent = formatCLP(subtotal);
+    document.getElementById('cartShipping').textContent = shipping === 0 ? 'Gratis' : formatCLP(shipping);
+    document.getElementById('cartTotal').textContent = formatCLP(total);
+
+    // Mobile cart
+    document.getElementById('mobileCartTotal').textContent = formatCLP(total);
+
+    // Cart items list (desktop)
+    const desktopList = document.getElementById('cartItemsList');
+    const desktopFooter = document.getElementById('cartFooter');
+
+    // Cart items list (mobile)
+    const mobileList = document.getElementById('mobileCartItemsList');
+    const mobileFooter = document.getElementById('mobileCartFooter');
+
+    if (clientCart.length === 0) {
+        desktopList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-cart"></i></div>
+                <h6>Carrito vacío</h6>
+                <p class="text-muted small mb-0">Agrega productos del catálogo</p>
+            </div>
+        `;
+        mobileList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-cart"></i></div>
+                <h6>Carrito vacío</h6>
+                <p class="text-muted small">Agrega productos para comenzar</p>
+            </div>
+        `;
+        desktopFooter.classList.add('d-none');
+        mobileFooter.classList.add('d-none');
+    } else {
+        const itemsHtml = clientCart.map(item => `
+            <div class="d-flex gap-3 py-2 border-bottom">
+                ${item.image ? `<img src="${item.image}" alt="" class="rounded" style="width: 56px; height: 56px; object-fit: cover;">` : '<div class="avatar avatar-sm bg-crema text-dorado"><i class="bi bi-cupcake"></i></div>'}
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-medium small text-truncate">${escapeHtml(item.product_name)}</div>
+                    <div class="text-muted small">${formatCLP(item.price)} × ${item.quantity}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-chocolate">${formatCLP(item.price * item.quantity)}</span>
+                    <button class="btn btn-ghost btn-sm p-1" onclick="removeFromCart(${item.product_id})" title="Eliminar"><i class="bi bi-trash text-danger"></i></button>
+                </div>
+            </div>
+        `).join('');
+
+        desktopList.innerHTML = itemsHtml;
+        mobileList.innerHTML = itemsHtml;
+        desktopFooter.classList.remove('d-none');
+        mobileFooter.classList.remove('d-none');
+    }
+}
+
+function toggleCartSidebar(forceOpen = null) {
+    const sidebar = document.getElementById('cartSidebar');
+    const overlay = document.getElementById('cartOverlay');
+    const isOpen = sidebar.classList.contains('open');
+    const shouldOpen = forceOpen !== null ? forceOpen : !isOpen;
+
+    if (shouldOpen && clientCart.length === 0) return;
+
+    sidebar.classList.toggle('open', shouldOpen);
+    overlay.classList.toggle('open', shouldOpen);
+    document.body.style.overflow = shouldOpen ? 'hidden' : '';
+}
+
+async function createOrderFromCart() {
+    if (clientCart.length === 0) {
+        showToast('El carrito está vacío', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('checkoutBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+
+    // Get default delivery date (2 business days)
+    const deliveryDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const items = clientCart.map(item => ({
+        product: item.product_id,
+        quantity: item.quantity,
+        servings: item.servings,
+        unit_price: item.price
+    }));
+
+    try {
+        const response = await apiFetch('orders/', {
+            method: 'POST',
+            body: JSON.stringify({
+                delivery_date: deliveryDate,
+                status: 'CONFIRMADO',
+                items: items
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(JSON.stringify(err));
+        }
+
+        showToast('¡Pedido creado exitosamente!', 'success');
+        clearCart();
+        loadOrdersTimeline();
+        loadClientKpis();
+        toggleCartSidebar(false);
+
+        // Switch to timeline tab
+        const tab = new bootstrap.Tab(document.getElementById('tab-timeline'));
+        tab.show();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al crear pedido', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// ==================== DETALLE DE PEDIDO ====================
+async function viewOrderDetail(orderId) {
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    modal.show();
+
+    document.getElementById('orderDetailBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-chocolate"></div></div>';
+
+    try {
+        const response = await apiFetch(`orders/${orderId}/`);
+        if (!response.ok) throw new Error('Error cargando pedido');
+        const order = await response.json();
+
+        const itemsHtml = (order.items || []).map(item => `
+            <tr>
+                <td>${escapeHtml(item.product_name)}</td>
+                <td class="text-center">${item.quantity}</td>
+                <td class="text-center">${item.servings} porc.</td>
+                <td class="text-end">${formatCLP(item.unit_price)}</td>
+                <td class="text-end fw-medium">${formatCLP(item.subtotal)}</td>
+            </tr>
+        `).join('');
+
+        const paymentsHtml = (order.payments || []).map(p => `
+            <tr>
+                <td>${formatDateTime(p.paid_at || p.created_at)}</td>
+                <td><span class="badge badge-${getPaymentMethodColor(p.method)}">${getPaymentMethodLabel(p.method)}</span></td>
+                <td class="text-end">${formatCLP(p.amount)}</td>
+                <td><span class="badge badge-${getPaymentStatusColor(p.status)}">${getPaymentStatusLabel(p.status)}</span></td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Sin pagos registrados</td></tr>';
+
+        // Timeline steps for order
+        const timelineSteps = renderOrderDetailTimeline(order.status, order.status_history || []);
+
+        document.getElementById('orderDetailBody').innerHTML = `
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Pedido #${order.id}</h5>
+                    <p class="text-muted mb-1"><strong>Fecha:</strong> ${formatDateTime(order.created_at)}</p>
+                    <p class="text-muted mb-1"><strong>Entrega:</strong> ${formatDate(order.delivery_date)}</p>
+                    <p class="text-muted mb-1"><strong>Dirección:</strong> ${escapeHtml(order.delivery_address || 'Retiro en local')}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="badge-status badge-status-${order.status.toLowerCase()} fs-6 px-3 py-2">${getStatusLabel(order.status)}</span>
+                    <div class="mt-2"><span class="badge badge-${getPaymentStatusColor(order.payment_status)}">${getPaymentStatusLabel(order.payment_status)}</span></div>
+                </div>
+            </div>
+
+            ${timelineSteps}
+
+            <div class="row g-3 mb-4">
+                <div class="col-4">
+                    <div class="p-3 bg-crema rounded-lg text-center">
+                        <div class="fw-bold text-chocolate fs-4">${formatCLP(order.subtotal)}</div>
+                        <small class="text-muted">Subtotal</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 bg-crema rounded-lg text-center">
+                        <div class="fw-bold text-warning fs-4">${order.discount_percent || 0}%</div>
+                        <small class="text-muted">Descuento</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 bg-crema rounded-lg text-center">
+                        <div class="fw-bold text-exito fs-4">${formatCLP(order.total)}</div>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="mb-3"><i class="bi bi-list-ul me-2"></i>Productos</h6>
+            <div class="table-responsive table-responsive-stack mb-4">
+                <table class="table table-sm table-hover">
+                    <thead><tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-center">Porc.</th><th class="text-end">Precio Unit.</th><th class="text-end">Subtotal</th></tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                </table>
+            </div>
+
+            <h6 class="mb-3"><i class="bi bi-credit-card me-2"></i>Pagos</h6>
+            <div class="table-responsive table-responsive-stack">
+                <table class="table table-sm table-hover">
+                    <thead><tr><th>Fecha</th><th>Método</th><th class="text-end">Monto</th><th>Estado</th></tr></thead>
+                    <tbody>${paymentsHtml}</tbody>
+                </table>
+            </div>
+
+            ${order.notes ? `<hr><p><strong>Notas:</strong> ${escapeHtml(order.notes)}</p>` : ''}
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('orderDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+function renderOrderDetailTimeline(currentStatus, history) {
+    const steps = [
+        { key: 'COTIZACION', label: 'Cotización', icon: 'bi-file-text' },
+        { key: 'CONFIRMADO', label: 'Confirmado', icon: 'bi-check-circle' },
+        { key: 'EN_PRODUCCION', label: 'En Producción', icon: 'bi-gear' },
+        { key: 'LISTO', label: 'Listo', icon: 'bi-box-seam' },
+        { key: 'DESPACHADO', label: 'Despachado', icon: 'bi-truck' },
+        { key: 'ENTREGADO', label: 'Entregado', icon: 'bi-check-circle-fill' }
+    ];
+
+    const currentIndex = steps.findIndex(s => s.key === currentStatus);
+
+    return `
+        <div class="order-timeline-detail mb-4">
+            <div class="d-flex justify-content-between position-relative">
+                <div class="progress-line" style="flex: 1; height: 3px; background: var(--color-crema-oscuro); border-radius: 2px; margin-top: 14px; position: relative; z-index: 0;">
+                    <div class="progress-fill" style="width: ${currentIndex >= 0 ? ((currentIndex + 1) / steps.length * 100) : 0}%; height: 100%; background: linear-gradient(90deg, var(--color-dorado) 0%, var(--color-chocolate) 100%); border-radius: 2px;"></div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+                ${steps.map((step, i) => `
+                    <div class="progress-step text-center" style="flex: 1; position: relative; z-index: 1;">
+                        <div class="step-marker mx-auto mb-1" style="width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--color-fondo); background: ${i < currentIndex ? 'var(--color-exito)' : (i === currentIndex ? 'var(--color-chocolate)' : 'var(--color-crema-oscuro)')}; box-shadow: ${i <= currentIndex ? '0 0 0 3px var(--color-exito)' : '0 0 0 2px var(--color-dorado-claro)'};">
+                            <i class="bi ${step.icon}" style="font-size: 0.7rem; color: ${i <= currentIndex ? 'white' : 'var(--color-texto-muted)'};"></i>
+                        </div>
+                        <small class="${i <= currentIndex ? 'fw-medium text-chocolate' : 'text-muted'}">${step.label}</small>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// ==================== WEBPAY ====================
+async function openWebpayModal(orderId, paymentId = null) {
+    const modal = new bootstrap.Modal(document.getElementById('webpayModal'));
+    modal.show();
+
+    document.getElementById('webpayModalBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-white"></div><p class="mt-2">Iniciando pago WebPay...</p></div>';
+
+    try {
+        let url = `webpay-transactions/init/?order=${orderId}`;
+        if (paymentId) url += `&payment=${paymentId}`;
+
+        const response = await apiFetch(url, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.url && data.token) {
+            document.getElementById('webpayModalBody').innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-credit-card-2-front fs-1 text-white"></i>
+                    <h5 class="mt-3">Redirigiendo a WebPay Transbank...</h5>
+                    <p class="text-muted">Si no es redirigido automáticamente, haga clic en el botón:</p>
+                    <a href="${data.url}?token_ws=${data.token}" target="_blank" class="btn btn-light btn-lg mt-3">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Ir a WebPay
+                    </a>
+                    <p class="text-muted small mt-3">Será redirigido en 3 segundos...</p>
+                </div>
+            `;
+            setTimeout(() => {
+                window.location.href = `${data.url}?token_ws=${data.token}`;
+            }, 3000);
+        } else {
+            document.getElementById('webpayModalBody').innerHTML = `
+                <div class="alert alert-danger">Error iniciando pago: ${data.error || 'Error desconocido'}</div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('webpayModalBody').innerHTML = '<div class="alert alert-danger">Error al iniciar pago WebPay</div>';
+    }
+}
+
+// ==================== REORDER ====================
+function showReorderModal(orderId) {
+    reorderOrderId = orderId;
+    const modal = new bootstrap.Modal(document.getElementById('reorderModal'));
+    modal.show();
+}
+
+document.getElementById('confirmReorderBtn').addEventListener('click', async function() {
+    if (!reorderOrderId) return;
+
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Cargando...';
+
+    try {
+        const response = await apiFetch(`orders/${reorderOrderId}/`);
+        if (!response.ok) throw new Error('Error cargando pedido');
+        const order = await response.json();
+
+        // Add items to cart
+        (order.items || []).forEach(item => {
+            const existing = clientCart.find(i => i.product_id === item.product);
+            if (existing) {
+                existing.quantity += item.quantity;
+            } else {
+                clientCart.push({
+                    product_id: item.product,
+                    product_name: item.product_name,
+                    price: item.unit_price,
+                    quantity: item.quantity,
+                    servings: item.servings,
+                    image: null
+                });
+            }
+        });
+
+        updateCartUI();
+        bootstrap.Modal.getInstance(document.getElementById('reorderModal')).hide();
+
+        // Switch to new order tab
+        const tab = new bootstrap.Tab(document.getElementById('tab-new-order'));
+        tab.show();
+
+        toggleCartSidebar(true);
+        showToast('Productos agregados al carrito', 'success');
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al reordenar', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        reorderOrderId = null;
+    }
+});
+
+// ==================== PERFIL ====================
+function setupForms() {
+    // Edit profile
+    document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+
+        const data = {
+            full_name: document.getElementById('profileFullName').value,
+            email: document.getElementById('profileEmail').value,
+            phone: document.getElementById('profilePhone').value,
+            address: document.getElementById('profileAddress').value,
+            birthdate: document.getElementById('profileBirthdate').value || null,
+            newsletter: document.getElementById('profileNewsletter').checked
+        };
+
+        try {
+            const response = await apiFetch('users/update_me/', {
+                method: 'PATCH',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error actualizando perfil');
+
+            showToast('Perfil actualizado correctamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide();
+
+            // Update displayed info
+            document.getElementById('displayName').textContent = data.full_name;
+            document.getElementById('displayEmail').textContent = data.email;
+            document.getElementById('displayPhone').textContent = data.phone || 'Sin teléfono registrado';
+
+            loadClientKpis(); // Refresh completion
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al actualizar perfil', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    // Change password
+    document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const new1 = document.getElementById('newPassword1').value;
+        const new2 = document.getElementById('newPassword2').value;
+
+        if (new1 !== new2) {
+            showToast('Las contraseñas no coinciden', 'warning');
+            return;
+        }
+
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Cambiando...';
+
+        const data = {
+            old_password: document.getElementById('currentPassword').value,
+            new_password: new1
+        };
+
+        try {
+            const response = await apiFetch('users/change-password/', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Error cambiando contraseña');
+            }
+
+            showToast('Contraseña cambiada correctamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+            this.reset();
+            updatePasswordStrengthUI('');
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    // Notification preferences
+    document.getElementById('notificationPreferencesForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        showToast('Preferencias guardadas (funcionalidad próximamente)', 'info');
+        bootstrap.Modal.getInstance(document.getElementById('notificationPreferencesModal')).hide();
+    });
+
+    // Add payment method
+    document.getElementById('addPaymentMethodForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        data.is_default = document.getElementById('setDefaultPayment').checked;
+
+        try {
+            const response = await apiFetch('payments/methods/', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error agregando método');
+
+            showToast('Método de pago agregado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addPaymentMethodModal')).hide();
+            this.reset();
+            loadPaymentMethods();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al agregar método', 'danger');
+        }
+    });
+}
+
+function previewAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('avatarPreview').src = e.target.result;
+        document.getElementById('modalAvatarPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // Upload avatar
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    apiFetch('users/update_me/', {
+        method: 'PATCH',
+        body: formData,
+        headers: {} // Let browser set Content-Type for FormData
+    }).then(response => {
+        if (response.ok) {
+            showToast('Foto de perfil actualizada', 'success');
+        }
+    }).catch(err => {
+        console.error('Error subiendo avatar:', err);
+        showToast('Error al subir imagen', 'danger');
+    });
+}
+
+function previewModalAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('modalAvatarPreview').src = e.target.result;
+        document.getElementById('avatarPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    const icon = button.querySelector('i');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+
+// Password strength meter
+function setupPasswordStrength() {
+    const input = document.getElementById('newPassword1');
+    input.addEventListener('input', function() {
+        updatePasswordStrengthUI(this.value);
+        checkPasswordMatch();
+    });
+
+    document.getElementById('newPassword2').addEventListener('input', checkPasswordMatch);
+}
+
+function updatePasswordStrengthUI(password) {
+    const bars = document.querySelectorAll('#passwordStrength .strength-bar');
+    const text = document.getElementById('passwordStrengthText');
+
+    if (!password) {
+        bars.forEach(b => b.style.background = 'var(--color-crema-oscuro)');
+        text.textContent = 'Seguridad: Muy débil';
+        return;
+    }
+
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    const colors = ['var(--color-error)', 'var(--color-advertencia)', 'var(--color-info)', 'var(--color-exito)', 'var(--color-exito)'];
+    const labels = ['Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte'];
+
+    bars.forEach((bar, i) => {
+        bar.style.background = i < score ? colors[score - 1] : 'var(--color-crema-oscuro)';
+    });
+    text.textContent = `Seguridad: ${labels[score - 1] || 'Muy débil'}`;
+    text.style.color = colors[score - 1] || 'var(--color-texto-muted)';
+}
+
+function checkPasswordMatch() {
+    const pass1 = document.getElementById('newPassword1').value;
+    const pass2 = document.getElementById('newPassword2').value;
+    const matchText = document.getElementById('passwordMatchText');
+    const mismatchText = document.getElementById('passwordMismatchText');
+
+    if (!pass2) {
+        matchText.classList.add('d-none');
+        mismatchText.classList.add('d-none');
+        return;
+    }
+
+    if (pass1 === pass2) {
+        matchText.classList.remove('d-none');
+        mismatchText.classList.add('d-none');
+    } else {
+        matchText.classList.add('d-none');
+        mismatchText.classList.remove('d-none');
+    }
+}
+
+// ==================== PAYMENT TAB SWITCHER ====================
+function setupPaymentTabSwitcher() {
+    document.querySelectorAll('[data-payment-tab]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-payment-tab]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const tab = this.dataset.paymentTab;
+            document.getElementById('paymentsPendingView').classList.toggle('d-none', tab !== 'pending');
+            document.getElementById('paymentsHistoryView').classList.toggle('d-none', tab !== 'history');
+        });
+    });
+}
+
+// ==================== PAYMENT METHOD TYPE SELECTOR ====================
+function setupPaymentMethodTypeSelector() {
+    const select = document.getElementById('paymentMethodType');
+    select.addEventListener('change', function() {
+        document.getElementById('webpayFields').classList.toggle('d-none', this.value !== 'WEBPAY');
+        document.getElementById('transferFields').classList.toggle('d-none', this.value !== 'TRANSFERENCIA');
+    });
+}
+
+// ==================== HELPERS ====================
+function getOrderStatusConfig(status) {
+    const configs = {
+        'COTIZACION': { label: 'Cotización', color: 'var(--color-texto-muted)' },
+        'CONFIRMADO': { label: 'Confirmado', color: 'var(--color-info)' },
+        'EN_PRODUCCION': { label: 'En Producción', color: 'var(--color-chocolate)' },
+        'LISTO': { label: 'Listo', color: 'var(--color-advertencia)' },
+        'DESPACHADO': { label: 'Despachado', color: 'var(--color-info)' },
+        'ENTREGADO': { label: 'Entregado', color: 'var(--color-exito)' },
+        'CANCELADO': { label: 'Cancelado', color: 'var(--color-error)' },
+        'RECHAZADO': { label: 'Rechazado', color: 'var(--color-error)' },
+    };
+    return configs[status] || { label: status, color: 'var(--color-texto-muted)' };
+}
+
+function getPaymentStatusConfig(status) {
+    const configs = {
+        'PENDIENTE': { label: 'Pendiente', badgeClass: 'badge-warning' },
+        'PAGADO_PARCIAL': { label: 'Pagado Parcial', badgeClass: 'badge-info' },
+        'PAGADO_TOTAL': { label: 'Pagado', badgeClass: 'badge-success' },
+    };
+    return configs[status] || { label: status, badgeClass: 'badge-secondary' };
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        'COTIZACION': 'Cotización',
+        'CONFIRMADO': 'Confirmado',
+        'EN_PRODUCCION': 'En Producción',
+        'LISTO': 'Listo',
+        'DESPACHADO': 'Despachado',
+        'ENTREGADO': 'Entregado',
+        'CANCELADO': 'Cancelado',
+        'RECHAZADO': 'Rechazado',
+    };
+    return labels[status] || status;
+}
+
+function getPaymentStatusLabel(status) {
+    const labels = {
+        'PENDIENTE': 'Pendiente',
+        'PAGADO_PARCIAL': 'Parcial',
+        'PAGADO_TOTAL': 'Pagado',
+    };
+    return labels[status] || status;
+}
+
+function getPaymentStatusColor(status) {
+    const colors = {
+        'PENDIENTE': 'warning',
+        'PAGADO_PARCIAL': 'info',
+        'PAGADO_TOTAL': 'success',
+    };
+    return colors[status] || 'secondary';
+}
+
+function getPaymentMethodLabel(method) {
+    const labels = {
+        'WEBPAY': 'WebPay',
+        'EFECTIVO': 'Efectivo',
+        'TRANSFERENCIA': 'Transferencia',
+    };
+    return labels[method] || method;
+}
+
+function getPaymentMethodColor(method) {
+    const colors = {
+        'WEBPAY': 'primary',
+        'EFECTIVO': 'success',
+        'TRANSFERENCIA': 'info',
+    };
+    return colors[method] || 'secondary';
+}
+
+function viewProductDetail(productId) {
+    window.open(`{% url 'products' %}${productId}/`, '_blank');
+}
+</script>
+{% endblock %}

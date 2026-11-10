@@ -1,0 +1,2384 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+/* Dispatch Page Styles */
+.dispatch-stats-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transicion);
+    position: relative;
+    overflow: hidden;
+}
+
+.dispatch-stats-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+.dispatch-stats-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+
+.dispatch-stats-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.dispatch-stats-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.dispatch-stats-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+    margin-bottom: 0.125rem;
+}
+
+.dispatch-stats-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Route Cards */
+.route-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+    transition: all var(--transicion);
+    box-shadow: var(--sombra-suave);
+}
+
+.route-card:hover {
+    box-shadow: var(--sombra-media);
+    border-color: var(--color-dorado);
+}
+
+.route-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-crema);
+    border-bottom: 1px solid var(--color-borde);
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.route-card-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.route-card-title h5 {
+    margin: 0;
+    color: var(--color-cacao);
+    font-size: var(--font-size-lg);
+}
+
+.route-card-meta {
+    font-size: var(--font-size-sm);
+    color: var(--color-texto-suave);
+}
+
+.route-card-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.route-progress-bar {
+    height: 6px;
+    background: var(--color-crema);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    flex: 1;
+    min-width: 100px;
+    max-width: 200px;
+}
+
+.route-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-chocolate), var(--color-dorado));
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+}
+
+.route-card-body {
+    padding: var(--space-4);
+}
+
+.route-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.route-stat-item {
+    background: var(--color-crema);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    text-align: center;
+    border: 1px solid var(--color-borde);
+}
+
+.route-stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+}
+
+.route-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+}
+
+.route-stat-pending .route-stat-value { color: var(--color-advertencia); }
+.route-stat-enroute .route-stat-value { color: var(--color-info); }
+.route-stat-delivered .route-stat-value { color: var(--color-exito); }
+.route-stat-failed .route-stat-value { color: var(--color-error); }
+
+.route-dispatches-table {
+    font-size: var(--font-size-sm);
+}
+
+.route-dispatches-table th {
+    background: var(--color-crema);
+    color: var(--color-texto-suave);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    padding: var(--space-2) var(--space-3);
+}
+
+.route-dispatches-table td {
+    padding: var(--space-2) var(--space-3);
+    vertical-align: middle;
+}
+
+.dispatch-row-pending { background: var(--color-crema); }
+.dispatch-row-enroute { background: var(--color-info-bg); }
+.dispatch-row-delivered { background: var(--color-exito-bg); }
+.dispatch-row-failed { background: var(--color-error-bg); }
+
+/* Map Container */
+.dispatch-map-container {
+    height: 500px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--color-borde);
+    background: var(--color-crema);
+}
+
+.dispatch-map-container.small {
+    height: 300px;
+}
+
+.leaflet-container {
+    font-family: var(--font-body);
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: var(--radius-md);
+    box-shadow: var(--sombra-fuerte);
+}
+
+.leaflet-popup-content {
+    margin: var(--space-2);
+    font-size: var(--font-size-sm);
+}
+
+.leaflet-popup-content h6 {
+    margin: 0 0 var(--space-1);
+    color: var(--color-cacao);
+}
+
+.leaflet-popup-content .popup-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-suave);
+}
+
+.leaflet-popup-content .popup-actions {
+    margin-top: var(--space-2);
+    display: flex;
+    gap: 0.375rem;
+}
+
+.leaflet-popup-content .popup-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: var(--font-size-xs);
+}
+
+/* Driver Cards */
+.driver-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    text-align: center;
+    transition: all var(--transicion);
+    height: 100%;
+}
+
+.driver-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+
+.driver-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    margin: 0 auto var(--space-3);
+}
+
+.driver-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: 0.25rem;
+}
+
+.driver-contact {
+    font-size: var(--font-size-sm);
+    color: var(--color-texto-muted);
+    margin-bottom: var(--space-2);
+}
+
+.driver-vehicle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--color-crema);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-suave);
+    margin-bottom: var(--space-3);
+}
+
+.driver-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.driver-status.active {
+    background: var(--color-exito-bg);
+    color: var(--color-exito);
+}
+
+.driver-status.inactive {
+    background: var(--color-crema-oscuro);
+    color: var(--color-texto-muted);
+}
+
+/* Signature Canvas */
+.signature-pad-wrapper {
+    border: 2px dashed var(--color-borde);
+    border-radius: var(--radius-md);
+    background: var(--color-crema);
+    position: relative;
+    overflow: hidden;
+}
+
+.signature-pad-wrapper.has-signature {
+    border-style: solid;
+    border-color: var(--color-dorado);
+}
+
+.signature-canvas {
+    display: block;
+    width: 100%;
+    height: 200px;
+    background: white;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.signature-canvas:focus {
+    outline: 2px solid var(--color-dorado);
+    outline-offset: -2px;
+}
+
+.signature-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--color-texto-muted);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.signature-pad-wrapper.has-signature .signature-placeholder {
+    opacity: 0;
+}
+
+.signature-controls {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    flex-wrap: wrap;
+}
+
+/* Photo Capture */
+.photo-capture-area {
+    border: 2px dashed var(--color-borde);
+    border-radius: var(--radius-md);
+    background: var(--color-crema);
+    padding: var(--space-4);
+    text-align: center;
+    transition: all var(--transicion);
+    position: relative;
+}
+
+.photo-capture-area:hover {
+    border-color: var(--color-dorado);
+    background: var(--color-dorado-claro);
+}
+
+.photo-capture-area.has-photo {
+    border-style: solid;
+    border-color: var(--color-dorado);
+    padding: 0;
+}
+
+.photo-placeholder {
+    color: var(--color-texto-muted);
+}
+
+.photo-placeholder i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-dorado);
+}
+
+.photo-preview {
+    position: relative;
+    width: 100%;
+    max-height: 250px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.photo-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.photo-preview-actions {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    display: flex;
+    gap: 0.375rem;
+}
+
+/* Filter Bar */
+.dispatch-filter-bar {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.dispatch-filter-row {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.dispatch-filter-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+.dispatch-filter-group label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.375rem;
+}
+
+.dispatch-filter-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* Tab Panel */
+.dispatch-tabs .nav-tabs {
+    border-bottom: 2px solid var(--color-borde);
+}
+
+.dispatch-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-texto-suave);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transicion);
+}
+
+.dispatch-tabs .nav-link:hover {
+    color: var(--color-chocolate);
+    border-bottom-color: var(--color-dorado);
+    background: transparent;
+}
+
+.dispatch-tabs .nav-link.active {
+    color: var(--color-chocolate);
+    border-bottom-color: var(--color-chocolate);
+    background: transparent;
+}
+
+.dispatch-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* Modal Enhancements */
+.modal-header-gradient-primary {
+    background: linear-gradient(135deg, var(--color-info) 0%, #2a5070 100%);
+    color: white;
+}
+
+.modal-header-gradient-success {
+    background: linear-gradient(135deg, var(--color-exito) 0%, #1e4d36 100%);
+    color: white;
+}
+
+.modal-header-gradient-warning {
+    background: linear-gradient(135deg, var(--color-advertencia) 0%, #8a6a08 100%);
+    color: var(--color-cacao);
+}
+
+.modal-header-gradient-danger {
+    background: linear-gradient(135deg, var(--color-error) 0%, #6b1d2a 100%);
+    color: white;
+}
+
+/* GPS Location Button */
+.gps-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-crema);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    color: var(--color-texto);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transicion);
+}
+
+.gps-btn:hover {
+    border-color: var(--color-dorado);
+    background: var(--color-dorado-claro);
+}
+
+.gps-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Delivery Confirmation Modal */
+.delivery-confirm-modal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.delivery-info-card {
+    background: var(--color-crema);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.delivery-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+}
+
+.delivery-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.delivery-info-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+}
+
+.delivery-info-value {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .route-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .route-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .route-card-status {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .route-progress-bar {
+        max-width: none;
+    }
+
+    .dispatch-filter-group {
+        min-width: 100%;
+    }
+
+    .dispatch-filter-actions {
+        width: 100%;
+    }
+
+    .dispatch-filter-actions .btn {
+        flex: 1;
+    }
+
+    .dispatch-map-container {
+        height: 300px;
+    }
+
+    .signature-canvas {
+        height: 150px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .dispatch-filter-bar, .dispatch-stats-card, .btn, .modal {
+        display: none !important;
+    }
+
+    .route-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-truck me-2 text-dorado"></i>Despachos / Rutas</h1>
+        <p class="text-muted mb-0">Gestiona rutas, seguimiento en vivo y confirmación de entregas con firma y foto</p>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#routeModal" onclick="openCreateRouteModal()">
+            <i class="bi bi-geo-alt me-1"></i>Nueva Ruta
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dispatchModal" onclick="openCreateDispatchModal()">
+            <i class="bi bi-plus-lg me-1"></i>Asignar Despacho
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="dispatch-stats-card" style="--accent-color: var(--color-info);">
+            <div class="dispatch-stats-icon" style="background: var(--color-info);"><i class="bi bi-geo-alt"></i></div>
+            <div class="dispatch-stats-info">
+                <div class="dispatch-stats-value" id="statRoutesToday">0</div>
+                <div class="dispatch-stats-label">Rutas Hoy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="dispatch-stats-card" style="--accent-color: var(--color-advertencia);">
+            <div class="dispatch-stats-icon" style="background: var(--color-advertencia);"><i class="bi bi-clock"></i></div>
+            <div class="dispatch-stats-info">
+                <div class="dispatch-stats-value" id="statPendingDispatches">0</div>
+                <div class="dispatch-stats-label">Pendientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="dispatch-stats-card" style="--accent-color: var(--color-info);">
+            <div class="dispatch-stats-icon" style="background: var(--color-info);"><i class="bi bi-truck"></i></div>
+            <div class="dispatch-stats-info">
+                <div class="dispatch-stats-value" id="statEnRoute">0</div>
+                <div class="dispatch-stats-label">En Ruta</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="dispatch-stats-card" style="--accent-color: var(--color-exito);">
+            <div class="dispatch-stats-icon" style="background: var(--color-exito);"><i class="bi bi-check-circle"></i></div>
+            <div class="dispatch-stats-info">
+                <div class="dispatch-stats-value" id="statDelivered">0</div>
+                <div class="dispatch-stats-label">Entregados</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="dispatch-filter-bar">
+    <div class="dispatch-filter-row">
+        <div class="dispatch-filter-group">
+            <label>Fecha</label>
+            <input type="date" class="form-control form-control-sm" id="dispatchDateFilter" onchange="loadRoutesToday()">
+        </div>
+        <div class="dispatch-filter-group">
+            <label>Conductor</label>
+            <select class="form-select form-select-sm" id="dispatchDriverFilter" onchange="loadRoutesToday()">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="dispatch-filter-group">
+            <label>Estado Ruta</label>
+            <select class="form-select form-select-sm" id="dispatchRouteStatusFilter" onchange="loadRoutesToday()">
+                <option value="">Todos</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="EN_PROGRESO">En Progreso</option>
+                <option value="COMPLETADA">Completada</option>
+            </select>
+        </div>
+        <div class="dispatch-filter-actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportDispatches()">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="refreshRoutesToday()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Tabs -->
+<div class="card dispatch-tabs">
+    <div class="card-header border-0">
+        <ul class="nav nav-tabs" id="dispatchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-rutas-hoy" data-bs-toggle="tab" data-bs-target="#panel-rutas-hoy" type="button" onclick="loadRoutesToday()">
+                    <i class="bi bi-calendar-day me-1"></i>Rutas de Hoy
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-mapa" data-bs-toggle="tab" data-bs-target="#panel-mapa" type="button" onclick="loadMapView()">
+                    <i class="bi bi-map me-1"></i>Vista Mapa
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-todos-despachos" data-bs-toggle="tab" data-bs-target="#panel-todos-despachos" type="button" onclick="loadAllDispatches()">
+                    <i class="bi bi-list-ul me-1"></i>Todos los Despachos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-conductores" data-bs-toggle="tab" data-bs-target="#panel-conductores" type="button" onclick="loadDrivers()">
+                    <i class="bi bi-people me-1"></i>Conductores
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content">
+            <!-- Panel Rutas de Hoy -->
+            <div class="tab-pane fade show active" id="panel-rutas-hoy" role="tabpanel">
+                <div id="routesTodayContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-chocolate" role="status"></div>
+                        <p class="text-muted mt-2">Cargando rutas de hoy...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Mapa -->
+            <div class="tab-pane fade" id="panel-mapa" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12 col-xl-8">
+                        <div class="dispatch-map-container" id="dispatchMap"></div>
+                    </div>
+                    <div class="col-12 col-xl-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Despachos en la Ruta</div>
+                            </div>
+                            <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                                <div class="list-group list-group-flush" id="mapRouteDispatches">
+                                    <div class="text-center p-4 text-muted">
+                                        <i class="bi bi-map fs-1"></i>
+                                        <p class="mt-2 mb-0">Selecciona una ruta en el mapa</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Todos los Despachos -->
+            <div class="tab-pane fade" id="panel-todos-despachos" role="tabpanel">
+                <div class="dispatch-filter-bar">
+                    <div class="dispatch-filter-row">
+                        <div class="dispatch-filter-group">
+                            <label>Fecha</label>
+                            <input type="date" class="form-control form-control-sm" id="allDispatchesDateFilter" onchange="loadAllDispatches()">
+                        </div>
+                        <div class="dispatch-filter-group">
+                            <label>Ruta</label>
+                            <select class="form-select form-select-sm" id="allDispatchesRouteFilter" onchange="loadAllDispatches()">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="dispatch-filter-group">
+                            <label>Estado</label>
+                            <select class="form-select form-select-sm" id="allDispatchesStatusFilter" onchange="loadAllDispatches()">
+                                <option value="">Todos</option>
+                                <option value="PENDIENTE">Pendiente</option>
+                                <option value="EN_RUTA">En Ruta</option>
+                                <option value="ENTREGADO">Entregado</option>
+                                <option value="FALLIDO">Fallido</option>
+                            </select>
+                        </div>
+                        <div class="dispatch-filter-actions">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportAllDispatches()">
+                                <i class="bi bi-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive table-responsive-stack">
+                    <table class="table table-hover mb-0" id="allDispatchesTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">Despacho</th>
+                                <th>Ruta</th>
+                                <th>Conductor</th>
+                                <th>Pedido</th>
+                                <th>Cliente</th>
+                                <th style="width: 70px;">Seq.</th>
+                                <th style="width: 130px;">Estado</th>
+                                <th style="width: 100px;">Entregado</th>
+                                <th style="width: 120px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allDispatchesTableBody">
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="spinner-border text-chocolate" role="status"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav aria-label="Paginación" class="p-3">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center" id="allDispatchesPaginationList"></ul>
+                </nav>
+            </div>
+
+            <!-- Panel Conductores -->
+            <div class="tab-pane fade" id="panel-conductores" role="tabpanel">
+                <div class="row g-3" id="driversContainer">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-chocolate" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ruta -->
+<div class="modal fade" id="routeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-primary">
+                <h5 class="modal-title" id="routeModalTitle"><i class="bi bi-geo-alt me-2"></i>Nueva Ruta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="routeForm" novalidate>
+                <input type="hidden" name="id" id="routeId">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="routeName" class="form-label fw-medium">Nombre de la Ruta <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="routeName" name="name" required placeholder="Ej: Ruta Norte - Mañana">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="routeDate" class="form-label fw-medium">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="routeDate" name="date" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="routeDriver" class="form-label fw-medium">Conductor <span class="text-danger">*</span></label>
+                            <select class="form-select" id="routeDriver" name="driver" required>
+                                <option value="">Seleccionar conductor...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="routeVehicle" class="form-label fw-medium">Vehículo</label>
+                            <input type="text" class="form-control" id="routeVehicle" name="vehicle" placeholder="Patente / Modelo">
+                        </div>
+                        <div class="col-12">
+                            <label for="routeNotes" class="form-label fw-medium">Notas / Instrucciones</label>
+                            <textarea class="form-control" id="routeNotes" name="notes" rows="3" placeholder="Instrucciones especiales, zona de cobertura, horarios..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="routeSubmitBtn">
+                        <i class="bi bi-save me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Despacho -->
+<div class="modal fade" id="dispatchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-success">
+                <h5 class="modal-title"><i class="bi bi-plus-lg me-2"></i>Asignar Despacho a Ruta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="dispatchForm" novalidate>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="dispatchRoute" class="form-label fw-medium">Ruta <span class="text-danger">*</span></label>
+                            <select class="form-select" id="dispatchRoute" name="route" required>
+                                <option value="">Seleccionar ruta...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="dispatchOrder" class="form-label fw-medium">Pedido Listo <span class="text-danger">*</span></label>
+                            <select class="form-select" id="dispatchOrder" name="order" required>
+                                <option value="">Seleccionar pedido...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="dispatchSequence" class="form-label fw-medium">Secuencia <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="dispatchSequence" name="sequence" min="1" value="1" required>
+                        </div>
+                        <div class="col-12 col-md-8">
+                            <label for="dispatchNotes" class="form-label">Notas de entrega</label>
+                            <input type="text" class="form-control" id="dispatchNotes" name="notes" placeholder="Instrucciones especiales, referencia, código de acceso...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check me-1"></i>Asignar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Entrega (Firma + Foto + GPS) -->
+<div class="modal fade delivery-confirm-modal" id="deliveryConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-warning">
+                <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i>Confirmar Entrega</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="deliveryConfirmForm" novalidate>
+                <input type="hidden" id="deliveryDispatchId" name="dispatch_id">
+                <div class="modal-body">
+                    <!-- Delivery Info Card -->
+                    <div class="delivery-info-card">
+                        <div class="delivery-info-grid">
+                            <div class="delivery-info-item">
+                                <span class="delivery-info-label">Pedido</span>
+                                <span class="delivery-info-value" id="deliveryOrderInfo">#</span>
+                            </div>
+                            <div class="delivery-info-item">
+                                <span class="delivery-info-label">Cliente</span>
+                                <span class="delivery-info-value" id="deliveryClientInfo">—</span>
+                            </div>
+                            <div class="delivery-info-item">
+                                <span class="delivery-info-label">Dirección</span>
+                                <span class="delivery-info-value" id="deliveryAddressInfo">—</span>
+                            </div>
+                            <div class="delivery-info-item">
+                                <span class="delivery-info-label">Productos</span>
+                                <span class="delivery-info-value" id="deliveryProductsInfo">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firma Digital -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-pen me-2"></i>Firma del Cliente <span class="text-danger">*</span></h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="signature-pad-wrapper" id="signatureWrapper">
+                                <canvas id="signatureCanvas" class="signature-canvas" width="800" height="200" tabindex="0" aria-label="Área de firma"></canvas>
+                                <div class="signature-placeholder">
+                                    <i class="bi bi-pen fs-1 d-block mb-2"></i>
+                                    <p class="mb-0">El cliente firma aquí (mouse, touch o stylus)</p>
+                                </div>
+                            </div>
+                            <div class="signature-controls">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSignature()">
+                                    <i class="bi bi-eraser me-1"></i>Limpiar
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="undoSignature()">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Deshacer
+                                </button>
+                                <span class="ms-auto text-muted small align-self-center">
+                                    Mínimo 1 trazo requerido
+                                </span>
+                            </div>
+                            <input type="hidden" id="signatureData" name="signature" required>
+                        </div>
+                    </div>
+
+                    <!-- Foto de Entrega -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-camera me-2"></i>Foto de Entrega <span class="text-danger">*</span></h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="photo-capture-area" id="photoCaptureArea" onclick="document.getElementById('deliveryPhotoFile').click()">
+                                <div class="photo-placeholder" id="photoPlaceholder">
+                                    <i class="bi bi-camera"></i>
+                                    <p class="mb-1 fw-medium">Tocar o click para tomar foto</p>
+                                    <small class="text-muted">O selecciona de la galería</small>
+                                </div>
+                                <div class="photo-preview d-none" id="photoPreview">
+                                    <img id="photoPreviewImg" src="" alt="Foto de entrega">
+                                    <div class="photo-preview-actions">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="clearDeliveryPhoto(event)" title="Quitar foto">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="retakeDeliveryPhoto(event)" title="Retomar">
+                                            <i class="bi bi-camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="file" id="deliveryPhotoFile" name="photo" accept="image/*" capture="environment" class="d-none" onchange="previewDeliveryPhoto(this)">
+                            </div>
+                            <input type="hidden" id="deliveryPhotoData" name="photo_base64" required>
+                            <div class="form-text mt-2">Toma una foto del producto entregado. Se recomienda usar la cámara trasera.</div>
+                        </div>
+                    </div>
+
+                    <!-- GPS Location -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-geo-fill me-2"></i>Ubicación GPS</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Lat</span>
+                                        <input type="text" class="form-control" id="deliveryLat" name="gps_lat" readonly placeholder="—">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Lng</span>
+                                        <input type="text" class="form-control" id="deliveryLng" name="gps_lng" readonly placeholder="—">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="gps-btn" onclick="getCurrentLocation()" id="gpsBtn">
+                                <i class="bi bi-geo-fill"></i>
+                                <span id="gpsBtnText">Obtener Mi Ubicación</span>
+                            </button>
+                            <div class="form-text mt-2">Opcional: captura la ubicación exacta de la entrega.</div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-chat me-2"></i>Observaciones</h6>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" id="deliveryNotes" name="notes" rows="2" placeholder="Comentarios sobre la entrega, estado del producto, recepción..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning text-dark" id="deliveryConfirmBtn">
+                        <i class="bi bi-check-circle me-1"></i>Confirmar Entrega
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Despacho -->
+<div class="modal fade" id="dispatchDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-truck me-2"></i>Detalle del Despacho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dispatchDetailBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-chocolate" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Ruta -->
+<div class="modal fade" id="routeDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-primary">
+                <h5 class="modal-title" id="routeDetailTitle"><i class="bi bi-geo-alt me-2"></i>Detalle de Ruta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="routeDetailBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-white" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+// ==================== ESTADO GLOBAL ====================
+let driversCache = [];
+let routesCache = [];
+let ordersReadyCache = [];
+let currentDateFilter = new Date().toISOString().split('T')[0];
+let map = null;
+let mapMarkers = [];
+let mapRoutes = [];
+let selectedRouteForMap = null;
+let allDispatchesCurrentPage = 1;
+let allDispatchesFilters = {};
+
+let signaturePad = null;
+let signatureStrokes = [];
+let signatureHistory = []; // For undo
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Ensure JWT tokens are ready before loading data
+    if (window.API && window.API.initJWTTokens) {
+        await window.API.initJWTTokens();
+    }
+    loadDriversForSelects();
+    loadRoutesForSelects();
+    loadOrdersReadyForSelects();
+    loadRoutesToday();
+    initSignaturePad();
+    setupForms();
+
+    // Set default dates
+    document.getElementById('dispatchDateFilter').value = currentDateFilter;
+    document.getElementById('allDispatchesDateFilter').value = currentDateFilter;
+    document.getElementById('routeDate').value = currentDateFilter;
+});
+
+// ==================== CARGA DE DATOS BASE ====================
+async function loadDriversForSelects() {
+    try {
+        const response = await apiFetch('drivers/?page_size=100&is_active=true');
+        if (response.ok) {
+            driversCache = await response.json();
+            const drivers = driversCache.results || driversCache;
+
+            const selects = [
+                document.getElementById('routeDriver'),
+                document.getElementById('dispatchDriverFilter')
+            ];
+
+            selects.forEach(select => {
+                if (!select) return;
+                drivers.forEach(d => {
+                    const name = d.user?.username || d.user?.get_full_name || 'Sin nombre';
+                    select.innerHTML += `<option value="${d.id}">${escapeHtml(name)} (${d.vehicle || 'Sin vehículo'})</option>`;
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando conductores:', error);
+    }
+}
+
+async function loadRoutesForSelects() {
+    try {
+        const response = await apiFetch('routes/?page_size=100&ordering=-date');
+        if (response.ok) {
+            routesCache = await response.json();
+            const routes = routesCache.results || routesCache;
+            const today = new Date().toISOString().split('T')[0];
+
+            const selects = [
+                document.getElementById('dispatchRoute'),
+                document.getElementById('dispatchRouteFilter'),
+                document.getElementById('allDispatchesRouteFilter')
+            ];
+
+            selects.forEach(select => {
+                if (!select) return;
+                const isFilter = select.id !== 'dispatchRoute';
+                select.innerHTML = isFilter
+                    ? '<option value="">Todas las rutas</option>'
+                    : '<option value="">Seleccionar ruta...</option>';
+                routes.filter(r => !isFilter || r.date >= today || select.id === 'dispatchRouteFilter').forEach(r => {
+                    select.innerHTML += `<option value="${r.id}">${escapeHtml(r.name)} (${formatDate(r.date)}) - ${r.driver_name || 'Sin conductor'}</option>`;
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando rutas:', error);
+    }
+}
+
+async function loadOrdersReadyForSelects() {
+    try {
+        const response = await apiFetch('orders/?status=LISTO&page_size=200');
+        if (response.ok) {
+            ordersReadyCache = await response.json();
+            const orders = ordersReadyCache.results || ordersReadyCache;
+            const select = document.getElementById('dispatchOrder');
+            orders.forEach(o => {
+                select.innerHTML += `<option value="${o.id}">#${o.id} - ${escapeHtml(o.client?.name)} - ${formatCLP(o.total)} (Entrega: ${formatDate(o.delivery_date)})</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando pedidos listos:', error);
+    }
+}
+
+// ==================== RUTAS DE HOY ====================
+async function loadRoutesToday() {
+    const date = document.getElementById('dispatchDateFilter').value || currentDateFilter;
+    const driver = document.getElementById('dispatchDriverFilter').value;
+    const status = document.getElementById('dispatchRouteStatusFilter').value;
+    currentDateFilter = date;
+
+    document.getElementById('dispatchDateFilter').value = date;
+
+    const params = new URLSearchParams({ date });
+    if (driver) params.append('driver', driver);
+    if (status) params.append('status', status);
+
+    try {
+        const response = await apiFetch(`routes/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando rutas');
+        const routes = await response.json();
+        const routesList = routes.results || routes;
+
+        renderRoutesToday(routesList);
+        updateStats(routesList);
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('routesTodayContainer').innerHTML = `
+            <div class="alert alert-danger m-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Error cargando rutas: ${error.message}
+                <button class="btn btn-sm btn-outline-danger ms-2" onclick="loadRoutesToday()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+                </button>
+            </div>
+        `;
+    }
+}
+
+function renderRoutesToday(routes) {
+    const container = document.getElementById('routesTodayContainer');
+
+    if (!routes || routes.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                <p class="text-muted mt-2">No hay rutas programadas para ${formatDate(currentDateFilter)}</p>
+                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#routeModal" onclick="openCreateRouteModal()">
+                    <i class="bi bi-plus-lg me-1"></i>Crear Ruta
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = routes.map(route => {
+        const dispatches = route.dispatches || [];
+        const pending = dispatches.filter(d => d.status === 'PENDIENTE').length;
+        const enRoute = dispatches.filter(d => d.status === 'EN_RUTA').length;
+        const delivered = dispatches.filter(d => d.status === 'ENTREGADO').length;
+        const failed = dispatches.filter(d => d.status === 'FALLIDO').length;
+        const total = dispatches.length;
+
+        const progress = total > 0 ? Math.round(((delivered + failed) / total) * 100) : 0;
+        const statusColor = getRouteStatusColor(route.status);
+        const statusLabel = getRouteStatusLabel(route.status);
+
+        const dispatchesHtml = dispatches.map(d => `
+            <tr class="dispatch-row-${d.status.toLowerCase().replace('_', '-')}">
+                <td>${d.sequence}</td>
+                <td><strong>#${d.order_id}</strong></td>
+                <td>${escapeHtml(d.client_name)}</td>
+                <td><span class="badge bg-${getDispatchStatusColor(d.status)}">${getDispatchStatusLabel(d.status)}</span></td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        ${d.status === 'PENDIENTE' ? `
+                            <button class="btn btn-outline-primary" onclick="startDispatch(${d.id})" title="Iniciar despacho">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        ` : ''}
+                        ${d.status === 'EN_RUTA' ? `
+                            <button class="btn btn-outline-success" onclick="openDeliveryConfirmModal(${d.id})" title="Confirmar Entrega">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="failDispatch(${d.id})" title="Marcar Fallido">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-outline-secondary" onclick="viewDispatchDetail(${d.id})" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="5" class="text-center text-muted py-3">Sin despachos asignados</td></tr>';
+
+        return `
+            <div class="route-card" style="border-left-color: var(--${statusColor});" data-route-id="${route.id}">
+                <div class="route-card-header">
+                    <div class="route-card-title">
+                        <h5><i class="bi bi-geo-alt-fill" style="color: var(--${statusColor});"></i> ${escapeHtml(route.name)}</h5>
+                        <span class="badge" style="background: var(--${statusColor});">${statusLabel}</span>
+                    </div>
+                    <div class="route-card-status">
+                        <div class="route-progress-bar" title="${progress}% completado">
+                            <div class="route-progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <small class="text-muted">${progress}%</small>
+                    </div>
+                </div>
+                <div class="route-card-body">
+                    <div class="route-stats-row">
+                        <div class="route-stat-item route-stat-pending">
+                            <div class="route-stat-value">${pending}</div>
+                            <div class="route-stat-label">Pendientes</div>
+                        </div>
+                        <div class="route-stat-item route-stat-enroute">
+                            <div class="route-stat-value">${enRoute}</div>
+                            <div class="route-stat-label">En Ruta</div>
+                        </div>
+                        <div class="route-stat-item route-stat-delivered">
+                            <div class="route-stat-value">${delivered}</div>
+                            <div class="route-stat-label">Entregados</div>
+                        </div>
+                        <div class="route-stat-item route-stat-failed">
+                            <div class="route-stat-value">${failed}</div>
+                            <div class="route-stat-label">Fallidos</div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <small class="text-muted">
+                            <i class="bi bi-person me-1"></i>${escapeHtml(route.driver_name || 'Sin conductor')}
+                            <i class="bi bi-truck ms-2 me-1"></i>${escapeHtml(route.vehicle || 'Sin vehículo')}
+                        </small>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-secondary" onclick="viewRouteDetail(${route.id})">
+                                <i class="bi bi-eye me-1"></i>Ver Ruta
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="selectRouteForMap(${route.id})" data-bs-toggle="tab" data-bs-target="#panel-mapa">
+                                <i class="bi bi-map me-1"></i>Mapa
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm route-dispatches-table mb-0">
+                            <thead>
+                                <tr><th style="width: 50px;">Seq.</th><th>Pedido</th><th>Cliente</th><th>Estado</th><th style="width: 130px;">Acciones</th></tr>
+                            </thead>
+                            <tbody>${dispatchesHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateStats(routes) {
+    let totalRoutes = routes.length;
+    let totalPending = 0, totalEnRoute = 0, totalDelivered = 0;
+
+    routes.forEach(route => {
+        (route.dispatches || []).forEach(d => {
+            if (d.status === 'PENDIENTE') totalPending++;
+            else if (d.status === 'EN_RUTA') totalEnRoute++;
+            else if (d.status === 'ENTREGADO') totalDelivered++;
+        });
+    });
+
+    document.getElementById('statRoutesToday').textContent = totalRoutes;
+    document.getElementById('statPendingDispatches').textContent = totalPending;
+    document.getElementById('statEnRoute').textContent = totalEnRoute;
+    document.getElementById('statDelivered').textContent = totalDelivered;
+}
+
+function getRouteStatusColor(status) {
+    const colors = {
+        'PENDIENTE': 'advertencia',
+        'EN_PROGRESO': 'info',
+        'COMPLETADA': 'exito',
+        'CANCELADA': 'error',
+    };
+    return colors[status] || 'secondary';
+}
+
+function getRouteStatusLabel(status) {
+    const labels = {
+        'PENDIENTE': 'Pendiente',
+        'EN_PROGRESO': 'En Progreso',
+        'COMPLETADA': 'Completada',
+        'CANCELADA': 'Cancelada',
+    };
+    return labels[status] || status;
+}
+
+function getDispatchStatusColor(status) {
+    const colors = {
+        'PENDIENTE': 'secondary',
+        'EN_RUTA': 'info',
+        'ENTREGADO': 'success',
+        'FALLIDO': 'danger',
+    };
+    return colors[status] || 'secondary';
+}
+
+function getDispatchStatusLabel(status) {
+    const labels = {
+        'PENDIENTE': 'Pendiente',
+        'EN_RUTA': 'En Ruta',
+        'ENTREGADO': 'Entregado',
+        'FALLIDO': 'Fallido',
+    };
+    return labels[status] || status;
+}
+
+function refreshRoutesToday() {
+    loadRoutesToday();
+}
+
+// ==================== VISTA MAPA ====================
+async function loadMapView() {
+    if (!map) {
+        initMap();
+    }
+    await loadRoutesForMap();
+}
+
+function initMap() {
+    // Santiago, Chile as default center
+    map = L.map('dispatchMap', {
+        zoomControl: true,
+        scrollWheelZoom: true
+    }).setView([-33.4489, -70.6693], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Add click handler to close popup when clicking map
+    map.on('click', () => {
+        map.closePopup();
+    });
+}
+
+async function loadRoutesForMap() {
+    const date = document.getElementById('dispatchDateFilter').value || currentDateFilter;
+
+    try {
+        const response = await apiFetch(`routes/?date=${date}`);
+        if (!response.ok) throw new Error('Error cargando rutas');
+        const routes = await response.json();
+        const routesList = routes.results || routes;
+
+        renderRoutesOnMap(routesList);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function renderRoutesOnMap(routes) {
+    // Clear existing markers and routes
+    mapMarkers.forEach(m => map.removeLayer(m));
+    mapMarkers = [];
+    mapRoutes.forEach(r => map.removeLayer(r));
+    mapRoutes = [];
+
+    if (!routes || routes.length === 0) {
+        document.getElementById('mapRouteDispatches').innerHTML = `
+            <div class="text-center p-4 text-muted">
+                <i class="bi bi-map fs-1"></i>
+                <p class="mt-2 mb-0">No hay rutas para mostrar en el mapa</p>
+            </div>
+        `;
+        return;
+    }
+
+    const bounds = [];
+    const routeColors = ['#5D2E0C', '#C9A86C', '#3A6B8C', '#2D6A4F', '#B8860B', '#8B2635'];
+
+    routes.forEach((route, index) => {
+        const color = routeColors[index % routeColors.length];
+        const dispatches = route.dispatches || [];
+
+        // Add markers for each dispatch with delivery address
+        dispatches.forEach((dispatch, seqIndex) => {
+            if (dispatch.delivery_lat && dispatch.delivery_lng) {
+                const lat = parseFloat(dispatch.delivery_lat);
+                const lng = parseFloat(dispatch.delivery_lng);
+
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: getStatusMarkerColor(dispatch.status),
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.9
+                }).addTo(map);
+
+                marker.bindPopup(createDispatchPopup(dispatch, route, color));
+                marker.routeId = route.id;
+                marker.dispatchId = dispatch.id;
+                mapMarkers.push(marker);
+                bounds.push([lat, lng]);
+            }
+        });
+
+        // Draw route line if we have coordinates
+        const coords = dispatches
+            .filter(d => d.delivery_lat && d.delivery_lng)
+            .map(d => [parseFloat(d.delivery_lat), parseFloat(d.delivery_lng)]);
+
+        if (coords.length >= 2) {
+            const polyline = L.polyline(coords, {
+                color: color,
+                weight: 3,
+                opacity: 0.7,
+                dashArray: '10, 10'
+            }).addTo(map);
+            mapRoutes.push(polyline);
+        }
+    });
+
+    // Fit map to bounds
+    if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    // Render first route's dispatches in sidebar
+    if (routes.length > 0) {
+        selectedRouteForMap = routes[0];
+        renderMapSidebarDispatches(routes[0]);
+    }
+}
+
+function getStatusMarkerColor(status) {
+    const colors = {
+        'PENDIENTE': '#6c757d',
+        'EN_RUTA': '#3A6B8C',
+        'ENTREGADO': '#2D6A4F',
+        'FALLIDO': '#8B2635'
+    };
+    return colors[status] || '#6c757d';
+}
+
+function createDispatchPopup(dispatch, route, routeColor) {
+    const statusColor = getDispatchStatusColor(dispatch.status);
+    return `
+        <div style="min-width: 220px;">
+            <h6 style="margin: 0 0 8px; color: ${routeColor}; border-bottom: 1px solid ${routeColor}; padding-bottom: 4px;">
+                ${escapeHtml(route.name)} - Seq. ${dispatch.sequence}
+            </h6>
+            <div class="popup-meta">
+                <div><strong>Pedido:</strong> #${dispatch.order_id}</div>
+                <div><strong>Cliente:</strong> ${escapeHtml(dispatch.client_name)}</div>
+                <div><strong>Estado:</strong> <span class="badge bg-${statusColor}">${getDispatchStatusLabel(dispatch.status)}</span></div>
+                ${dispatch.delivery_address ? `<div><strong>Dir:</strong> ${escapeHtml(dispatch.delivery_address.substring(0, 50))}${dispatch.delivery_address.length > 50 ? '...' : ''}</div>` : ''}
+            </div>
+            <div class="popup-actions">
+                ${dispatch.status === 'EN_RUTA' ? `
+                    <button class="btn btn-sm btn-success" onclick="mapClosePopups(); openDeliveryConfirmModal(${dispatch.id})">
+                        <i class="bi bi-check-circle me-1"></i>Entregar
+                    </button>
+                ` : ''}
+                <button class="btn btn-sm btn-outline-primary" onclick="mapClosePopups(); viewDispatchDetail(${dispatch.id})">
+                    <i class="bi bi-eye me-1"></i>Ver
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function mapClosePopups() {
+    if (map) map.closePopup();
+}
+
+function selectRouteForMap(routeId) {
+    const route = routesCache?.results?.find(r => r.id === routeId) || routesCache?.find(r => r.id === routeId);
+    if (route) {
+        selectedRouteForMap = route;
+        renderMapSidebarDispatches(route);
+    }
+}
+
+function renderMapSidebarDispatches(route) {
+    const container = document.getElementById('mapRouteDispatches');
+    const dispatches = route.dispatches || [];
+
+    if (!dispatches.length) {
+        container.innerHTML = `
+            <div class="text-center p-4 text-muted">
+                <i class="bi bi-inbox fs-1"></i>
+                <p class="mt-2 mb-0">Esta ruta no tiene despachos asignados</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = dispatches.map(dispatch => {
+        const statusColor = getDispatchStatusColor(dispatch.status);
+        return `
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center ${dispatch.status === 'ENTREGADO' ? 'list-group-item-success' : (dispatch.status === 'FALLIDO' ? 'list-group-item-danger' : (dispatch.status === 'EN_RUTA' ? 'list-group-item-info' : ''))}">
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-${statusColor}">${dispatch.sequence}</span>
+                        <strong>#${dispatch.order_id}</strong>
+                    </div>
+                    <small class="text-muted">${escapeHtml(dispatch.client_name)}</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-${statusColor}">${getDispatchStatusLabel(dispatch.status)}</span>
+                    ${dispatch.status === 'EN_RUTA' ? `
+                        <button class="btn btn-sm btn-success ms-1" onclick="openDeliveryConfirmModal(${dispatch.id})" title="Confirmar Entrega">
+                            <i class="bi bi-check-circle"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== TODOS LOS DESPACHOS ====================
+async function loadAllDispatches(page = 1) {
+    allDispatchesCurrentPage = page;
+    allDispatchesFilters = {
+        date: document.getElementById('allDispatchesDateFilter').value,
+        route: document.getElementById('allDispatchesRouteFilter').value,
+        status: document.getElementById('allDispatchesStatusFilter').value
+    };
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: 20,
+        ordering: '-created_at'
+    });
+    Object.entries(allDispatchesFilters).forEach(([key, val]) => {
+        if (val) params.append(key === 'date' ? 'route_date' : key, val);
+    });
+
+    try {
+        const response = await apiFetch(`dispatches/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando despachos');
+        const data = await response.json();
+        renderAllDispatchesTable(data.results || data);
+        renderPagination(data, 'allDispatches');
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar despachos', 'danger');
+    }
+}
+
+function renderAllDispatchesTable(dispatches) {
+    const tbody = document.getElementById('allDispatchesTableBody');
+    if (!dispatches || dispatches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No hay despachos</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = dispatches.map(d => `
+        <tr>
+            <td data-label="Despacho"><strong>#${d.id}</strong></td>
+            <td data-label="Ruta">${escapeHtml(d.route_name)}</td>
+            <td data-label="Conductor">${escapeHtml(d.driver_name)}</td>
+            <td data-label="Pedido"><strong>#${d.order_id}</strong></td>
+            <td data-label="Cliente">${escapeHtml(d.client_name)}</td>
+            <td data-label="Seq.">${d.sequence}</td>
+            <td data-label="Estado"><span class="badge bg-${getDispatchStatusColor(d.status)}">${getDispatchStatusLabel(d.status)}</span></td>
+            <td data-label="Entregado">${d.delivered_at ? formatDateTime(d.delivered_at) : '<span class="text-muted">—</span>'}</td>
+            <td data-label="Acciones">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-primary" onclick="viewDispatchDetail(${d.id})" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${d.status === 'EN_RUTA' ? `
+                        <button class="btn btn-outline-success" onclick="openDeliveryConfirmModal(${d.id})" title="Confirmar Entrega">
+                            <i class="bi bi-check-circle"></i>
+                        </button>
+                    ` : ''}
+                    ${d.signature ? `
+                        <button class="btn btn-outline-info" onclick="viewDispatchDetail(${d.id})" title="Ver firma y foto">
+                            <i class="bi bi-pen"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderPagination(data, type) {
+    const container = document.getElementById(`${type}PaginationList`);
+    if (!container) return;
+
+    const current = data.page || 1;
+    const total = data.total_pages || 1;
+    let html = '';
+
+    if (current > 1) {
+        const fn = type === 'allDispatches' ? 'loadAllDispatches' : 'loadDrivers';
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${fn}(${current - 1})"><i class="bi bi-chevron-left"></i></a></li>`;
+    }
+
+    for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+        const fn = type === 'allDispatches' ? 'loadAllDispatches' : 'loadDrivers';
+        html += `<li class="page-item ${i === current ? 'active' : ''}"><a class="page-link" href="#" onclick="${fn}(${i})">${i}</a></li>`;
+    }
+
+    if (current < total) {
+        const fn = type === 'allDispatches' ? 'loadAllDispatches' : 'loadDrivers';
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="${fn}(${current + 1})"><i class="bi bi-chevron-right"></i></a></li>`;
+    }
+
+    container.innerHTML = html;
+}
+
+// ==================== CONDUCTORES ====================
+async function loadDrivers(page = 1) {
+    try {
+        const response = await apiFetch(`drivers/?page=${page}&page_size=20`);
+        if (!response.ok) throw new Error('Error cargando conductores');
+        const data = await response.json();
+        renderDrivers(data.results || data);
+        renderPagination(data, 'drivers');
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar conductores', 'danger');
+    }
+}
+
+function renderDrivers(drivers) {
+    const container = document.getElementById('driversContainer');
+    if (!drivers || drivers.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center py-4 text-muted">No hay conductores registrados</div>';
+        return;
+    }
+
+    container.innerHTML = drivers.map(d => `
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="driver-card">
+                <div class="driver-avatar">
+                    ${(d.user?.username || d.user?.get_full_name || '?').charAt(0).toUpperCase()}
+                </div>
+                <h5 class="driver-name">${escapeHtml(d.user?.get_full_name || d.user?.username || 'Sin nombre')}</h5>
+                <p class="driver-contact">
+                    <i class="bi bi-envelope me-1"></i>${escapeHtml(d.user?.email || '—')}<br>
+                    <i class="bi bi-telephone me-1"></i>${escapeHtml(d.phone || '—')}
+                </p>
+                <div class="driver-vehicle">
+                    <i class="bi bi-truck"></i>${escapeHtml(d.vehicle || 'Sin vehículo asignado')}
+                </div>
+                <span class="driver-status ${d.is_active ? 'active' : 'inactive'}">
+                    <i class="bi bi-${d.is_active ? 'check-circle' : 'x-circle'}"></i>
+                    ${d.is_active ? 'Activo' : 'Inactivo'}
+                </span>
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewDriverRoutes(${d.id})">
+                        <i class="bi bi-geo-alt me-1"></i>Ver Rutas
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==================== FORMULARIOS ====================
+function setupForms() {
+    // Route form
+    document.getElementById('routeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            return;
+        }
+
+        const id = document.getElementById('routeId').value;
+        const data = {
+            name: document.getElementById('routeName').value,
+            date: document.getElementById('routeDate').value,
+            driver: parseInt(document.getElementById('routeDriver').value),
+            vehicle: document.getElementById('routeVehicle').value,
+            notes: document.getElementById('routeNotes').value
+        };
+
+        try {
+            const url = id ? `routes/${id}/` : 'routes/';
+            const method = id ? 'PATCH' : 'POST';
+            const response = await apiFetch(url, { method, body: JSON.stringify(data) });
+
+            if (!response.ok) throw new Error('Error guardando ruta');
+
+            showToast('Ruta guardada', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('routeModal')).hide();
+            loadRoutesToday();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al guardar ruta', 'danger');
+        }
+    });
+
+    // Dispatch form
+    document.getElementById('dispatchForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            return;
+        }
+
+        const data = {
+            route: parseInt(document.getElementById('dispatchRoute').value),
+            order: parseInt(document.getElementById('dispatchOrder').value),
+            sequence: parseInt(document.getElementById('dispatchSequence').value),
+            notes: document.getElementById('dispatchNotes').value
+        };
+
+        try {
+            const response = await apiFetch('dispatches/', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error asignando despacho');
+
+            showToast('Despacho asignado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('dispatchModal')).hide();
+            loadRoutesToday();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al asignar despacho', 'danger');
+        }
+    });
+
+    // Delivery confirm form
+    document.getElementById('deliveryConfirmForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            return;
+        }
+
+        if (!signaturePad || signaturePad.isEmpty()) {
+            showToast('Debe capturar la firma del cliente', 'warning');
+            document.getElementById('signatureCanvas').focus();
+            return;
+        }
+
+        if (!document.getElementById('deliveryPhotoData').value) {
+            showToast('Debe tomar/seleccionar una foto de la entrega', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('deliveryConfirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Confirmando...';
+
+        const data = {
+            dispatch_id: document.getElementById('deliveryDispatchId').value,
+            signature: document.getElementById('signatureData').value,
+            photo_base64: document.getElementById('deliveryPhotoData').value,
+            gps_lat: document.getElementById('deliveryLat').value || null,
+            gps_lng: document.getElementById('deliveryLng').value || null,
+            notes: document.getElementById('deliveryNotes').value
+        };
+
+        try {
+            const dispatchId = document.getElementById('deliveryDispatchId').value;
+            const response = await apiFetch(`dispatches/${dispatchId}/deliver/`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Error confirmando entrega');
+
+            showToast('Entrega confirmada con firma, foto y GPS', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deliveryConfirmModal')).hide();
+            loadRoutesToday();
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al confirmar entrega', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar Entrega';
+        }
+    });
+}
+
+// ==================== MODALES ====================
+function openCreateRouteModal() {
+    document.getElementById('routeForm').reset();
+    document.getElementById('routeId').value = '';
+    document.getElementById('routeDate').value = currentDateFilter;
+    document.getElementById('routeModalTitle').innerHTML = '<i class="bi bi-geo-alt me-2"></i>Nueva Ruta';
+    document.getElementById('routeSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Guardar';
+    new bootstrap.Modal(document.getElementById('routeModal')).show();
+}
+
+function openCreateDispatchModal() {
+    document.getElementById('dispatchForm').reset();
+    document.getElementById('dispatchSequence').value = 1;
+    new bootstrap.Modal(document.getElementById('dispatchModal')).show();
+}
+
+async function viewRouteDetail(routeId) {
+    const modal = new bootstrap.Modal(document.getElementById('routeDetailModal'));
+    modal.show();
+    document.getElementById('routeDetailBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-white" role="status"></div></div>';
+
+    try {
+        const response = await apiFetch(`routes/${routeId}/`);
+        if (!response.ok) throw new Error('Error cargando ruta');
+        const route = await response.json();
+
+        const dispatches = route.dispatches || [];
+        const pending = dispatches.filter(d => d.status === 'PENDIENTE').length;
+        const enRoute = dispatches.filter(d => d.status === 'EN_RUTA').length;
+        const delivered = dispatches.filter(d => d.status === 'ENTREGADO').length;
+        const failed = dispatches.filter(d => d.status === 'FALLIDO').length;
+
+        document.getElementById('routeDetailTitle').innerHTML = `<i class="bi bi-geo-alt me-2"></i>${escapeHtml(route.name)}`;
+        document.getElementById('routeDetailBody').innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Fecha:</strong> ${formatDate(route.date)}<br>
+                    <strong>Conductor:</strong> ${escapeHtml(route.driver_name || 'Sin asignar')}<br>
+                    <strong>Vehículo:</strong> ${escapeHtml(route.vehicle || '—')}
+                </div>
+                <div class="col-md-6">
+                    <span class="badge bg-${getRouteStatusColor(route.status)} fs-6 px-3 py-2">${getRouteStatusLabel(route.status)}</span>
+                </div>
+            </div>
+            <hr>
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="p-2 bg-light rounded text-center">
+                        <div class="fw-bold text-warning">${pending}</div>
+                        <small class="text-muted">Pendientes</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-2 bg-light rounded text-center">
+                        <div class="fw-bold text-info">${enRoute}</div>
+                        <small class="text-muted">En Ruta</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-2 bg-light rounded text-center">
+                        <div class="fw-bold text-success">${delivered}</div>
+                        <small class="text-muted">Entregados</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-2 bg-light rounded text-center">
+                        <div class="fw-bold text-danger">${failed}</div>
+                        <small class="text-muted">Fallidos</small>
+                    </div>
+                </div>
+            </div>
+            ${route.notes ? `<div class="mb-3 p-3 bg-crema rounded"><strong>Notas:</strong> ${escapeHtml(route.notes)}</div>` : ''}
+            <div class="table-responsive table-responsive-stack">
+                <table class="table table-sm table-hover">
+                    <thead><tr><th>Seq.</th><th>Pedido</th><th>Cliente</th><th>Dirección</th><th>Estado</th><th>Entregado</th></tr></thead>
+                    <tbody>
+                        ${dispatches.map(d => `
+                            <tr class="${d.status === 'ENTREGADO' ? 'table-success' : (d.status === 'FALLIDO' ? 'table-danger' : (d.status === 'EN_RUTA' ? 'table-info' : ''))}">
+                                <td>${d.sequence}</td>
+                                <td>#${d.order_id}</td>
+                                <td>${escapeHtml(d.client_name)}</td>
+                                <td>${escapeHtml(d.delivery_address || '—')}</td>
+                                <td><span class="badge bg-${getDispatchStatusColor(d.status)}">${getDispatchStatusLabel(d.status)}</span></td>
+                                <td>${d.delivered_at ? formatDateTime(d.delivered_at) : '—'}</td>
+                            </tr>
+                        `).join('') || '<tr><td colspan="6" class="text-center text-muted">Sin despachos</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('routeDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+async function viewDispatchDetail(dispatchId) {
+    const modal = new bootstrap.Modal(document.getElementById('dispatchDetailModal'));
+    modal.show();
+
+    document.getElementById('dispatchDetailBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-chocolate" role="status"></div></div>';
+
+    try {
+        const response = await apiFetch(`dispatches/${dispatchId}/`);
+        if (!response.ok) throw new Error('Error cargando despacho');
+        const d = await response.json();
+
+        document.getElementById('dispatchDetailBody').innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Ruta:</strong> ${escapeHtml(d.route_name)}<br>
+                    <strong>Conductor:</strong> ${escapeHtml(d.driver_name)}<br>
+                    <strong>Fecha Ruta:</strong> ${formatDate(d.route_date)}
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="badge bg-${getDispatchStatusColor(d.status)} fs-6 px-3 py-2">${getDispatchStatusLabel(d.status)}</span>
+                </div>
+            </div>
+            <hr>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <strong>Pedido:</strong> #${d.order_id}<br>
+                    <strong>Cliente:</strong> ${escapeHtml(d.client_name)}<br>
+                    <strong>Dirección:</strong> ${escapeHtml(d.delivery_address || '—')}<br>
+                    <strong>Secuencia:</strong> ${d.sequence}
+                </div>
+                <div class="col-md-6">
+                    <strong>Productos:</strong> ${escapeHtml(d.products_summary || '—')}<br>
+                    <strong>Notas:</strong> ${escapeHtml(d.notes || '—')}
+                </div>
+            </div>
+            ${d.signature ? `
+                <hr>
+                <h6><i class="bi bi-pen me-2"></i>Firma Digital</h6>
+                <img src="${d.signature}" class="img-fluid rounded border" style="max-height: 150px;">
+            ` : ''}
+            ${d.photo ? `
+                <hr>
+                <h6><i class="bi bi-camera me-2"></i>Foto de Entrega</h6>
+                <img src="${d.photo}" class="img-fluid rounded border" style="max-height: 300px;">
+            ` : ''}
+            ${d.gps_lat && d.gps_lng ? `
+                <hr>
+                <h6><i class="bi bi-geo-fill me-2"></i>Ubicación GPS</h6>
+                <p>Lat: ${d.gps_lat}, Lng: ${d.gps_lng}</p>
+                <a href="https://maps.google.com/?q=${d.gps_lat},${d.gps_lng}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-map me-1"></i>Ver en Google Maps
+                </a>
+            ` : ''}
+            ${d.delivered_at ? `
+                <hr>
+                <p class="text-muted"><i class="bi bi-check-circle text-success me-1"></i>Entregado: ${formatDateTime(d.delivered_at)}</p>
+            ` : ''}
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('dispatchDetailBody').innerHTML = '<div class="text-center text-danger py-4">Error al cargar detalle</div>';
+    }
+}
+
+function viewDriverRoutes(driverId) {
+    showToast('Ver rutas del conductor - En desarrollo', 'info');
+}
+
+// ==================== FIRMA DIGITAL (Canvas Mejorado) ====================
+function initSignaturePad() {
+    const canvas = document.getElementById('signatureCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    const wrapper = document.getElementById('signatureWrapper');
+
+    // Configure canvas
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        redrawSignature();
+    }
+
+    // Initial background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#2D1B0E';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function startDrawing(e) {
+        isDrawing = true;
+        const coords = getCoords(e);
+        lastX = coords.x;
+        lastY = coords.y;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        wrapper.classList.add('has-signature');
+        e.preventDefault();
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const coords = getCoords(e);
+        ctx.lineTo(coords.x, coords.y);
+        ctx.stroke();
+        signatureStrokes.push({ x: coords.x, y: coords.y });
+        lastX = coords.x;
+        lastY = coords.y;
+        e.preventDefault();
+    }
+
+    function stopDrawing() {
+        if (isDrawing) {
+            isDrawing = false;
+            // Save stroke for undo
+            if (signatureStrokes.length > 0) {
+                signatureHistory.push([...signatureStrokes]);
+                if (signatureHistory.length > 20) signatureHistory.shift(); // Limit history
+            }
+            updateSignatureData();
+        }
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    // Handle resize
+    window.addEventListener('resize', resizeCanvas);
+    setTimeout(resizeCanvas, 100);
+
+    signaturePad = {
+        canvas,
+        ctx,
+        wrapper,
+        isEmpty: () => signatureStrokes.length === 0,
+        clear: () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            signatureStrokes = [];
+            signatureHistory = [];
+            wrapper.classList.remove('has-signature');
+            updateSignatureData();
+        },
+        undo: () => {
+            if (signatureHistory.length === 0) return;
+            signatureStrokes = signatureHistory.pop() || [];
+            redrawSignature();
+        },
+        toDataURL: () => canvas.toDataURL('image/png')
+    };
+}
+
+function redrawSignature() {
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrapper = document.getElementById('signatureWrapper');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#2D1B0E';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (signatureStrokes.length > 0) {
+        wrapper.classList.add('has-signature');
+        ctx.beginPath();
+        ctx.moveTo(signatureStrokes[0].x, signatureStrokes[0].y);
+        for (let i = 1; i < signatureStrokes.length; i++) {
+            ctx.lineTo(signatureStrokes[i].x, signatureStrokes[i].y);
+        }
+        ctx.stroke();
+    } else {
+        wrapper.classList.remove('has-signature');
+    }
+    updateSignatureData();
+}
+
+function updateSignatureData() {
+    document.getElementById('signatureData').value = signaturePad.toDataURL();
+}
+
+function clearSignature() {
+    signaturePad.clear();
+}
+
+function undoSignature() {
+    signaturePad.undo();
+}
+
+// ==================== FOTO ENTREGA ====================
+function previewDeliveryPhoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        showToast('Seleccione un archivo de imagen válido', 'warning');
+        return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('La imagen es muy grande (máx 5MB)', 'warning');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('photoPreviewImg').src = e.target.result;
+        document.getElementById('deliveryPhotoData').value = e.target.result;
+        document.getElementById('photoPlaceholder').classList.add('d-none');
+        document.getElementById('photoPreview').classList.remove('d-none');
+        document.getElementById('photoCaptureArea').classList.add('has-photo');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearDeliveryPhoto(e) {
+    if (e) e.stopPropagation();
+    document.getElementById('deliveryPhotoFile').value = '';
+    document.getElementById('deliveryPhotoData').value = '';
+    document.getElementById('photoPlaceholder').classList.remove('d-none');
+    document.getElementById('photoPreview').classList.add('d-none');
+    document.getElementById('photoPreviewImg').src = '';
+    document.getElementById('photoCaptureArea').classList.remove('has-photo');
+}
+
+function retakeDeliveryPhoto(e) {
+    if (e) e.stopPropagation();
+    clearDeliveryPhoto();
+    document.getElementById('deliveryPhotoFile').click();
+}
+
+// ==================== GPS ====================
+async function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        showToast('Geolocalización no soportada en este navegador', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('gpsBtn');
+    const btnText = document.getElementById('gpsBtnText');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btnText.textContent = 'Obteniendo...';
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            document.getElementById('deliveryLat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('deliveryLng').value = position.coords.longitude.toFixed(6);
+            showToast('Ubicación GPS capturada', 'success');
+            btnText.textContent = 'Ubicación obtenida ✓';
+            btn.classList.remove('loading');
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-outline-secondary');
+        },
+        (error) => {
+            let msg = 'Error obteniendo ubicación';
+            if (error.code === error.PERMISSION_DENIED) msg = 'Permiso de ubicación denegado';
+            else if (error.code === error.TIMEOUT) msg = 'Tiempo agotado obteniendo ubicación';
+            showToast(msg, 'danger');
+            btnText.textContent = 'Obtener Mi Ubicación';
+            btn.classList.remove('loading');
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    ).finally(() => {
+        setTimeout(() => {
+            btn.disabled = false;
+            if (!btn.classList.contains('btn-success')) {
+                btnText.textContent = 'Obtener Mi Ubicación';
+            }
+        }, 2000);
+    });
+}
+
+// ==================== CONFIRMAR ENTREGA ====================
+async function openDeliveryConfirmModal(dispatchId) {
+    const modal = new bootstrap.Modal(document.getElementById('deliveryConfirmModal'));
+    modal.show();
+
+    // Reset form
+    document.getElementById('deliveryConfirmForm').reset();
+    signaturePad.clear();
+    clearDeliveryPhoto();
+    document.getElementById('deliveryLat').value = '';
+    document.getElementById('deliveryLng').value = '';
+    document.getElementById('gpsBtn').classList.remove('btn-success');
+    document.getElementById('gpsBtn').classList.add('btn-outline-secondary');
+    document.getElementById('gpsBtnText').textContent = 'Obtener Mi Ubicación';
+
+    document.getElementById('deliveryOrderInfo').textContent = '#' + dispatchId;
+    document.getElementById('deliveryDispatchId').value = dispatchId;
+
+    try {
+        const response = await apiFetch(`dispatches/${dispatchId}/`);
+        if (!response.ok) throw new Error('Error cargando despacho');
+        const dispatch = await response.json();
+
+        document.getElementById('deliveryOrderInfo').textContent = '#' + dispatch.order_id;
+        document.getElementById('deliveryClientInfo').textContent = dispatch.client_name;
+        document.getElementById('deliveryAddressInfo').textContent = dispatch.delivery_address || '—';
+        document.getElementById('deliveryProductsInfo').textContent = dispatch.products_summary || dispatch.order_items_summary || 'Ver detalle en pedido';
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error cargando datos del despacho', 'danger');
+    }
+}
+
+async function startDispatch(dispatchId) {
+    try {
+        const response = await apiFetch(`dispatches/${dispatchId}/start/`, { method: 'POST' });
+        if (!response.ok) throw new Error('Error iniciando despacho');
+        showToast('Despacho iniciado - En ruta', 'success');
+        loadRoutesToday();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al iniciar despacho', 'danger');
+    }
+}
+
+async function failDispatch(dispatchId) {
+    const reason = prompt('Motivo del fallo en la entrega:');
+    if (!reason) return;
+
+    try {
+        const response = await apiFetch(`dispatches/${dispatchId}/fail/`, {
+            method: 'POST',
+            body: JSON.stringify({ reason })
+        });
+        if (!response.ok) throw new Error('Error marcando fallido');
+        showToast('Despacho marcado como fallido', 'warning');
+        loadRoutesToday();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al marcar fallido', 'danger');
+    }
+}
+
+function exportDispatches() {
+    showToast('Exportación de rutas de hoy - En desarrollo', 'info');
+}
+
+function exportAllDispatches() {
+    showToast('Exportación de todos los despachos - En desarrollo', 'info');
+}
+</script>
+{% endblock %}

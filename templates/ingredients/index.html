@@ -1,0 +1,1730 @@
+{% extends 'base.html' %}
+
+{% block title %}Insumos / Stock - Dulce Arte{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Ingredients Inventory Styles */
+.ingredient-stats-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transicion);
+    position: relative;
+    overflow: hidden;
+}
+
+.ingredient-stats-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-color);
+}
+
+.ingredient-stats-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+}
+
+.ingredient-stats-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.ingredient-stats-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ingredient-stats-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+    margin-bottom: 0.125rem;
+}
+
+.ingredient-stats-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ingredient-stats-trend {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ingredient-stats-trend.positive { color: var(--color-exito); }
+.ingredient-stats-trend.negative { color: var(--color-error); }
+
+/* Stock Status Indicators */
+.stock-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.stock-status-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.stock-critical { color: var(--color-error); background: var(--color-error-bg); }
+.stock-low { color: var(--color-advertencia); background: var(--color-advertencia-bg); }
+.stock-ok { color: var(--color-exito); background: var(--color-exito-bg); }
+.stock-out { color: var(--color-texto-muted); background: var(--color-crema-oscuro); }
+
+/* Progress Bar for Stock Level */
+.stock-progress-container {
+    min-width: 120px;
+    max-width: 200px;
+}
+
+.stock-progress {
+    height: 8px;
+    background: var(--color-crema);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.stock-progress-bar {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease, background 0.3s ease;
+    position: relative;
+}
+
+.stock-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.stock-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.25rem;
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+}
+
+/* Table Row States */
+.ingredient-row-critical { background: var(--color-error-bg); }
+.ingredient-row-low { background: var(--color-advertencia-bg); }
+.ingredient-row-out { background: var(--color-crema-oscuro); opacity: 0.7; }
+
+/* View Toggle */
+.view-toggle-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-borde);
+    background: var(--color-fondo);
+    color: var(--color-texto-suave);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transicion);
+    font-size: var(--font-size-sm);
+}
+
+.view-toggle-btn.active,
+.view-toggle-btn:hover {
+    background: var(--color-chocolate);
+    border-color: var(--color-chocolate);
+    color: white;
+}
+
+.view-toggle-btn:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.view-toggle-btn:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+/* Grid View Cards */
+.ingredients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-4);
+    padding: var(--space-2);
+}
+
+.ingredient-card {
+    background: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transicion);
+    display: flex;
+    flex-direction: column;
+}
+
+.ingredient-card:hover {
+    border-color: var(--color-dorado);
+    box-shadow: var(--sombra-media);
+    transform: translateY(-2px);
+}
+
+.ingredient-card.critical { border-left: 4px solid var(--color-error); }
+.ingredient-card.low { border-left: 4px solid var(--color-advertencia); }
+.ingredient-card.out { border-left: 4px solid var(--color-texto-muted); opacity: 0.8; }
+
+.ingredient-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-crema);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.ingredient-card-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-chocolate) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.ingredient-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ingredient-card-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: 0.25rem;
+    font-size: var(--font-size-base);
+}
+
+.ingredient-card-meta {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+}
+
+.ingredient-card-status {
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.ingredient-card-body {
+    padding: var(--space-4);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ingredient-stock-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.ingredient-stock-current {
+    text-align: right;
+}
+
+.ingredient-stock-value {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-cacao);
+    line-height: 1;
+}
+
+.ingredient-stock-unit {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+}
+
+.ingredient-stock-min {
+    text-align: right;
+}
+
+.ingredient-stock-min-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-texto-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.125rem;
+}
+
+.ingredient-stock-min-value {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-texto-suave);
+}
+
+.ingredient-stock-progress {
+    flex: 1;
+    min-width: 100px;
+}
+
+.ingredient-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-borde);
+    background: var(--color-crema);
+    margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+}
+
+.ingredient-cost {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-chocolate);
+    font-size: var(--font-size-lg);
+}
+
+.ingredient-actions {
+    display: flex;
+    gap: 0.375rem;
+}
+
+/* Supplier badge */
+.supplier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    background: var(--color-dorado-claro);
+    color: var(--color-cacao);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+}
+
+.supplier-badge .supplier-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-dorado);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Perishable indicator */
+.perishable-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.perishable-badge.yes {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+}
+
+.perishable-badge.no {
+    background: var(--color-crema-oscuro);
+    color: var(--color-texto-muted);
+}
+
+/* Alert Banner */
+.stock-alert-banner {
+    border-radius: var(--radius-lg);
+    border: none;
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stock-alert-banner.critical {
+    background: linear-gradient(135deg, var(--color-error-bg) 0%, rgba(139, 38, 53, 0.15) 100%);
+    border-left: 4px solid var(--color-error);
+}
+
+.stock-alert-banner.ok {
+    background: linear-gradient(135deg, var(--color-exito-bg) 0%, rgba(45, 106, 79, 0.1) 100%);
+    border-left: 4px solid var(--color-exito);
+}
+
+.stock-alert-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.stock-alert-banner.critical .stock-alert-icon {
+    background: var(--color-error);
+    color: white;
+}
+
+.stock-alert-banner.ok .stock-alert-icon {
+    background: var(--color-exito);
+    color: white;
+}
+
+.stock-alert-content {
+    flex: 1;
+}
+
+.stock-alert-title {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-cacao);
+    margin-bottom: 0.25rem;
+}
+
+.stock-alert-message {
+    font-size: var(--font-size-sm);
+    color: var(--color-texto-suave);
+    margin: 0;
+}
+
+.stock-alert-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* Modal Enhancements */
+.modal-header-gradient-primary {
+    background: linear-gradient(135deg, var(--color-chocolate) 0%, var(--color-cacao) 100%);
+}
+
+.modal-header-gradient-success {
+    background: linear-gradient(135deg, var(--color-exito) 0%, #1e4d36 100%);
+}
+
+.modal-header-gradient-info {
+    background: linear-gradient(135deg, var(--color-info) 0%, #2a5070 100%);
+}
+
+.modal-header-gradient-warning {
+    background: linear-gradient(135deg, var(--color-advertencia) 0%, #8a6a08 100%);
+}
+
+/* Form Enhancements */
+.form-label.fw-medium { font-weight: var(--font-weight-medium); }
+.form-control:focus, .form-select:focus {
+    border-color: var(--color-dorado);
+    box-shadow: 0 0 0 3px var(--color-dorado-claro);
+}
+
+/* Empty State */
+.empty-state-ingredients {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--color-texto-muted);
+}
+
+.empty-state-ingredients .icon {
+    font-size: 4rem;
+    color: var(--color-dorado-claro);
+    margin-bottom: var(--space-3);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .ingredient-stock-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    .ingredient-stock-progress {
+        width: 100%;
+    }
+
+    .ingredients-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stock-progress-container {
+        min-width: auto;
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-box-seam me-2 text-dorado"></i>Insumos / Stock</h1>
+        <p class="text-muted mb-0">Gestiona inventario, stock crítico y órdenes de compra</p>
+    </div>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#purchaseOrderModal" onclick="openPurchaseOrderModal()">
+            <i class="bi bi-cart-plus me-1"></i>Nueva Orden Compra
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ingredientModal" onclick="openCreateIngredientModal()">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Stock Alert Banner -->
+<div id="stockAlertBanner" class="mb-4"></div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="ingredient-stats-card" style="--accent-color: var(--color-error);">
+            <div class="ingredient-stats-icon" style="background: var(--color-error);"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="ingredient-stats-info">
+                <div class="ingredient-stats-value" id="statCritical">—</div>
+                <div class="ingredient-stats-label">Críticos (< 100% mín)</div>
+            </div>
+            <div class="ingredient-stats-trend negative" id="trendCritical"><i class="bi bi-arrow-up"></i> 0</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="ingredient-stats-card" style="--accent-color: var(--color-advertencia);">
+            <div class="ingredient-stats-icon" style="background: var(--color-advertencia);"><i class="bi bi-exclamation-circle-fill"></i></div>
+            <div class="ingredient-stats-info">
+                <div class="ingredient-stats-value" id="statLow">—</div>
+                <div class="ingredient-stats-label">Bajo Mínimo (< 150%)</div>
+            </div>
+            <div class="ingredient-stats-trend negative" id="trendLow"><i class="bi bi-arrow-up"></i> 0</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="ingredient-stats-card" style="--accent-color: var(--color-exito);">
+            <div class="ingredient-stats-icon" style="background: var(--color-exito);"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="ingredient-stats-info">
+                <div class="ingredient-stats-value" id="statOk">—</div>
+                <div class="ingredient-stats-label">Stock OK</div>
+            </div>
+            <div class="ingredient-stats-trend positive" id="trendOk"><i class="bi bi-arrow-down"></i> 0</div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="ingredient-stats-card" style="--accent-color: var(--color-info);">
+            <div class="ingredient-stats-icon" style="background: var(--color-info);"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="ingredient-stats-info">
+                <div class="ingredient-stats-value" id="statOut">—</div>
+                <div class="ingredient-stats-label">Sin Stock</div>
+            </div>
+            <div class="ingredient-stats-trend negative" id="trendOut"><i class="bi bi-arrow-up"></i> 0</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters & View Toggle -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-5">
+                <label class="form-label visually-hidden" for="ingredientSearch">Buscar insumos</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="ingredientSearch" placeholder="Buscar por nombre, proveedor..." onkeyup="debounceSearchIngredients()">
+                </div>
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label visually-hidden" for="ingredientStatusFilter">Filtrar por estado</label>
+                <select class="form-select" id="ingredientStatusFilter" onchange="loadIngredients()">
+                    <option value="">Todos los estados</option>
+                    <option value="critical">Crítico</option>
+                    <option value="low">Bajo Mínimo</option>
+                    <option value="ok">OK</option>
+                    <option value="out">Sin Stock</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label visually-hidden" for="ingredientSupplierFilter">Filtrar por proveedor</label>
+                <select class="form-select" id="ingredientSupplierFilter" onchange="loadIngredients()">
+                    <option value="">Todos los proveedores</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                    <div class="btn-group" role="group" aria-label="Vista">
+                        <button type="button" class="view-toggle-btn active" id="viewTableBtn" onclick="setViewMode('table')" aria-pressed="true"><i class="bi bi-table me-1"></i>Tabla</button>
+                        <button type="button" class="view-toggle-btn" id="viewGridBtn" onclick="setViewMode('grid')" aria-pressed="false"><i class="bi bi-grid-3x3-gap-fill me-1"></i>Tarjetas</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary" onclick="exportIngredients()" title="Exportar"><i class="bi bi-download"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table View -->
+<div id="tableView" class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive table-responsive-stack">
+            <table class="table table-hover mb-0" id="ingredientsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAllIngredients" onchange="toggleSelectAllIngredients()"></th>
+                        <th>Insumo</th>
+                        <th class="d-none d-md-table-cell" style="width: 80px;">Unidad</th>
+                        <th class="d-none d-lg-table-cell" style="width: 160px;">Stock Actual / Mín</th>
+                        <th style="width: 140px;">Estado</th>
+                        <th class="d-none d-xl-table-cell" style="width: 100px;">Costo Unit.</th>
+                        <th class="d-none d-xl-table-cell" style="width: 150px;">Proveedor</th>
+                        <th class="d-none d-lg-table-cell" style="width: 100px;">Perecible</th>
+                        <th style="width: 130px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="ingredientsTableBody">
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <div class="spinner-border text-chocolate" role="status"></div>
+                            <p class="text-muted mt-2 mb-0">Cargando insumos...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-top-0">
+        <nav aria-label="Paginación insumos" class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="text-muted small" id="ingredientsTableInfo">Mostrando 0 de 0</div>
+            <ul class="pagination pagination-sm mb-0" id="ingredientsPaginationList"></ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Grid View -->
+<div id="gridView" class="ingredients-grid" style="display: none;"></div>
+
+<!-- Modal Insumo -->
+<div class="modal fade" id="ingredientModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-primary text-white">
+                <h5 class="modal-title" id="ingredientModalTitle"><i class="bi bi-box-seam me-2"></i>Nuevo Insumo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="ingredientForm" novalidate>
+                <input type="hidden" name="id" id="ingredientId">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-8">
+                            <label for="ingredientName" class="form-label fw-medium">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="ingredientName" name="name" required placeholder="Ej: Harina 0000, Chocolate 70%, Mantequilla sin sal">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="ingredientUnit" class="form-label fw-medium">Unidad <span class="text-danger">*</span></label>
+                            <select class="form-select" id="ingredientUnit" name="unit" required>
+                                <option value="kg">Kilogramos (kg)</option>
+                                <option value="g">Gramos (g)</option>
+                                <option value="l">Litros (l)</option>
+                                <option value="ml">Mililitros (ml)</option>
+                                <option value="un" selected>Unidades (un)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="ingredientCurrentStock" class="form-label fw-medium">Stock Actual <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="ingredientCurrentStock" name="current_stock" step="0.001" min="0" value="0" required>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="ingredientMinStock" class="form-label fw-medium">Stock Mínimo <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="ingredientMinStock" name="min_stock" step="0.001" min="0" value="10" required>
+                            <div class="form-text">Alerta cuando stock baje de este valor</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="ingredientUnitCost" class="form-label fw-medium">Costo Unitario <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="ingredientUnitCost" name="unit_cost" step="0.01" min="0" value="0" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="ingredientSupplier" class="form-label fw-medium">Proveedor</label>
+                            <select class="form-select" id="ingredientSupplier" name="supplier">
+                                <option value="">Sin proveedor asignado</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label for="ingredientShelfLife" class="form-label fw-medium">Vida Útil (días)</label>
+                            <input type="number" class="form-control" id="ingredientShelfLife" name="shelf_life_days" min="0" placeholder="0 = no perecible">
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="ingredientIsPerishable" name="is_perishable">
+                                <label class="form-check-label fw-medium" for="ingredientIsPerishable">Es Perecible</label>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="ingredientIsActive" name="is_active" checked>
+                                <label class="form-check-label fw-medium" for="ingredientIsActive">Activo</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label for="ingredientNotes" class="form-label fw-medium">Notas</label>
+                            <textarea class="form-control" id="ingredientNotes" name="notes" rows="2" placeholder="Observaciones, lote preferido, condiciones de almacenamiento..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="ingredientSubmitBtn">
+                        <i class="bi bi-save me-1"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Movimiento de Stock -->
+<div class="modal fade" id="stockMovementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-info text-white">
+                <h5 class="modal-title"><i class="bi bi-arrow-up-down me-2"></i>Movimiento de Stock</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="stockMovementForm" novalidate>
+                <input type="hidden" name="ingredient_id" id="movementIngredientId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Insumo</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="movementIngredientName" readonly>
+                            <span class="input-group-text" id="movementUnit">un</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="movementType" class="form-label fw-medium">Tipo de Movimiento <span class="text-danger">*</span></label>
+                        <select class="form-select" id="movementType" name="type" required>
+                            <option value="ENTRADA">📥 Entrada (Compra / Recepción)</option>
+                            <option value="SALIDA">📤 Salida (Consumo / Producción)</option>
+                            <option value="MERMA">🗑️ Merma (Desperdicio / Caducidad)</option>
+                            <option value="AJUSTE">⚖️ Ajuste (Inventario Físico)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="movementQuantity" class="form-label fw-medium">Cantidad <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="movementQuantity" name="quantity" step="0.001" min="0.001" required placeholder="Ej: 25.5">
+                    </div>
+                    <div class="mb-3">
+                        <label for="movementReference" class="form-label fw-medium">Referencia</label>
+                        <input type="text" class="form-control" id="movementReference" name="reference" placeholder="N° OC, N° Pedido, N° Factura, Inventario...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="movementNotes" class="form-label fw-medium">Notas / Motivo</label>
+                        <textarea class="form-control" id="movementNotes" name="notes" rows="2" placeholder="Detalle del movimiento..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-check me-1"></i>Registrar Movimiento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Orden de Compra -->
+<div class="modal fade" id="purchaseOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient-success text-white">
+                <h5 class="modal-title"><i class="bi bi-cart-plus me-2"></i>Nueva Orden de Compra</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="purchaseOrderForm" novalidate>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="poSupplier" class="form-label fw-medium">Proveedor <span class="text-danger">*</span></label>
+                            <select class="form-select" id="poSupplier" name="supplier" required>
+                                <option value="">Seleccionar proveedor...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="poExpectedDate" class="form-label fw-medium">Fecha Esperada <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="poExpectedDate" name="expected_date" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="poNotes" class="form-label fw-medium">Notas</label>
+                        <textarea class="form-control" id="poNotes" name="notes" rows="2" placeholder="Instrucciones de entrega, condiciones de pago..."></textarea>
+                    </div>
+                    <h6 class="mb-2"><i class="bi bi-list-ul me-2"></i>Items de la Orden</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover" id="poItemsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40%;">Insumo</th>
+                                    <th style="width: 15%;">Cantidad</th>
+                                    <th style="width: 15%;">Costo Unit.</th>
+                                    <th style="width: 20%;">Subtotal</th>
+                                    <th style="width: 10%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="poItemsTableBody">
+                                <tr id="poEmptyRow">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-cart-plus fs-1 d-block mb-2"></i>
+                                        No hay items agregados
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPoItem()">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar Insumo
+                    </button>
+                    <div class="row g-3 mt-4 pt-3 border-top">
+                        <div class="col-12 col-md-4 ms-auto">
+                            <label class="form-label fw-medium">Total Orden</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control fw-bold text-success fs-5" id="poTotal" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save me-1"></i>Crear Orden de Compra
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==================== ESTADO GLOBAL ====================
+let ingredientsCurrentPage = 1;
+let ingredientsSearchTimeout;
+let suppliersCache = [];
+let currentViewMode = 'table'; // 'table' | 'grid'
+
+// Purchase Order State
+let poItems = [];
+let poCounter = 0;
+
+// ==================== INICIALIZACIÓN ====================
+document.addEventListener('DOMContentLoaded', function() {
+    loadSuppliers();
+    loadIngredients();
+    setupIngredientForm();
+    setupStockMovementForm();
+    setupPurchaseOrderForm();
+});
+
+// ==================== CARGA DE DATOS BASE ====================
+async function loadSuppliers() {
+    try {
+        const response = await apiFetch('suppliers/?page_size=100');
+        if (response.ok) {
+            suppliersCache = await response.json();
+            const suppliers = suppliersCache.results || suppliersCache;
+
+            const selects = [
+                document.getElementById('ingredientSupplier'),
+                document.getElementById('poSupplier'),
+                document.getElementById('ingredientSupplierFilter')
+            ];
+
+            selects.forEach(select => {
+                if (!select) return;
+                const currentVal = select.value;
+                const isFilter = select.id === 'ingredientSupplierFilter';
+                select.innerHTML = isFilter
+                    ? '<option value="">Todos los proveedores</option>'
+                    : '<option value="">Sin proveedor</option>';
+                suppliers.forEach(sup => {
+                    select.innerHTML += `<option value="${sup.id}">${escapeHtml(sup.name)}</option>`;
+                });
+                select.value = currentVal;
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando proveedores:', error);
+    }
+}
+
+// ==================== LISTA PRINCIPAL ====================
+async function loadIngredients(page = 1) {
+    ingredientsCurrentPage = page;
+    const search = document.getElementById('ingredientSearch').value;
+    const status = document.getElementById('ingredientStatusFilter').value;
+    const supplier = document.getElementById('ingredientSupplierFilter').value;
+
+    const params = new URLSearchParams({
+        page: page,
+        page_size: 20,
+        ordering: 'name'
+    });
+    if (search) params.append('search', search);
+    if (status) params.append('stock_status', status);
+    if (supplier) params.append('supplier', supplier);
+
+    try {
+        const response = await apiFetch(`ingredients/?${params.toString()}`);
+        if (!response.ok) throw new Error('Error cargando insumos');
+        const data = await response.json();
+        renderIngredientsTable(data.results || data);
+        renderIngredientsGrid(data.results || data);
+        renderPagination(data, 'ingredients');
+        updateStats(data.results || data);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar insumos', 'danger');
+    }
+}
+
+function debounceSearchIngredients() {
+    clearTimeout(ingredientsSearchTimeout);
+    ingredientsSearchTimeout = setTimeout(() => loadIngredients(1), 300);
+}
+
+// ==================== RENDER TABLE VIEW ====================
+function renderIngredientsTable(ingredients) {
+    const tbody = document.getElementById('ingredientsTableBody');
+    const info = document.getElementById('ingredientsTableInfo');
+
+    if (!ingredients || ingredients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No hay insumos registrados</td></tr>';
+        if (info) info.textContent = 'Mostrando 0 de 0';
+        return;
+    }
+
+    // Calculate total count for info
+    // We'll use a global or estimate from pagination
+
+    tbody.innerHTML = ingredients.map(ing => {
+        const stockRatio = ing.min_stock > 0 ? ing.current_stock / ing.min_stock : 1;
+        let rowClass = '', statusClass = '', statusLabel = '', statusIcon = '', progressClass = '';
+
+        if (ing.current_stock <= 0) {
+            rowClass = 'ingredient-row-out';
+            statusClass = 'stock-out';
+            statusLabel = 'Sin Stock';
+            statusIcon = 'bi-x-circle-fill';
+            progressClass = 'bg-secondary';
+        } else if (stockRatio < 1) {
+            rowClass = 'ingredient-row-critical';
+            statusClass = 'stock-critical';
+            statusLabel = 'Crítico';
+            statusIcon = 'bi-exclamation-triangle-fill';
+            progressClass = 'bg-danger';
+        } else if (stockRatio < 1.5) {
+            rowClass = 'ingredient-row-low';
+            statusClass = 'stock-low';
+            statusLabel = 'Bajo Mínimo';
+            statusIcon = 'bi-exclamation-circle-fill';
+            progressClass = 'bg-warning';
+        } else {
+            statusClass = 'stock-ok';
+            statusLabel = 'OK';
+            statusIcon = 'bi-check-circle-fill';
+            progressClass = 'bg-success';
+        }
+
+        const progressPercent = Math.min(100, Math.round(stockRatio * 100));
+
+        return `
+            <tr class="${rowClass}" data-id="${ing.id}">
+                <td><input type="checkbox" class="form-check-input ingredient-checkbox" value="${ing.id}"></td>
+                <td data-label="Insumo">
+                    <strong>${escapeHtml(ing.name)}</strong>
+                    ${ing.notes ? `<div class="text-muted small" style="max-width: 300px;">${escapeHtml(ing.notes.substring(0, 60))}${ing.notes.length > 60 ? '...' : ''}</div>` : ''}
+                </td>
+                <td class="d-none d-md-table-cell" data-label="Unidad">${escapeHtml(ing.unit)}</td>
+                <td class="d-none d-lg-table-cell" data-label="Stock Actual / Mín">
+                    <div class="stock-progress-container">
+                        <div class="stock-progress">
+                            <div class="stock-progress-bar ${progressClass}" style="width: ${progressPercent}%;" role="progressbar" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="stock-progress-labels">
+                            <span>${ing.current_stock} ${ing.unit}</span>
+                            <span>Mín: ${ing.min_stock} ${ing.unit}</span>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Estado">
+                    <span class="stock-status-badge ${statusClass}">
+                        <i class="bi ${statusIcon}"></i>${statusLabel}
+                    </span>
+                </td>
+                <td class="d-none d-xl-table-cell" data-label="Costo Unit.">${formatCLP(ing.unit_cost)}</td>
+                <td class="d-none d-xl-table-cell" data-label="Proveedor">
+                    ${ing.supplier ? `
+                        <span class="supplier-badge">
+                            <span class="supplier-avatar">${ing.supplier.name.charAt(0).toUpperCase()}</span>
+                            ${escapeHtml(ing.supplier.name)}
+                        </span>
+                    ` : '<span class="text-muted">—</span>'}
+                </td>
+                <td class="d-none d-lg-table-cell" data-label="Perecible">
+                    ${ing.is_perishable ?
+                        `<span class="perishable-badge yes"><i class="bi bi-clock me-1"></i>${ing.shelf_life_days} días</span>` :
+                        '<span class="perishable-badge no"><i class="bi bi-x-circle me-1"></i>No</span>'
+                    }
+                </td>
+                <td data-label="Acciones">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="viewIngredientMovements(${ing.id})" title="Ver movimientos"><i class="bi bi-clock-history"></i></button>
+                        <button type="button" class="btn btn-outline-success" onclick="openStockMovementModal(${ing.id})" title="Registrar movimiento"><i class="bi bi-arrow-up-down"></i></button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="editIngredient(${ing.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteIngredient(${ing.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Update table info
+    if (info) {
+        // We don't have total count here, could fetch from pagination
+        info.textContent = `Mostrando ${ingredients.length} insumos`;
+    }
+}
+
+// ==================== RENDER GRID VIEW ====================
+function renderIngredientsGrid(ingredients) {
+    const container = document.getElementById('gridView');
+    if (!container) return;
+
+    if (!ingredients || ingredients.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state-ingredients" style="grid-column: 1 / -1;">
+                <div class="icon"><i class="bi bi-box-seam"></i></div>
+                <h5>No hay insumos</h5>
+                <p class="text-muted small mb-3">Comienza agregando tu primer insumo</p>
+                <button type="button" class="btn btn-primary" onclick="openCreateIngredientModal()">
+                    <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = ingredients.map(ing => {
+        const stockRatio = ing.min_stock > 0 ? ing.current_stock / ing.min_stock : 1;
+        let cardClass = '', statusClass = '', statusLabel = '', statusIcon = '', progressClass = '';
+
+        if (ing.current_stock <= 0) {
+            cardClass = 'out';
+            statusClass = 'stock-out';
+            statusLabel = 'Sin Stock';
+            statusIcon = 'bi-x-circle-fill';
+            progressClass = 'bg-secondary';
+        } else if (stockRatio < 1) {
+            cardClass = 'critical';
+            statusClass = 'stock-critical';
+            statusLabel = 'Crítico';
+            statusIcon = 'bi-exclamation-triangle-fill';
+            progressClass = 'bg-danger';
+        } else if (stockRatio < 1.5) {
+            cardClass = 'low';
+            statusClass = 'stock-low';
+            statusLabel = 'Bajo Mínimo';
+            statusIcon = 'bi-exclamation-circle-fill';
+            progressClass = 'bg-warning';
+        } else {
+            statusClass = 'stock-ok';
+            statusLabel = 'OK';
+            statusIcon = 'bi-check-circle-fill';
+            progressClass = 'bg-success';
+        }
+
+        const progressPercent = Math.min(100, Math.round(stockRatio * 100));
+
+        // Determine icon based on unit or name
+        let icon = 'bi-box-seam';
+        const nameLower = ing.name.toLowerCase();
+        if (nameLower.includes('harina') || nameLower.includes('azúcar') || nameLower.includes('sal')) icon = 'bi-basket';
+        else if (nameLower.includes('huevo')) icon = 'bi-egg';
+        else if (nameLower.includes('leche') || nameLower.includes('crema')) icon = 'bi-droplet';
+        else if (nameLower.includes('mantequilla') || nameLower.includes('margarina') || nameLower.includes('aceite')) icon = 'bi-droplet-fill';
+        else if (nameLower.includes('chocolate') || nameLower.includes('cacao')) icon = 'bi-heart';
+        else if (nameLower.includes('fruta') || nameLower.includes('fresa') || nameLower.includes('mora') || nameLower.includes('arándano')) icon = 'bi-flower1';
+        else if (nameLower.includes('nuez') || nameLower.includes('almendra') || nameLower.includes('avellana')) icon = 'bi-gem';
+
+        return `
+            <div class="ingredient-card ${cardClass}" data-id="${ing.id}">
+                <div class="ingredient-card-header">
+                    <div class="ingredient-card-avatar"><i class="bi ${icon}"></i></div>
+                    <div class="ingredient-card-info">
+                        <div class="ingredient-card-name">${escapeHtml(ing.name)}</div>
+                        <div class="ingredient-card-meta">
+                            <span>${escapeHtml(ing.unit)}</span>
+                            ${ing.supplier ? `<span>·</span><span>${escapeHtml(ing.supplier.name)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="ingredient-card-status">
+                        <span class="stock-status-badge ${statusClass}"><i class="bi ${statusIcon}"></i>${statusLabel}</span>
+                    </div>
+                </div>
+                <div class="ingredient-card-body">
+                    <div class="ingredient-stock-main">
+                        <div class="ingredient-stock-current">
+                            <div class="ingredient-stock-value">${ing.current_stock}</div>
+                            <div class="ingredient-stock-unit">${ing.unit}</div>
+                        </div>
+                        <div class="ingredient-stock-progress">
+                            <div class="stock-progress">
+                                <div class="stock-progress-bar ${progressClass}" style="width: ${progressPercent}%;"></div>
+                            </div>
+                        </div>
+                        <div class="ingredient-stock-min">
+                            <div class="ingredient-stock-min-label">Mínimo</div>
+                            <div class="ingredient-stock-min-value">${ing.min_stock} ${ing.unit}</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap" style="font-size: var(--font-size-sm);">
+                        <span class="text-muted">
+                            Costo: <strong class="text-chocolate">${formatCLP(ing.unit_cost)}/${ing.unit}</strong>
+                        </span>
+                        ${ing.is_perishable ?
+                            `<span class="perishable-badge yes"><i class="bi bi-clock me-1"></i>Perecible (${ing.shelf_life_days} días)</span>` :
+                            '<span class="perishable-badge no"><i class="bi bi-x-circle me-1"></i>No perecible</span>'
+                        }
+                    </div>
+                </div>
+                <div class="ingredient-card-footer">
+                    <div class="ingredient-cost">${formatCLP(ing.unit_cost * ing.current_stock)} valor stock</div>
+                    <div class="ingredient-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewIngredientMovements(${ing.id})" title="Movimientos"><i class="bi bi-clock-history"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="openStockMovementModal(${ing.id})" title="Stock"><i class="bi bi-arrow-up-down"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="editIngredient(${ing.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ==================== VIEW MODE TOGGLE ====================
+function setViewMode(mode) {
+    currentViewMode = mode;
+    const tableView = document.getElementById('tableView');
+    const gridView = document.getElementById('gridView');
+    const tableBtn = document.getElementById('viewTableBtn');
+    const gridBtn = document.getElementById('viewGridBtn');
+
+    if (mode === 'table') {
+        tableView.style.display = '';
+        gridView.style.display = 'none';
+        tableBtn.classList.add('active');
+        tableBtn.setAttribute('aria-pressed', 'true');
+        gridBtn.classList.remove('active');
+        gridBtn.setAttribute('aria-pressed', 'false');
+    } else {
+        tableView.style.display = 'none';
+        gridView.style.display = 'grid';
+        gridBtn.classList.add('active');
+        gridBtn.setAttribute('aria-pressed', 'true');
+        tableBtn.classList.remove('active');
+        tableBtn.setAttribute('aria-pressed', 'false');
+    }
+}
+
+// ==================== ESTADÍSTICAS ====================
+function updateStats(ingredients) {
+    const critical = ingredients.filter(ing => ing.current_stock > 0 && ing.min_stock > 0 && ing.current_stock / ing.min_stock < 1).length;
+    const low = ingredients.filter(ing => ing.current_stock > 0 && ing.min_stock > 0 && ing.current_stock / ing.min_stock >= 1 && ing.current_stock / ing.min_stock < 1.5).length;
+    const ok = ingredients.filter(ing => ing.current_stock > 0 && ing.min_stock > 0 && ing.current_stock / ing.min_stock >= 1.5).length;
+    const out = ingredients.filter(ing => ing.current_stock <= 0).length;
+
+    document.getElementById('statCritical').textContent = critical;
+    document.getElementById('statLow').textContent = low;
+    document.getElementById('statOk').textContent = ok;
+    document.getElementById('statOut').textContent = out;
+
+    // Update trends (compare with previous load - simplified)
+    document.getElementById('trendCritical').innerHTML = `<i class="bi bi-arrow-${critical > 0 ? 'up' : 'down'}"></i> ${critical}`;
+    document.getElementById('trendLow').innerHTML = `<i class="bi bi-arrow-${low > 0 ? 'up' : 'down'}"></i> ${low}`;
+    document.getElementById('trendOk').innerHTML = `<i class="bi bi-arrow-${ok > 0 ? 'up' : 'down'}"></i> ${ok}`;
+    document.getElementById('trendOut').innerHTML = `<i class="bi bi-arrow-${out > 0 ? 'up' : 'down'}"></i> ${out}`;
+
+    // Update Alert Banner
+    updateAlertBanner(critical, out, low);
+}
+
+function updateAlertBanner(critical, out, low) {
+    const container = document.getElementById('stockAlertBanner');
+    if (!container) return;
+
+    if (critical > 0 || out > 0) {
+        container.innerHTML = `
+            <div class="stock-alert-banner critical" role="alert">
+                <div class="stock-alert-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="stock-alert-content">
+                    <div class="stock-alert-title">¡Alerta de Stock Crítico!</div>
+                    <p class="stock-alert-message mb-0">
+                        ${critical > 0 ? `<strong>${critical}</strong> insumo${critical !== 1 ? 's' : ''} por debajo del stock mínimo` : ''}
+                        ${critical > 0 && out > 0 ? ' · ' : ''}
+                        ${out > 0 ? `<strong>${out}</strong> insumo${out !== 1 ? 's' : ''} sin stock` : ''}
+                    </p>
+                </div>
+                <div class="stock-alert-actions">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="openPurchaseOrderModal()">
+                        <i class="bi bi-cart-plus me-1"></i>Crear Orden Compra
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportIngredients()">
+                        <i class="bi bi-download me-1"></i>Exportar
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (low > 0) {
+        container.innerHTML = `
+            <div class="stock-alert-banner warning" style="background: linear-gradient(135deg, var(--color-advertencia-bg) 0%, rgba(184, 134, 11, 0.1) 100%); border-left: 4px solid var(--color-advertencia);" role="alert">
+                <div class="stock-alert-icon" style="background: var(--color-advertencia); color: white;"><i class="bi bi-exclamation-circle-fill"></i></div>
+                <div class="stock-alert-content">
+                    <div class="stock-alert-title">Atención: Stock Bajo</div>
+                    <p class="stock-alert-message mb-0"><strong>${low}</strong> insumo${low !== 1 ? 's' : ''} cerca del mínimo. Revisar pronto.</p>
+                </div>
+                <div class="stock-alert-actions">
+                    <button type="button" class="btn btn-sm btn-warning text-dark" onclick="openPurchaseOrderModal()">
+                        <i class="bi bi-cart-plus me-1"></i>Ordenar
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="stock-alert-banner ok" role="status">
+                <div class="stock-alert-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="stock-alert-content">
+                    <div class="stock-alert-title">Stock Saludable</div>
+                    <p class="stock-alert-message mb-0">Todos los insumos tienen stock suficiente</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ==================== PAGINACIÓN ====================
+function renderPagination(data, type) {
+    const container = document.getElementById(`${type}PaginationList`);
+    if (!container) return;
+
+    const current = data.page || 1;
+    const total = data.total_pages || 1;
+    let html = '';
+
+    if (current > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadIngredients(${current - 1})"><i class="bi bi-chevron-left"></i></a></li>`;
+    }
+
+    for (let i = Math.max(1, current - 2); i <= Math.min(total, current + 2); i++) {
+        html += `<li class="page-item ${i === current ? 'active' : ''}"><a class="page-link" href="#" onclick="loadIngredients(${i})">${i}</a></li>`;
+    }
+
+    if (current < total) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="loadIngredients(${current + 1})"><i class="bi bi-chevron-right"></i></a></li>`;
+    }
+
+    container.innerHTML = html;
+}
+
+// ==================== MODAL INSUMO ====================
+function openCreateIngredientModal() {
+    document.getElementById('ingredientForm').reset();
+    document.getElementById('ingredientId').value = '';
+    document.getElementById('ingredientModalTitle').innerHTML = '<i class="bi bi-box-seam me-2"></i>Nuevo Insumo';
+    document.getElementById('ingredientIsActive').checked = true;
+    document.getElementById('ingredientSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Guardar';
+    new bootstrap.Modal(document.getElementById('ingredientModal')).show();
+}
+
+function setupIngredientForm() {
+    const form = document.getElementById('ingredientForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const id = document.getElementById('ingredientId').value;
+        const data = {
+            name: document.getElementById('ingredientName').value,
+            unit: document.getElementById('ingredientUnit').value,
+            current_stock: parseFloat(document.getElementById('ingredientCurrentStock').value),
+            min_stock: parseFloat(document.getElementById('ingredientMinStock').value),
+            unit_cost: parseFloat(document.getElementById('ingredientUnitCost').value),
+            supplier: document.getElementById('ingredientSupplier').value || null,
+            shelf_life_days: parseInt(document.getElementById('ingredientShelfLife').value) || 0,
+            is_perishable: document.getElementById('ingredientIsPerishable').checked,
+            is_active: document.getElementById('ingredientIsActive').checked,
+            notes: document.getElementById('ingredientNotes').value
+        };
+
+        try {
+            const url = id ? `ingredients/${id}/` : 'ingredients/';
+            const method = id ? 'PATCH' : 'POST';
+            const response = await apiFetch(url, { method, body: JSON.stringify(data) });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(JSON.stringify(err));
+            }
+
+            showToast(id ? 'Insumo actualizado' : 'Insumo creado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('ingredientModal')).hide();
+            loadIngredients(ingredientsCurrentPage);
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al guardar insumo', 'danger');
+        }
+    });
+}
+
+async function editIngredient(id) {
+    try {
+        const response = await apiFetch(`ingredients/${id}/`);
+        if (!response.ok) throw new Error('Error cargando insumo');
+        const ing = await response.json();
+
+        document.getElementById('ingredientId').value = ing.id;
+        document.getElementById('ingredientName').value = ing.name;
+        document.getElementById('ingredientUnit').value = ing.unit;
+        document.getElementById('ingredientCurrentStock').value = ing.current_stock;
+        document.getElementById('ingredientMinStock').value = ing.min_stock;
+        document.getElementById('ingredientUnitCost').value = ing.unit_cost;
+        document.getElementById('ingredientSupplier').value = ing.supplier?.id || '';
+        document.getElementById('ingredientShelfLife').value = ing.shelf_life_days || 0;
+        document.getElementById('ingredientIsPerishable').checked = ing.is_perishable;
+        document.getElementById('ingredientIsActive').checked = ing.is_active;
+        document.getElementById('ingredientNotes').value = ing.notes || '';
+
+        document.getElementById('ingredientModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Insumo';
+        document.getElementById('ingredientSubmitBtn').innerHTML = '<i class="bi bi-save me-1"></i>Actualizar';
+        new bootstrap.Modal(document.getElementById('ingredientModal')).show();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar insumo', 'danger');
+    }
+}
+
+async function deleteIngredient(id) {
+    if (!confirm('¿Está seguro de eliminar este insumo? Esta acción no se puede deshacer.')) return;
+
+    try {
+        const response = await apiFetch(`ingredients/${id}/`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Error eliminando insumo');
+        showToast('Insumo eliminado', 'success');
+        loadIngredients(ingredientsCurrentPage);
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al eliminar insumo', 'danger');
+    }
+}
+
+// ==================== MOVIMIENTOS DE STOCK ====================
+async function viewIngredientMovements(id) {
+    try {
+        const [ingRes, movRes] = await Promise.all([
+            apiFetch(`ingredients/${id}/`),
+            apiFetch(`ingredients/${id}/movements/?page_size=20`)
+        ]);
+
+        if (!ingRes.ok) throw new Error('Error cargando insumo');
+        const ing = await ingRes.json();
+        const mov = await movRes.json();
+
+        const movements = (mov.results || mov).map(m => `
+            <tr>
+                <td>${formatDate(m.created_at)}</td>
+                <td><span class="badge bg-${getMovementColor(m.type)}">${m.type}</span></td>
+                <td class="${m.type === 'ENTRADA' ? 'text-success' : 'text-danger'}">${m.quantity > 0 ? '+' : ''}${m.quantity} ${ing.unit}</td>
+                <td>${escapeHtml(m.reference || '—')}</td>
+                <td>${escapeHtml(m.notes || '—')}</td>
+                <td>${escapeHtml(m.created_by?.username || 'Sistema')}</td>
+            </tr>
+        `).join('') || '<tr><td colspan="6" class="text-center text-muted">Sin movimientos registrados</td></tr>';
+
+        const modalHtml = `
+            <div class="modal fade" id="movementsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header bg-chocolate text-white">
+                            <h5 class="modal-title"><i class="bi bi-clock-history me-2"></i>Movimientos: ${escapeHtml(ing.name)}</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3 mb-3">
+                                <div class="col-4 text-center p-2 bg-light rounded">
+                                    <div class="fw-bold fs-4 text-primary">${ing.current_stock} ${ing.unit}</div>
+                                    <small class="text-muted">Stock Actual</small>
+                                </div>
+                                <div class="col-4 text-center p-2 bg-light rounded">
+                                    <div class="fw-bold fs-4 text-warning">${ing.min_stock} ${ing.unit}</div>
+                                    <small class="text-muted">Stock Mínimo</small>
+                                </div>
+                                <div class="col-4 text-center p-2 bg-light rounded">
+                                    <div class="fw-bold fs-4 text-info">${formatCLP(ing.unit_cost)}</div>
+                                    <small class="text-muted">Costo Unit.</small>
+                                </div>
+                            </div>
+                            <div class="table-responsive table-responsive-stack">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Referencia</th><th>Notas</th><th>Usuario</th></tr></thead>
+                                    <tbody>${movements}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const existing = document.getElementById('movementsModal');
+        if (existing) existing.remove();
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        new bootstrap.Modal(document.getElementById('movementsModal')).show();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar movimientos', 'danger');
+    }
+}
+
+function getMovementColor(type) {
+    const colors = { 'ENTRADA': 'success', 'SALIDA': 'danger', 'MERMA': 'warning', 'AJUSTE': 'info' };
+    return colors[type] || 'secondary';
+}
+
+function openStockMovementModal(ingredientId) {
+    apiFetch(`ingredients/${ingredientId}/`).then(res => res.json()).then(ing => {
+        document.getElementById('movementIngredientId').value = ing.id;
+        document.getElementById('movementIngredientName').value = `${ing.name} (Stock: ${ing.current_stock} ${ing.unit})`;
+        document.getElementById('movementUnit').textContent = ing.unit;
+        document.getElementById('stockMovementForm').reset();
+        document.getElementById('movementIngredientId').value = ing.id;
+        document.getElementById('movementIngredientName').value = `${ing.name} (Stock: ${ing.current_stock} ${ing.unit})`;
+        new bootstrap.Modal(document.getElementById('stockMovementModal')).show();
+    });
+}
+
+function setupStockMovementForm() {
+    const form = document.getElementById('stockMovementForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const data = {
+            ingredient: document.getElementById('movementIngredientId').value,
+            type: document.getElementById('movementType').value,
+            quantity: parseFloat(document.getElementById('movementQuantity').value),
+            reference: document.getElementById('movementReference').value,
+            notes: document.getElementById('movementNotes').value
+        };
+
+        try {
+            const response = await apiFetch('stock-movements/', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(JSON.stringify(err));
+            }
+
+            showToast('Movimiento registrado', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('stockMovementModal')).hide();
+            loadIngredients(ingredientsCurrentPage);
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al registrar movimiento', 'danger');
+        }
+    });
+}
+
+// ==================== ORDEN DE COMPRA ====================
+function openPurchaseOrderModal() {
+    poItems = [];
+    poCounter = 0;
+    document.getElementById('purchaseOrderForm').reset();
+    document.getElementById('poExpectedDate').valueAsDate = new Date(Date.now() + 7*24*60*60*1000);
+    renderPoItemsTable();
+    updatePoTotal();
+    new bootstrap.Modal(document.getElementById('purchaseOrderModal')).show();
+}
+
+async function addPoItem() {
+    try {
+        const response = await apiFetch('ingredients/?page_size=200&is_active=true');
+        if (!response.ok) throw new Error('Error cargando insumos');
+        const data = await response.json();
+        const ingredients = data.results || data;
+
+        if (ingredients.length === 0) {
+            showToast('No hay insumos disponibles', 'warning');
+            return;
+        }
+
+        poCounter++;
+        poItems.push({
+            tempId: poCounter,
+            ingredient: '',
+            ingredient_name: '',
+            quantity: 1,
+            unit_cost: 0,
+            unit: ''
+        });
+        renderPoItemsTable();
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al cargar insumos', 'danger');
+    }
+}
+
+function renderPoItemsTable() {
+    const tbody = document.getElementById('poItemsTableBody');
+    const emptyRow = document.getElementById('poEmptyRow');
+
+    if (poItems.length === 0) {
+        if (emptyRow) emptyRow.style.display = '';
+        return;
+    }
+    if (emptyRow) emptyRow.style.display = 'none';
+
+    tbody.innerHTML = poItems.map((item, index) => `
+        <tr data-index="${index}">
+            <td>
+                <select class="form-select form-select-sm po-ingredient-select" data-temp-id="${item.tempId}" onchange="updatePoIngredient(this, ${index})" required>
+                    <option value="">Seleccionar insumo...</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm po-quantity" value="${item.quantity}" step="0.001" min="0.001" onchange="updatePoQuantity(${index}, this.value)" required>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm po-unit-cost" value="${item.unit_cost}" step="0.01" min="0" onchange="updatePoUnitCost(${index}, this.value)" required>
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm po-subtotal" value="0" readonly>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePoItem(${index})" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    loadIngredientsForPoSelects();
+}
+
+async function loadIngredientsForPoSelects() {
+    try {
+        const response = await apiFetch('ingredients/?page_size=200&is_active=true');
+        if (!response.ok) return;
+        const data = await response.json();
+        const ingredients = data.results || data;
+
+        document.querySelectorAll('.po-ingredient-select').forEach(select => {
+            const tempId = select.dataset.tempId;
+            const currentItem = poItems.find(i => i.tempId == tempId);
+
+            ingredients.forEach(ing => {
+                const selected = currentItem && currentItem.ingredient == ing.id ? 'selected' : '';
+                select.innerHTML += `<option value="${ing.id}" data-cost="${ing.unit_cost}" data-unit="${ing.unit}" ${selected}>${escapeHtml(ing.name)} (Stock: ${ing.current_stock} ${ing.unit}) - ${formatCLP(ing.unit_cost)}/${ing.unit}</option>`;
+            });
+
+            if (currentItem && currentItem.ingredient) {
+                updatePoIngredient(select, poItems.findIndex(i => i.tempId == tempId));
+            }
+        });
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function updatePoIngredient(select, index) {
+    const option = select.options[select.selectedIndex];
+    const cost = parseFloat(option.dataset.cost) || 0;
+    const unit = option.dataset.unit || '';
+    const ingredientId = select.value;
+    const ingredientName = option.text;
+
+    poItems[index] = {
+        ...poItems[index],
+        ingredient: ingredientId ? parseInt(ingredientId) : null,
+        ingredient_name: ingredientName,
+        unit_cost: cost,
+        unit: unit
+    };
+
+    const row = select.closest('tr');
+    row.querySelector('.po-unit-cost').value = cost.toFixed(2);
+    updatePoRowCalculations(index);
+    updatePoTotal();
+}
+
+function updatePoQuantity(index, quantity) {
+    poItems[index] = { ...poItems[index], quantity: parseFloat(quantity) || 0 };
+    updatePoRowCalculations(index);
+    updatePoTotal();
+}
+
+function updatePoUnitCost(index, cost) {
+    poItems[index] = { ...poItems[index], unit_cost: parseFloat(cost) || 0 };
+    updatePoRowCalculations(index);
+    updatePoTotal();
+}
+
+function updatePoRowCalculations(index) {
+    const item = poItems[index];
+    const row = document.querySelector(`#poItemsTableBody tr[data-index="${index}"]`);
+    if (!row) return;
+
+    const quantity = item.quantity || 0;
+    const unitCost = item.unit_cost || 0;
+    const subtotal = quantity * unitCost;
+
+    row.querySelector('.po-subtotal').value = formatCLP(subtotal);
+}
+
+function updatePoTotal() {
+    let total = 0;
+    poItems.forEach(item => {
+        total += (item.quantity || 0) * (item.unit_cost || 0);
+    });
+    document.getElementById('poTotal').value = formatCLP(total);
+}
+
+function removePoItem(index) {
+    poItems.splice(index, 1);
+    renderPoItemsTable();
+    updatePoTotal();
+}
+
+function setupPurchaseOrderForm() {
+    const form = document.getElementById('purchaseOrderForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!form.checkValidity() || poItems.length === 0) {
+            form.classList.add('was-validated');
+            if (poItems.length === 0) showToast('Agregue al menos un item', 'warning');
+            return;
+        }
+
+        const data = {
+            supplier: document.getElementById('poSupplier').value,
+            expected_date: document.getElementById('poExpectedDate').value,
+            notes: document.getElementById('poNotes').value,
+            items: poItems.map(item => ({
+                ingredient: item.ingredient,
+                quantity: item.quantity,
+                unit_cost: item.unit_cost
+            }))
+        };
+
+        try {
+            const response = await apiFetch('purchase-orders/', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(JSON.stringify(err));
+            }
+
+            showToast('Orden de compra creada', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('purchaseOrderModal')).hide();
+            loadIngredients(ingredientsCurrentPage);
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al crear orden de compra', 'danger');
+        }
+    });
+}
+
+function exportIngredients() {
+    showToast('Exportación en desarrollo - Próximamente CSV/Excel', 'info');
+}
+
+function toggleSelectAllIngredients() {
+    const selectAll = document.getElementById('selectAllIngredients');
+    document.querySelectorAll('.ingredient-checkbox').forEach(cb => {
+        cb.checked = selectAll.checked;
+    });
+}
+</script>
+{% endblock %}

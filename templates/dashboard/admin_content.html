@@ -1,0 +1,441 @@
+<!-- Dashboard Admin Content - Redesigned with marriet.cl inspired design -->
+<div class="stagger">
+    <!-- Quick Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-cart-check"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="ordersTodayTrend">
+                        <i class="bi bi-arrow-up"></i> +12%
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiOrdersToday">—</div>
+                <div class="kpi-label">Pedidos Hoy</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-kanban"></i>
+                    </div>
+                    <div class="kpi-trend" id="productionTrend">
+                        <i class="bi bi-arrow-right"></i> —
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiInProduction">—</div>
+                <div class="kpi-label">En Producción</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="readyDispatchTrend">
+                        <i class="bi bi-arrow-up"></i> +8%
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiReadyDispatch">—</div>
+                <div class="kpi-label">Listos para Despacho</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="kpi-trend negative" id="lowStockTrend">
+                        <i class="bi bi-arrow-up"></i> +3
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiLowStock">—</div>
+                <div class="kpi-label">Stock Crítico</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- Recent Orders Table -->
+        <div class="col-12 col-xl-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Pedidos Recientes</h5>
+                    <div class="d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-funnel me-1"></i>Filtrar
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">Estado</h6></li>
+                                <li><a class="dropdown-item" href="#" data-filter="all"><i class="bi bi-check2-all me-2"></i>Todos</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="COTIZACION"><span class="badge badge-warning me-2">Cotización</span>Cotizaciones</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="CONFIRMADO"><span class="badge badge-info me-2">Confirmado</span>Confirmados</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="EN_PRODUCCION"><span class="badge badge-primary me-2">En Producción</span>En Producción</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="LISTO"><span class="badge badge-success me-2">Listo</span>Listos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" data-filter="ENTREGADO"><span class="badge bg-success me-2">Entregado</span>Entregados</a></li>
+                            </ul>
+                        </div>
+                        <a href="{% url 'orders' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-right me-1"></i>Ver todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="adminRecentOrdersTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Pedido</th>
+                                    <th>Cliente</th>
+                                    <th style="width: 160px;">Estado</th>
+                                    <th style="width: 120px;">Total</th>
+                                    <th style="width: 140px;">Entrega</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status">
+                                            <span class="visually-hidden">Cargando pedidos...</span>
+                                        </div>
+                                        <p class="text-muted mt-2 mb-0">Cargando pedidos recientes...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart & Quick Stats -->
+        <div class="col-12 col-xl-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Ingresos del Mes</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-period="month">Mes</button>
+                        <button type="button" class="btn btn-outline-secondary" data-period="week">Semana</button>
+                        <button type="button" class="btn btn-outline-secondary" data-period="year">Año</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Summary Stats -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="p-3 bg-crema rounded-lg">
+                                <div class="fw-bold text-chocolate fs-4" id="adminTotalRevenue">$0</div>
+                                <small class="text-muted">Ingresos Totales</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-crema rounded-lg">
+                                <div class="fw-bold text-exito fs-4" id="adminAvgOrder">$0</div>
+                                <small class="text-muted">Ticket Promedio</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-crema rounded-lg">
+                                <div class="fw-bold text-info fs-4" id="adminConversionRate">0%</div>
+                                <small class="text-muted">Conversión</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-crema rounded-lg">
+                                <div class="fw-bold text-dorado fs-4" id="adminNewClients">0</div>
+                                <small class="text-muted">Clientes Nuevos</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="position-relative" style="height: 280px;">
+                        <canvas id="adminRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Row -->
+    <div class="row g-3 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Accesos Rápidos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{% url 'orders' %}?new=1" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Nuevo Pedido
+                        </a>
+                        <a href="{% url 'products' %}?new=1" class="btn btn-outline-secondary">
+                            <i class="bi bi-cupcake me-2"></i>Nuevo Producto
+                        </a>
+                        <a href="{% url 'clients' %}?new=1" class="btn btn-outline-secondary">
+                            <i class="bi bi-person-plus me-2"></i>Nuevo Cliente
+                        </a>
+                        <a href="{% url 'production' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-kanban me-2"></i>Ver Kanban
+                        </a>
+                        <a href="{% url 'dispatch' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-truck me-2"></i>Despachos
+                        </a>
+                        <a href="{% url 'reports' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-2"></i>Reportes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdminDashboardData();
+    initPeriodButtons();
+});
+
+async function loadAdminDashboardData(period = 'month') {
+    try {
+        const response = await apiFetch(`reports/dashboard/?period=${period}`);
+        if (!response.ok) throw new Error('Error cargando dashboard admin');
+        const data = await response.json();
+
+        // Update KPIs
+        if (data.kpis) {
+            updateElement('kpiOrdersToday', data.kpis.orders_today || 0);
+            updateElement('kpiInProduction', data.kpis.in_production || 0);
+            updateElement('kpiReadyDispatch', data.kpis.ready_for_dispatch || data.kpiReadyDispatch || 0);
+            updateElement('kpiLowStock', data.kpis.low_stock_ingredients || 0);
+            updateElement('adminTotalRevenue', formatCLP(data.kpis.total_revenue_month || 0));
+            updateElement('adminAvgOrder', formatCLP(data.kpis.avg_order_value || 0));
+            updateElement('adminConversionRate', (data.kpis.conversion_rate || 0) + '%');
+            updateElement('adminNewClients', data.kpis.new_clients || 0);
+
+            // Update trends
+            if (data.kpis.orders_today_trend !== undefined) {
+                updateTrend('ordersTodayTrend', data.kpis.orders_today_trend);
+            }
+            if (data.kpis.low_stock_trend !== undefined) {
+                updateTrend('lowStockTrend', data.kpis.low_stock_trend);
+            }
+        }
+
+        // Render recent orders
+        if (data.recent_orders) {
+            renderAdminRecentOrders(data.recent_orders);
+        }
+
+        // Render chart
+        if (data.chart_data) {
+            renderAdminRevenueChart(data.chart_data);
+        }
+    } catch (error) {
+        console.error('Error cargando dashboard admin:', error);
+        showToast('Error al cargar dashboard admin', 'danger');
+    }
+}
+
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        // Animate number change
+        if (el.tagName === 'DIV' && !isNaN(parseFloat(value))) {
+            animateNumber(el, value);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+function updateTrend(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const isPositive = value >= 0;
+    el.className = `kpi-trend ${isPositive ? 'positive' : 'negative'}`;
+    el.innerHTML = `<i class="bi bi-arrow-${isPositive ? 'up' : 'down'}"></i> ${isPositive ? '+' : ''}${value}%`;
+}
+
+function animateNumber(element, target) {
+    const start = parseFloat(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const end = parseFloat(target);
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+        const current = start + (end - start) * eased;
+        element.textContent = formatCLP(current);
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    requestAnimationFrame(update);
+}
+
+function renderAdminRecentOrders(orders) {
+    const tbody = document.getElementById('adminRecentOrdersTable').querySelector('tbody');
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-0">No hay pedidos recientes</p>
+                    <a href="{% url 'orders' %}?new=1" class="btn btn-primary btn-sm mt-3">
+                        <i class="bi bi-plus me-1"></i>Crear primer pedido
+                    </a>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = orders.map(order => `
+        <tr data-id="${order.id}">
+            <td data-label="Pedido"><strong>#${order.id}</strong></td>
+            <td data-label="Cliente">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar avatar-sm" style="background: linear-gradient(135deg, var(--color-dorado) 0%, var(--color-dorado-brillante) 100%);">
+                        ${escapeHtml(order.client__name?.charAt(0) || 'C')}
+                    </div>
+                    <div>
+                        <div class="fw-medium">${escapeHtml(order.client__name)}</div>
+                        <small class="text-muted">${escapeHtml(order.client__email || '')}</small>
+                    </div>
+                </div>
+            </td>
+            <td data-label="Estado">
+                ${UI.getStatusBadge(order.status, 'orders')}
+            </td>
+            <td data-label="Total">
+                <span class="fw-semibold text-chocolate">${formatCLP(order.total)}</span>
+            </td>
+            <td data-label="Entrega">${formatDate(order.delivery_date)}</td>
+            <td>
+                <a href="{% url 'orders' %}${order.id}/" class="btn btn-ghost btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                </a>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderAdminRevenueChart(chartData) {
+    const ctx = document.getElementById('adminRevenueChart');
+    if (!ctx || !window.Chart) return;
+
+    if (window.adminRevenueChart) {
+        window.adminRevenueChart.destroy();
+    }
+
+    // Use design system colors
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-chocolate').trim();
+    const primaryLight = getComputedStyle(document.documentElement).getPropertyValue('--color-dorado-claro').trim();
+
+    window.adminRevenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels || [],
+            datasets: [{
+                label: 'Ingresos',
+                data: chartData.data || [],
+                borderColor: primaryColor,
+                backgroundColor: primaryColor + '20',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: primaryColor,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#2D1B0E',
+                    titleFont: { family: "'Playfair Display', serif", size: 14 },
+                    bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => `Ingresos: ${formatCLP(ctx.parsed.y)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: "'DM Sans', sans-serif", size: 11 }, color: '#9C8A7A' }
+                },
+                y: {
+                    grid: { color: '#F5EDE3' },
+                    ticks: {
+                        font: { family: "'DM Sans', sans-serif", size: 11 },
+                        color: '#9C8A7A',
+                        callback: v => formatCLP(v)
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function initPeriodButtons() {
+    document.querySelectorAll('[data-period]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            loadAdminDashboardData(this.dataset.period);
+        });
+    });
+}
+</script>
+
+<style>
+/* Additional styles for admin dashboard */
+.bg-crema { background-color: var(--color-crema) !important; }
+.text-chocolate { color: var(--color-chocolate) !important; }
+.text-dorado { color: var(--color-advertencia) !important; }
+.text-exito { color: var(--color-exito) !important; }
+.text-info { color: var(--color-info) !important; }
+
+/* Avatar */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--color-cacao);
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+}
+.avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-sm); }
+.avatar-md { width: 40px; height: 40px; font-size: var(--font-size-base); }
+.avatar-lg { width: 56px; height: 56px; font-size: var(--font-size-xl); }
+
+/* Table enhancements */
+.table td {
+    vertical-align: middle;
+}
+.table .fw-semibold { font-weight: var(--font-weight-semibold); }
+</style>

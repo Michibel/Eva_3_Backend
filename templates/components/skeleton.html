@@ -1,0 +1,83 @@
+{# Skeleton Loading Component #}
+{# Usage: {% include 'components/skeleton.html' with type='card' count=3 %} #}
+{% load frontend_tags %}
+
+{% if type == 'card' %}
+<div class="stagger">
+    {% for i in ""|rjust:count %}
+    <div class="card skeleton-card" style="height: 280px;"></div>
+    {% endfor %}
+</div>
+{% elif type == 'row' %}
+<div class="stagger">
+    {% for i in ""|rjust:count %}
+    <div class="row g-3 mb-3">
+        <div class="col-3"><div class="skeleton" style="height: 40px; border-radius: var(--radius-full);"></div></div>
+        <div class="col-9"><div class="skeleton skeleton-text" style="width: 60%;"></div></div>
+    </div>
+    {% endfor %}
+</div>
+{% elif type == 'table' %}
+<div class="table-responsive">
+    <table class="table">
+        <thead class="table-light">
+            <tr>
+                {% for i in ""|rjust:columns|default:4 %}
+                <th><div class="skeleton skeleton-text" style="width: 80px;"></div></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in ""|rjust:count %}
+            <tr>
+                {% for j in ""|rjust:columns|default:4 %}
+                <td><div class="skeleton skeleton-text" style="width: 100%;"></div></td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% elif type == 'kpi' %}
+<div class="row g-4 stagger">
+    {% for i in ""|rjust:count %}
+    <div class="col-md-3">
+        <div class="kpi-card skeleton" style="height: 140px;"></div>
+    </div>
+    {% endfor %}
+</div>
+{% elif type == 'list' %}
+<div class="stagger">
+    {% for i in ""|rjust:count %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-auto"><div class="skeleton skeleton-avatar"></div></div>
+                <div class="col">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% elif type == 'kanban' %}
+<div class="kanban-board">
+    {% for col in columns|default:"Recibido,En Preparación,Horneado/Decorad,Control Calidad,Listo"|split:"," %}
+    <div class="kanban-column" data-column="{{ col|lower|slugify }}">
+        <div class="kanban-column-header">
+            {{ col }}
+            <span class="kanban-column-count">0</span>
+        </div>
+        <div class="kanban-cards">
+            {% for i in ""|rjust:2 %}
+            <div class="kanban-card skeleton" style="height: 180px;"></div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="skeleton skeleton-text" style="width: {{ width|default:'100%' }}; height: {{ height|default:'1rem' }};"></div>
+{% endif %}

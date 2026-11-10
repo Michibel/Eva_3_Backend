@@ -1,0 +1,42 @@
+{# Modal Component #}
+{# Usage: {% include 'components/modal.html' with id='myModal' title='Título' size='lg' %} #}
+
+<div class="modal-overlay" id="{{ id|default:'modal' }}-overlay" tabindex="-1" aria-hidden="true">
+    <div class="modal modal-{{ size|default:'md' }}" role="dialog" aria-labelledby="{{ id }}-title" aria-modal="true">
+        <div class="modal-header">
+            <h5 class="modal-title" id="{{ id }}-title">
+                {% if icon %}<i class="bi {{ icon }} me-2"></i>{% endif %}
+                {{ title|default:'Modal' }}
+            </h5>
+            <button type="button" class="modal-close" aria-label="Cerrar" onclick="UI.hideModal('{{ id }}')">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            {% block modal_content %}{% endblock %}
+        </div>
+
+        {% if show_footer %}
+        <div class="modal-footer">
+            {% block modal_footer %}
+            <button type="button" class="btn btn-ghost" onclick="UI.hideModal('{{ id }}')">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="{{ confirm_action|default:'' }}">{{ confirm_text|default:'Guardar' }}</button>
+            {% endblock %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('{{ id|default:"modal" }}-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                UI.hideModal('{{ id }}');
+            }
+        });
+    }
+});
+</script>

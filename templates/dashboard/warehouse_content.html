@@ -1,0 +1,612 @@
+<!-- Dashboard Bodega Content - Redesigned for Bodega -->
+<div class="stagger">
+    <!-- Quick Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="kpi-trend positive" id="whTotalTrend">
+                        <i class="bi bi-arrow-up"></i> +12
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiTotalIngredients">—</div>
+                <div class="kpi-label">Total Insumos</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="kpi-trend negative" id="whCriticalTrend">
+                        <i class="bi bi-arrow-up"></i> +3
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiCriticalStock">—</div>
+                <div class="kpi-label">Stock Crítico</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div class="kpi-trend negative" id="whOutTrend">
+                        <i class="bi bi-arrow-up"></i> +1
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiOutOfStock">—</div>
+                <div class="kpi-label">Sin Stock</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <div class="kpi-trend" id="whPendingPOTrend">
+                        <i class="bi bi-arrow-right"></i> —
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpiPendingPO">—</div>
+                <div class="kpi-label">Órdenes Pendientes</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- Critical Stock Alert -->
+        <div class="col-12 col-xl-5">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Insumos Críticos</h5>
+                    <a href="{% url 'ingredients' %}?filter=critical" class="btn btn-ghost btn-sm">Ver todos</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="criticalStockTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Insumo</th>
+                                    <th style="width: 100px;">Stock Actual</th>
+                                    <th style="width: 100px;">Mínimo</th>
+                                    <th style="width: 100px;">Nivel</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Out of Stock & Quick Order -->
+        <div class="col-12 col-xl-7">
+            <div class="row g-4 h-100">
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-x-circle me-2"></i>Sin Stock</h5>
+                            <span class="badge badge-danger" id="outOfStockCount">0</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive table-responsive-stack">
+                                <table class="table table-hover mb-0" id="outOfStockTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Insumo</th>
+                                            <th style="width: 140px;">Proveedor</th>
+                                            <th style="width: 100px;">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="3" class="text-center py-5">
+                                                <div class="spinner-border text-chocolate" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Compra Rápida</h5>
+                            <a href="{% url 'ingredients' %}?new=po" class="btn btn-ghost btn-sm">Nueva OC</a>
+                        </div>
+                        <div class="card-body">
+                            <form id="quickPurchaseForm" class="needs-validation" novalidate>
+                                <div class="mb-3">
+                                    <label class="form-label">Insumo</label>
+                                    <select class="form-select" name="ingredient" id="quickIngredient" required>
+                                        <option value="">Seleccionar insumo sin stock...</option>
+                                    </select>
+                                    <div class="invalid-feedback">Selecciona un insumo</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Cantidad a Pedir</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="quantity" id="quickQuantity" min="1" required>
+                                        <span class="input-group-text" id="quickUnit">unidad</span>
+                                    </div>
+                                    <div class="invalid-feedback">Ingresa una cantidad</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Proveedor</label>
+                                    <select class="form-select" name="supplier" id="quickSupplier" required>
+                                        <option value="">Seleccionar proveedor...</option>
+                                    </select>
+                                    <div class="invalid-feedback">Selecciona un proveedor</div>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-cart-plus me-2"></i>Generar Orden de Compra
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Orders Row -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Órdenes de Compra Recientes</h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="poStatusFilter" style="width: auto;">
+                            <option value="all">Todos los estados</option>
+                            <option value="BORRADOR">Borrador</option>
+                            <option value="ENVIADA">Enviada</option>
+                            <option value="CONFIRMADA">Confirmada</option>
+                            <option value="RECIBIDA">Recibida</option>
+                            <option value="CANCELADA">Cancelada</option>
+                        </select>
+                        <a href="{% url 'ingredients' %}?tab=orders" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-right me-1"></i>Ver todas
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive table-responsive-stack">
+                        <table class="table table-hover mb-0" id="purchaseOrdersTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 80px;">Orden</th>
+                                    <th>Proveedor</th>
+                                    <th style="width: 140px;">Fecha Esperada</th>
+                                    <th style="width: 130px;">Estado</th>
+                                    <th style="width: 120px;">Total</th>
+                                    <th style="width: 100px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-chocolate" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadWarehouseDashboardData();
+    initQuickPurchaseForm();
+    initPOFilter();
+});
+
+async function loadWarehouseDashboardData() {
+    try {
+        const response = await apiFetch('reports/dashboard/');
+        if (!response.ok) throw new Error('Error cargando dashboard bodega');
+        const data = await response.json();
+
+        // Update KPIs
+        if (data.kpis) {
+            updateElement('kpiTotalIngredients', data.kpis.total_ingredients || 0);
+            updateElement('kpiCriticalStock', data.kpis.low_stock_ingredients || 0);
+            updateElement('kpiOutOfStock', data.kpis.out_of_stock_count || 0);
+            updateElement('kpiPendingPO', data.kpis.pending_purchase_orders || 0);
+        }
+
+        // Render tables
+        if (data.critical_stock) {
+            renderCriticalStock(data.critical_stock);
+        }
+        if (data.out_of_stock) {
+            renderOutOfStock(data.out_of_stock);
+            populateQuickPurchaseSelects(data.out_of_stock);
+        }
+        if (data.purchase_orders) {
+            renderPurchaseOrders(data.purchase_orders);
+        }
+    } catch (error) {
+        console.error('Error cargando dashboard bodega:', error);
+        showToast('Error al cargar dashboard bodega', 'danger');
+    }
+}
+
+function updateElement(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        if (!isNaN(parseFloat(value)) && typeof value !== 'string') {
+            animateNumber(el, value);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+function animateNumber(element, target) {
+    const start = parseFloat(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const end = parseFloat(target);
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (end - start) * eased;
+        element.textContent = Math.round(current);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
+function renderCriticalStock(items) {
+    const tbody = document.getElementById('criticalStockTable').querySelector('tbody');
+    if (!items || items.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-5">
+                    <i class="bi bi-shield-check fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-0">No hay insumos críticos</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+        const ratio = item.min_stock > 0 ? item.current_stock / item.min_stock : 1;
+        let levelClass, levelLabel;
+
+        if (item.current_stock <= 0) {
+            levelClass = 'badge-danger';
+            levelLabel = 'Sin Stock';
+        } else if (ratio < 1) {
+            levelClass = 'badge-danger';
+            levelLabel = 'Crítico';
+        } else if (ratio < 1.5) {
+            levelClass = 'badge-warning';
+            levelLabel = 'Bajo Mínimo';
+        } else {
+            levelClass = 'badge-success';
+            levelLabel = 'OK';
+        }
+
+        const rowClass = item.current_stock <= 0 ? 'table-danger' : (ratio < 1 ? 'table-danger' : (ratio < 1.5 ? 'table-warning' : ''));
+
+        return `
+            <tr class="${rowClass}" data-id="${item.id}">
+                <td data-label="Insumo">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="avatar avatar-sm" style="background: var(--color-crema); color: var(--color-dorado-claro);">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div>
+                            <div class="fw-medium">${escapeHtml(item.name)}</div>
+                            <small class="text-muted">${escapeHtml(item.category_name || '')}</small>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Stock Actual">
+                    <span class="fw-semibold ${item.current_stock <= 0 ? 'text-danger' : ''}">${item.current_stock} ${escapeHtml(item.unit)}</span>
+                </td>
+                <td data-label="Mínimo">${item.min_stock} ${escapeHtml(item.unit)}</td>
+                <td data-label="Nivel">
+                    <span class="badge ${levelClass}">${levelLabel}</span>
+                </td>
+                <td>
+                    <button class="btn btn-ghost btn-sm" onclick="quickOrder(${item.id}, ${item.min_stock * 2 - item.current_stock})" title="Pedido rápido">
+                        <i class="bi bi-cart-plus"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderOutOfStock(items) {
+    const tbody = document.getElementById('outOfStockTable').querySelector('tbody');
+    const countEl = document.getElementById('outOfStockCount');
+
+    if (countEl) countEl.textContent = items?.length || 0;
+
+    if (!items || items.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center py-5">
+                    <i class="bi bi-check-circle fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-0">Todos los insumos tienen stock</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => `
+        <tr class="table-danger" data-id="${item.id}">
+            <td data-label="Insumo">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar avatar-sm" style="background: var(--color-error-claro); color: var(--color-error);">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <div class="fw-medium">${escapeHtml(item.name)}</div>
+                        <small class="text-muted">${escapeHtml(item.category_name || '')}</small>
+                    </div>
+                </div>
+            </td>
+            <td data-label="Proveedor">
+                ${escapeHtml(item.supplier_name || 'Sin proveedor asignado')}
+            </td>
+            <td data-label="Acción">
+                <button class="btn btn-sm btn-primary" onclick="quickOrder(${item.id}, ${item.min_stock * 3})">
+                    <i class="bi bi-cart-plus me-1"></i>Pedir
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderPurchaseOrders(orders) {
+    const tbody = document.getElementById('purchaseOrdersTable').querySelector('tbody');
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-5">
+                    <i class="bi bi-truck fs-1 text-muted mb-2" style="color: var(--color-dorado-claro) !important;"></i>
+                    <p class="text-muted mb-3">No hay órdenes de compra</p>
+                    <button class="btn btn-primary" onclick="createNewPO()">
+                        <i class="bi bi-plus-circle me-2"></i>Crear primera orden
+                    </button>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const statusConfig = {
+        'BORRADOR': { color: 'secondary', label: 'Borrador' },
+        'ENVIADA': { color: 'info', label: 'Enviada' },
+        'CONFIRMADA': { color: 'primary', label: 'Confirmada' },
+        'RECIBIDA': { color: 'success', label: 'Recibida' },
+        'CANCELADA': { color: 'danger', label: 'Cancelada' }
+    };
+
+    tbody.innerHTML = orders.map(order => {
+        const status = statusConfig[order.status] || { color: 'secondary', label: order.status };
+        const isOverdue = order.expected_date && new Date(order.expected_date) < new Date() && order.status !== 'RECIBIDA' && order.status !== 'CANCELADA';
+
+        return `
+            <tr data-id="${order.id}" ${isOverdue ? 'class="table-danger"' : ''}>
+                <td data-label="Orden"><strong>#${order.id}</strong></td>
+                <td data-label="Proveedor">${escapeHtml(order.supplier__name)}</td>
+                <td data-label="Fecha Esperada">
+                    <span class="${isOverdue ? 'text-danger fw-medium' : ''}">
+                        ${formatDate(order.expected_date)}
+                        ${isOverdue ? ' <i class="bi bi-exclamation-triangle"></i>' : ''}
+                    </span>
+                </td>
+                <td data-label="Estado">
+                    <span class="badge badge-${status.color}">${status.label}</span>
+                </td>
+                <td data-label="Total"><span class="fw-semibold text-chocolate">${formatCLP(order.total)}</span></td>
+                <td data-label="Acciones">
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'ingredients' %}orders/${order.id}/" class="btn btn-ghost" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                        ${order.status === 'CONFIRMADA' ? `
+                            <button class="btn btn-outline-success" onclick="receiveOrder(${order.id})" title="Marcar como recibida">
+                                <i class="bi bi-check"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function populateQuickPurchaseSelects(outOfStockItems) {
+    const ingredientSelect = document.getElementById('quickIngredient');
+    const supplierSelect = document.getElementById('quickSupplier');
+    const unitSpan = document.getElementById('quickUnit');
+
+    if (!ingredientSelect) return;
+
+    // Populate ingredients
+    ingredientSelect.innerHTML = '<option value="">Seleccionar insumo sin stock...</option>' +
+        outOfStockItems.map(item => `<option value="${item.id}" data-unit="${escapeHtml(item.unit)}" data-supplier="${escapeHtml(item.supplier_name || '')}" data-supplier-id="${item.supplier_id || ''}">${escapeHtml(item.name)} (${item.category_name || 'Sin categoría'})</option>`).join('');
+
+    // Handle ingredient change
+    ingredientSelect.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        const unit = selected.dataset.unit;
+        const supplierName = selected.dataset.supplier;
+        const supplierId = selected.dataset.supplierId;
+
+        if (unitSpan) unitSpan.textContent = unit || 'unidad';
+
+        if (supplierId && supplierSelect) {
+            supplierSelect.value = supplierId;
+        }
+    });
+}
+
+function initQuickPurchaseForm() {
+    const form = document.getElementById('quickPurchaseForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        UI.showLoading(submitBtn, 'Generando...');
+
+        const formData = new FormData(form);
+        const data = {
+            ingredient: formData.get('ingredient'),
+            quantity: formData.get('quantity'),
+            supplier: formData.get('supplier')
+        };
+
+        try {
+            const response = await API.post('ingredients/quick-purchase-order/', data);
+            if (response.ok) {
+                showToast('Orden de compra creada correctamente', 'success');
+                form.reset();
+                form.classList.remove('was-validated');
+                loadWarehouseDashboardData();
+            } else {
+                const error = await response.json().catch(() => ({}));
+                showToast(error.detail || 'Error al crear la orden', 'danger');
+            }
+        } catch (error) {
+            showToast('Error de conexión', 'danger');
+        } finally {
+            UI.hideLoading(submitBtn);
+        }
+    });
+}
+
+function initPOFilter() {
+    const filter = document.getElementById('poStatusFilter');
+    if (!filter) return;
+
+    filter.addEventListener('change', function() {
+        const value = this.value;
+        const rows = document.querySelectorAll('#purchaseOrdersTable tbody tr[data-id]');
+
+        rows.forEach(row => {
+            if (value === 'all') {
+                row.style.display = '';
+            } else {
+                const badge = row.querySelector('.badge');
+                if (badge) {
+                    row.style.display = badge.textContent.trim() === value ? '' : 'none';
+                }
+            }
+        });
+    });
+}
+
+function quickOrder(ingredientId, suggestedQty) {
+    const ingredientSelect = document.getElementById('quickIngredient');
+    const quantityInput = document.getElementById('quickQuantity');
+
+    if (ingredientSelect) {
+        ingredientSelect.value = ingredientId;
+        ingredientSelect.dispatchEvent(new Event('change'));
+    }
+    if (quantityInput) {
+        quantityInput.value = suggestedQty;
+    }
+
+    // Scroll to form
+    const form = document.getElementById('quickPurchaseForm');
+    if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        form.querySelector('button[type="submit"]').focus();
+    }
+}
+
+function createNewPO() {
+    showToast('Redirigiendo a creación de orden...', 'info');
+    setTimeout(() => {
+        window.location.href = '{% url "ingredients" %}?new=po';
+    }, 500);
+}
+
+function receiveOrder(orderId) {
+    UI.confirm('¿Marcar esta orden como recibida completamente?', 'Confirmar Recepción')
+        .then(confirmed => {
+            if (confirmed) {
+                API.patch(`ingredients/purchase-orders/${orderId}/receive/`)
+                    .then(response => {
+                        if (response.ok) {
+                            showToast('Orden marcada como recibida', 'success');
+                            loadWarehouseDashboardData();
+                        } else {
+                            showToast('Error al recibir la orden', 'danger');
+                        }
+                    })
+                    .catch(() => showToast('Error de conexión', 'danger'));
+            }
+        });
+}
+</script>
+
+<style>
+/* Avatar */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    color: var(--color-cacao);
+    font-weight: var(--font-weight-bold);
+    flex-shrink: 0;
+}
+.avatar-sm { width: 32px; height: 32px; font-size: var(--font-size-sm); }
+
+/* Progress bar for stock levels */
+.stock-level-bar {
+    height: 6px;
+    background: var(--color-crema-oscuro);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: var(--space-1);
+}
+
+.stock-level-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
